@@ -1,0 +1,73 @@
+{
+  "name": "advisor-track-backend",
+  "version": "1.0.0",
+  "description": "AdvisorTrack REST API — Node.js + TypeScript backend for the mobile app",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "dev:demo": "node scripts/dev-demo.js",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test:phase3": "tsx scripts/verify-phase3.ts",
+    "test:phase4": "tsx scripts/verify-phase4.ts",
+    "test:phase4a": "tsx scripts/verify-phase4a.ts",
+    "test:phase5": "tsx scripts/verify-phase5.ts",
+    "test:phase6": "tsx scripts/verify-phase6.ts",
+    "test:phase7": "tsx scripts/verify-phase7.ts",
+    "test:phase8": "tsx scripts/verify-phase8.ts",
+    "test:phase9": "tsx scripts/verify-phase9.ts",
+    "test:phase10": "tsx scripts/verify-phase10.ts",
+    "test:phase11": "tsx scripts/verify-phase11.ts",
+    "test:phase12": "tsx scripts/verify-phase12.ts",
+    "db:hash-password": "node scripts/hash-password.js",
+    "db:create": "node scripts/create-database.js",
+    "db:create:demo": "node scripts/create-demo-database.js",
+    "db:migrate": "node scripts/run-migration.js",
+    "db:migrate:all": "node scripts/run-all-migrations.js",
+    "db:migrate:demo": "node scripts/run-demo-migrations.js",
+    "db:seed:demo": "node scripts/run-northstar-seed.js",
+    "db:reset-tester": "node scripts/reset-data-and-seed-tester.js",
+    "db:generate-pii-key": "node scripts/generate-pii-key.js",
+    "planning:verify": "npm run build && node scripts/verify-planning-parity.js"
+  },
+  "keywords": [
+    "advisortrack",
+    "api",
+    "typescript",
+    "express"
+  ],
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=20.19.4"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mailtrap": "^4.8.0",
+    "pdfkit": "^0.19.1",
+    "pg": "^8.21.0",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.15.30",
+    "@types/pdfkit": "^0.17.6",
+    "@types/pg": "^8.20.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  }
+}

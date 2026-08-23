@@ -1,0 +1,26 @@
+---
+description: Production infrastructure and configuration must not change unless the authorised phase explicitly permits that exact change
+alwaysApply: true
+---
+
+# Production safety
+
+Production database privileges, server configuration, environment configuration, Nginx configuration, and process configuration all count as production changes.
+
+Do not modify them unless the currently authorised phase explicitly requires and permits that exact change.
+
+## Do not change unless the phase explicitly permits it
+
+- Production PostgreSQL privileges, roles, and grants (including `PUBLIC`)
+- Production `.env` / secrets / process environment
+- Production Nginx site files and certificates (`api.advisortrack.co.za`, `portal.advisortrack.co.za`)
+- Production PM2 process configuration (`advisortrack-api`)
+- Production deployment directories and runtime
+
+## Accepted Phase 10 exception
+
+The Phase 10 `PUBLIC CONNECT` revoke on `advisor_track` is accepted and must not be reverted merely for symmetry. Production remained healthy and its application role retains explicit `CONNECT` permission.
+
+## Demo isolation
+
+Demo work must use the separate demo runtime, env, database, Nginx site, and PM2 process. Sharing the physical server/IP is acceptable. Sharing production application state is not.

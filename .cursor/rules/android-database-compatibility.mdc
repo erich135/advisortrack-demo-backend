@@ -1,0 +1,35 @@
+---
+description: Permanent Android-compatible database change rules for AdvisorTrack
+alwaysApply: true
+---
+
+# Android database compatibility
+
+The Android app was built first and depends on the existing AdvisorTrack database. Existing production tables and structures must remain backward-compatible.
+
+Migration 026 is the accepted pattern: add a new linked table (`company_subscriptions`) without modifying Android-dependent structures.
+
+## Allowed
+
+- Additive database changes
+- New tables
+- New columns on existing tables only when they are demonstrably non-breaking and backward-compatible
+
+## Not allowed
+
+- Dropping existing tables or columns
+- Renaming existing tables or columns
+- Changing existing column data types
+- Changing the existing meaning of a field
+- Changing existing nullability/default semantics in a way that could affect Android
+- Removing or repurposing existing constraints
+- Altering existing relationships relied on by Android
+- Restructuring existing core tables because a cleaner web-dashboard design is preferred
+
+## If data cannot safely fit the existing schema
+
+Prefer a new linked table. Do not reshape Android-dependent tables to suit the web dashboard.
+
+## Stop condition
+
+If a proposed change to an existing structure could affect Android behaviour, STOP and report it before implementing.
