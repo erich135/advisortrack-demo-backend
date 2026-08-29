@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 
-import { asAuthRequest, requireAuth, requireVerifiedEmail } from '../middleware/auth';
+import { asAuthRequest } from '../middleware/auth';
+import { androidResourceAuth } from '../middleware/androidAuth';
 
 import { ContactService } from '../services';
 
@@ -22,7 +23,7 @@ export const createContactsRouter = (contactService: ContactService) => {
 
 
 
-  router.use(requireAuth, requireVerifiedEmail);
+  router.use(...androidResourceAuth);
 
 
 

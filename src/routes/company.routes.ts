@@ -13,6 +13,7 @@ import {
   updateCompanyTeamSchema,
 } from '../validators/schemas';
 import { organisationStructureService } from '../services/organisationStructure.service';
+import { companyCustomerPortalService } from '../services/companyCustomerPortal.service';
 
 /**
  * Company-scoped APIs for the signed-in advisor's organisation.
@@ -142,6 +143,63 @@ export const createCompanyRouter = () => {
     try {
       const { userId } = asAuthRequest(req);
       res.json(ok(await organisationService.getLicencePool(userId)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/subscription', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      res.json(ok(await companyCustomerPortalService.getSubscription(userId)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/audit', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      res.json(ok(await companyCustomerPortalService.listAudit(userId)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/invoices', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      res.json(ok(await companyCustomerPortalService.listInvoices(userId)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/invoices/:invoiceId/pdf', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      const pdf = await companyCustomerPortalService.invoicePdf(userId, String(req.params.invoiceId));
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${pdf.filename}"`);
+      res.send(pdf.buffer);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/invoices/:invoiceId', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      res.json(ok(await companyCustomerPortalService.getInvoice(userId, String(req.params.invoiceId))));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/invoices/:invoiceId/send', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      res.json(ok(await companyCustomerPortalService.simulateInvoiceSend(userId, String(req.params.invoiceId))));
     } catch (error) {
       next(error);
     }

@@ -104,6 +104,7 @@ export interface MemberRow {
   is_platform_admin: boolean;
   is_active: boolean;
   last_login_at: Date | null;
+  last_mobile_activity_at: Date | null;
   email_verified_at: Date | null;
   created_at: Date;
   package_slug: string | null;
@@ -408,6 +409,8 @@ export const organisationRepository = {
   async listAdminAudit(input?: {
     companyId?: string;
     resourceType?: string;
+    /** When set, only events whose actor or target user is in this server-resolved set. */
+    permittedUserIds?: string[];
   }): Promise<SubscriptionAuditRow[]> {
     const result = await getPool().query<SubscriptionAuditRow>(
       `SELECT
@@ -425,9 +428,17 @@ export const organisationRepository = {
        WHERE a.resource_type IN ('licence', 'subscription', 'user', 'invoice', 'organisation')
          AND ($1::text IS NULL OR a.metadata->>'companyId' = $1)
          AND ($2::text IS NULL OR a.resource_type = $2)
+         AND ($3::uuid[] IS NULL OR (
+           a.user_id = ANY($3::uuid[])
+           OR COALESCE(a.metadata->>'targetUserId', '') = ANY(SELECT unnest($3::uuid[])::text)
+         ))
        ORDER BY a.created_at DESC
        LIMIT 200`,
-      [input?.companyId ?? null, input?.resourceType ?? null]
+      [
+        input?.companyId ?? null,
+        input?.resourceType ?? null,
+        input?.permittedUserIds === undefined ? null : input.permittedUserIds,
+      ]
     );
     return result.rows;
   },
@@ -735,6 +746,7 @@ export const organisationRepository = {
          u.is_platform_admin,
          u.is_active,
          u.last_login_at,
+         u.last_mobile_activity_at,
          u.email_verified_at,
          u.created_at,
          p.slug AS package_slug,

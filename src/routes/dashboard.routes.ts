@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { asAuthRequest, requireAuth, requireVerifiedEmail } from '../middleware/auth';
+import { asAuthRequest } from '../middleware/auth';
+import { androidResourceAuth } from '../middleware/androidAuth';
 import { DashboardService } from '../services/dashboard.service';
 import { ok } from '../utils/response';
 
@@ -9,7 +10,7 @@ import { ok } from '../utils/response';
 export const createDashboardRouter = (dashboardService: DashboardService) => {
   const router = Router();
 
-  router.use(requireAuth, requireVerifiedEmail);
+  router.use(...androidResourceAuth);
 
   /**
    * GET /api/v1/dashboard

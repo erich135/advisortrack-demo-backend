@@ -44,10 +44,7 @@ function assert(condition: unknown, message: string): void {
 }
 
 const root = path.resolve(__dirname, '..');
-const frontendRoot = path.resolve(
-  __dirname,
-  '../../../_Old-And-Other-Apps/AdvisorTrack/AdvisorTrack Frontend'
-);
+const frontendRoot = path.resolve(__dirname, '../../advisortrack-demo-frontend');
 
 type Envelope<T> = {
   success?: boolean;
@@ -223,6 +220,8 @@ function runStaticChecks(): void {
   assert(!/DELETE\s+FROM\b/i.test(sweepSrc), 'expiry sweep does not DELETE rows');
 
   assert(fs.existsSync(path.join(root, 'database/demo/003_demo_outbox_and_date_plan.sql')), 'demo outbox/date-plan migration exists');
+  assert(fs.existsSync(path.join(root, 'database/demo/004_date_plan_attention.sql')), 'demo date-plan attention buckets exist');
+  assert(fs.existsSync(path.join(root, 'database/029_last_mobile_activity.sql')), 'shared 029 last mobile activity migration exists');
   assert(!fs.existsSync(path.join(root, 'database/029_demo_outbox.sql')), 'outbox is not a production 029 migration');
   const productionMigrations = fs.readdirSync(path.join(root, 'database')).filter((name) => /^\d{3}_/.test(name));
   assert(!productionMigrations.includes('029_demo_sessions.sql'), 'demo tables stay out of the production migration chain');
@@ -242,6 +241,7 @@ function runStaticChecks(): void {
 
   const clone = fs.readFileSync(path.join(root, 'src/repositories/demoWorkspace.repository.ts'), 'utf8');
   assert(clone.includes('cloneOperationalData'), 'clone copies operational seed data');
+  assert(clone.includes('cloneCommercialData'), 'clone copies subscription and invoices');
   assert(clone.includes('assertNotTemplateCompany'), 'template mutations are blocked');
 
   const indexSrc = fs.readFileSync(path.join(root, 'src/index.ts'), 'utf8');
@@ -390,6 +390,14 @@ async function runDemoHttpChecks(baseUrl: string, databaseUrl?: string): Promise
   assert(people.length === counts.executives + counts.regionalManagers + counts.teamLeaders + counts.advisors, 'cloned org has 58 people');
   assert(people.filter((row) => row.role?.name === 'Regional Manager').length === 3, 'Executive sees three Regional Managers');
   assert(people.every((row) => row.email.endsWith('.demo.invalid')), 'cloned emails remain .demo.invalid');
+  assert(
+    people.every((row) => /\.[0-9a-f]{12}@northstar\.demo\.invalid$/i.test(row.email)),
+    'stored clone emails keep the visitor suffix'
+  );
+  assert(
+    people.every((row) => !/@northstaradvisory\.dem$/i.test(row.email)),
+    'stored emails are not rewritten to the display domain'
+  );
   assert(new Set(people.map((row) => row.email)).size === people.length, 'cloned emails are unique inside the visitor company');
 
   const regions = await api<{ id: string }[]>(baseUrl, '/api/v1/company/regions', { token: exec.token });
@@ -406,9 +414,73 @@ async function runDemoHttpChecks(baseUrl: string, databaseUrl?: string): Promise
   assert(licences.body.data?.assigned === 42, 'licence assigned is derived as 42');
   assert(licences.body.data?.available === 8, 'licence available is derived as 8');
 
-  const pipeline = await api<{ caseCount: number }>(baseUrl, '/api/v1/management/pipeline', { token: exec.token });
+  const pipeline = await api<{ advisorCount: number; caseCount: number }>(
+    baseUrl,
+    '/api/v1/management/pipeline',
+    { token: exec.token }
+  );
   const caseCount = pipeline.body.data?.caseCount ?? 0;
-  assert(caseCount >= 250 && caseCount <= 320, `pipeline/case records are in the 250–300 range (got ${caseCount})`);
+  assert(caseCount >= 360 && caseCount <= 450, `pipeline/case records are in the 360–450 range (got ${caseCount})`);
+  assert(pipeline.body.data?.advisorCount === 45, 'Executive Team Pipeline includes all 45 advisors');
+
+  type AdvisorSummary = {
+    lastMobileActivityAt: string | null;
+    activeCases: number;
+    pipelineValue: number;
+    issuedThisMonth: { amount: number; count: number };
+    attentionReasons: Array<{ code: string }>;
+    health: string;
+  };
+  const daysSince = (iso: string | null | undefined): number | null => {
+    if (!iso) return null;
+    return (Date.now() - new Date(iso).getTime()) / 86_400_000;
+  };
+  const loadShowcase = async (firstName: string, lastName: string) => {
+    const member = people.find((row) => row.firstName === firstName && row.lastName === lastName);
+    assert(Boolean(member), `${firstName} ${lastName} is visible to Executive`);
+    if (!member) return undefined;
+    const result = await api<AdvisorSummary>(
+      baseUrl,
+      `/api/v1/management/advisors/${member.id}/summary`,
+      { token: exec.token }
+    );
+    assert(result.status === 200, `${firstName} ${lastName} Advisor Details summary succeeds`);
+    return result.body.data;
+  };
+  const mayaSummary = await loadShowcase('Maya', 'Brooks');
+  assert((mayaSummary?.activeCases ?? 0) >= 6, 'Maya Brooks has a substantial current-case list');
+  assert((mayaSummary?.pipelineValue ?? 0) > 0, 'Maya Brooks pipeline value is derived from open cases');
+  assert(mayaSummary?.health === 'healthy', 'Maya Brooks is a healthy showcase advisor');
+  assert((daysSince(mayaSummary?.lastMobileActivityAt) ?? 99) < 2, 'Maya Brooks last mobile activity is recent');
+  assert((mayaSummary?.issuedThisMonth.amount ?? 0) > 0, 'Maya Brooks Issued This Month is populated');
+
+  const thaboSummary = await loadShowcase('Thabo', 'Nkosi');
+  assert((daysSince(thaboSummary?.lastMobileActivityAt) ?? 0) >= 3, 'Thabo Nkosi is inactive 3+ days');
+  assert(
+    (thaboSummary?.attentionReasons ?? []).some((row) => row.code === 'mobile_inactive'),
+    'Thabo Nkosi Needs Attention includes mobile inactivity'
+  );
+
+  const noahSummary = await loadShowcase('Noah', 'Patel');
+  assert((noahSummary?.pipelineValue ?? 0) > (noahSummary?.issuedThisMonth.amount ?? 0) * 2, 'Noah Patel has strong pipeline vs issued conversion');
+
+  const nalediSummary = await loadShowcase('Naledi', 'Molefe');
+  assert(
+    (nalediSummary?.attentionReasons ?? []).some((row) => row.code === 'stalled'),
+    'Naledi Molefe Needs Attention includes stalled cases'
+  );
+
+  const jabuSummary = await loadShowcase('Jabu', 'Sithole');
+  assert(
+    (jabuSummary?.attentionReasons ?? []).some((row) => row.code === 'missing_documents'),
+    'Jabu Sithole Needs Attention includes missing documents'
+  );
+
+  const eliasSummary = await loadShowcase('Elias', 'Mahlangu');
+  assert((eliasSummary?.attentionReasons.length ?? 0) >= 2, 'Elias Mahlangu has mixed attention issues');
+
+  const andreSummary = await loadShowcase('Andre', 'Steyn');
+  assert(andreSummary?.lastMobileActivityAt === null, 'Andre Steyn demonstrates null mobile activity');
 
   const lastMonth = await api<Performance>(baseUrl, '/api/v1/management/performance?period=last_month', {
     token: exec.token,
@@ -464,6 +536,13 @@ async function runDemoHttpChecks(baseUrl: string, databaseUrl?: string): Promise
   const rmPeople = rmMembers.body.data ?? [];
   assert(rmPeople.filter((row) => row.role?.name === 'Team Leader').length >= 3, 'selected RM has several Team Leaders');
   assert(rmPeople.every((row) => row.role?.name !== 'Executive'), 'RM scope does not include the Executive');
+  const rmPipeline = await api<{ advisorCount: number; caseCount: number }>(
+    baseUrl,
+    '/api/v1/management/pipeline',
+    { token: switchedRm.body.data!.token }
+  );
+  assert(rmPipeline.body.data?.advisorCount === 15, 'RM Team Pipeline is limited to own-region advisors');
+  assert((rmPipeline.body.data?.caseCount ?? 0) >= 90, 'RM Team Pipeline has a populated case set');
   const rmPerf = await api<Performance>(baseUrl, '/api/v1/management/performance?period=last_month', {
     token: switchedRm.body.data!.token,
   });
@@ -498,6 +577,21 @@ async function runDemoHttpChecks(baseUrl: string, databaseUrl?: string): Promise
   const tlPeople = tlMembers.body.data ?? [];
   assert(tlPeople.filter((row) => row.role?.name === 'Financial Advisor').length >= 5, 'selected TL has several Advisors');
   assert(tlPeople.every((row) => row.role?.name !== 'Regional Manager' && row.role?.name !== 'Executive'), 'TL scope is team-only');
+  const tlPipeline = await api<{ advisorCount: number; caseCount: number }>(
+    baseUrl,
+    '/api/v1/management/pipeline',
+    { token: switchedTl.body.data!.token }
+  );
+  assert(tlPipeline.body.data?.advisorCount === 5, 'TL Team Pipeline is limited to own-team advisors');
+  assert((tlPipeline.body.data?.caseCount ?? 0) >= 25, 'TL Team Pipeline has enough cases to be useful');
+  const mayaOnTeam = tlPeople.find((row) => row.firstName === 'Maya' && row.lastName === 'Brooks');
+  const mayaPipeline = await api<{ advisorCount: number; caseCount: number }>(
+    baseUrl,
+    `/api/v1/management/pipeline?advisorId=${mayaOnTeam?.id ?? ''}`,
+    { token: switchedTl.body.data!.token }
+  );
+  assert(mayaPipeline.body.data?.advisorCount === 1, 'advisor filter still returns a scoped pipeline');
+  assert((mayaPipeline.body.data?.caseCount ?? 0) >= 6, 'filtered advisor pipeline remains meaningful');
   const tlPerf = await api<Performance>(baseUrl, '/api/v1/management/performance?period=last_month', {
     token: switchedTl.body.data!.token,
   });
@@ -586,6 +680,13 @@ async function runDemoHttpChecks(baseUrl: string, databaseUrl?: string): Promise
     { token: reset.body.data!.token }
   );
   assert(resetLicences.body.data?.purchased === 50 && resetLicences.body.data?.assigned === 42 && resetLicences.body.data?.available === 8, 'reset restores 50 / 42 / 8 licences');
+  const resetPipeline = await api<{ advisorCount: number; caseCount: number }>(
+    baseUrl,
+    '/api/v1/management/pipeline',
+    { token: reset.body.data!.token }
+  );
+  assert(resetPipeline.body.data?.advisorCount === 5, 'Reset Demo Team Pipeline stays in the preserved Team Leader scope');
+  assert((resetPipeline.body.data?.caseCount ?? 0) >= 25, 'Reset Demo clone still has a useful Team Pipeline');
 
   const bMeAfter = await api<{ company?: { id?: string } }>(baseUrl, '/api/v1/company/me', {
     token: visitorB.body.data!.token,
@@ -628,10 +729,44 @@ async function runDemoHttpChecks(baseUrl: string, databaseUrl?: string): Promise
       );
       assert((retained.rows[0]?.n ?? 0) >= 50, 'archived visitor company users are retained');
 
+      const cloneCases = await client.query<{ n: number }>(
+        `SELECT COUNT(*)::int AS n
+         FROM client_cases c
+         INNER JOIN users u ON u.id = c.user_id
+         WHERE u.company_id = $1`,
+        [reset.body.data!.session.companyId]
+      );
+      assert(
+        cloneCases.rows[0].n >= 360 && cloneCases.rows[0].n <= 450,
+        `Reset Demo clone receives enriched cases (got ${cloneCases.rows[0].n})`
+      );
+      const cloneMobile = await client.query<{ inactive: number; recent: number; missing: number }>(
+        `SELECT
+           COUNT(*) FILTER (
+             WHERE r.name = 'Financial Advisor'
+               AND u.last_mobile_activity_at IS NOT NULL
+               AND u.last_mobile_activity_at <= NOW() - INTERVAL '3 days'
+           )::int AS inactive,
+           COUNT(*) FILTER (
+             WHERE r.name = 'Financial Advisor'
+               AND u.last_mobile_activity_at >= NOW() - INTERVAL '2 days'
+           )::int AS recent,
+           COUNT(*) FILTER (
+             WHERE r.name = 'Financial Advisor' AND u.last_mobile_activity_at IS NULL
+           )::int AS missing
+         FROM users u
+         INNER JOIN company_roles r ON r.id = u.company_role_id
+         WHERE u.company_id = $1`,
+        [reset.body.data!.session.companyId]
+      );
+      assert(cloneMobile.rows[0].inactive >= 3, 'Reset Demo clone has advisors inactive 3+ days');
+      assert(cloneMobile.rows[0].recent >= 8, 'Reset Demo clone has healthy recent mobile activity');
+      assert(cloneMobile.rows[0].missing >= 1, 'Reset Demo clone retains null mobile activity');
+
       const template = await client.query<{ company_id: string; status: string; seed_version: number }>(
         `SELECT company_id, status, seed_version FROM demo_workspace_templates WHERE status = 'active'`
       );
-      assert(template.rows[0]?.seed_version >= 12, 'active template is the Phase 12 Northstar master');
+      assert(template.rows[0]?.seed_version >= 14, 'active template is the Phase 14 Northstar master');
       const templateUsers = await client.query<{ n: number }>(
         `SELECT COUNT(*)::int AS n FROM users WHERE company_id = $1 AND is_active = TRUE`,
         [template.rows[0].company_id]

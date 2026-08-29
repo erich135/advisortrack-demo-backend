@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { asAuthRequest, requireAuth, requireVerifiedEmail } from '../middleware/auth';
+import { asAuthRequest } from '../middleware/auth';
+import { androidResourceAuth } from '../middleware/androidAuth';
 import { PlanningService } from '../services/planning.service';
 import { ok } from '../utils/response';
 import { updateGeneralSettingsSchema } from '../validators/schemas';
@@ -10,7 +11,7 @@ import { updateGeneralSettingsSchema } from '../validators/schemas';
 export const createPlanningRouter = (planningService: PlanningService) => {
   const router = Router();
 
-  router.use(requireAuth, requireVerifiedEmail);
+  router.use(...androidResourceAuth);
 
   /**
    * GET /api/v1/planning/targets — weekly deliverables and point targets (gross target is internal only).

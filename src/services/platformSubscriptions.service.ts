@@ -204,6 +204,12 @@ export const platformSubscriptionsService = {
     };
   },
 
+  async publicView(companyId: string) {
+    const row = await requireCompany(companyId);
+    return toSubscriptionDto(row);
+  },
+
+
   async get(actorUserId: string, companyId: string) {
     await requireInternalAdmin(actorUserId);
     const row = await requireCompany(companyId);

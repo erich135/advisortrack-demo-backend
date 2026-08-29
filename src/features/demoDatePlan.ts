@@ -10,6 +10,14 @@ export const DEMO_DATE_BUCKETS = [
   'year_to_date',
   'current_month',
   'older',
+  'hours_ago',
+  'yesterday',
+  'days_ago_3',
+  'days_ago_4',
+  'days_ago_5',
+  'stale_7',
+  'stale_14',
+  'upcoming',
 ] as const;
 
 export type DemoDateBucket = (typeof DEMO_DATE_BUCKETS)[number];
@@ -79,6 +87,19 @@ export const daysForDemoBucket = (bucket: DemoDateBucket, now: Date = new Date()
       (day) => !lastMonthSet.has(day) && !lastWeekSet.has(day)
     );
   }
+  if (bucket === 'hours_ago' || bucket === 'yesterday') return [today.ymd];
+  if (bucket === 'days_ago_3') return [addDaysYmd(today.ymd, -3)];
+  if (bucket === 'days_ago_4') return [addDaysYmd(today.ymd, -4)];
+  if (bucket === 'days_ago_5') return [addDaysYmd(today.ymd, -5)];
+  if (bucket === 'stale_7') {
+    return [7, 8, 9, 10].map((daysAgo) => addDaysYmd(today.ymd, -daysAgo));
+  }
+  if (bucket === 'stale_14') {
+    return [11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map((daysAgo) => addDaysYmd(today.ymd, -daysAgo));
+  }
+  if (bucket === 'upcoming') {
+    return [1, 2, 3, 4, 5].map((daysAhead) => addDaysYmd(today.ymd, daysAhead));
+  }
   const olderEnd = toYmd(today.year - 1, 11, 15);
   const olderStart = toYmd(today.year - 1, 1, 8);
   return enumerateYmdInclusive(olderStart, olderEnd);
@@ -89,12 +110,22 @@ export const resolveDemoBucketTimestamp = (
   slot: number,
   now: Date = new Date()
 ): Date => {
+  const today = zonedCalendarDate(now, BUSINESS_TIMEZONE);
+  if (bucket === 'hours_ago') {
+    const hours = 1 + (Math.abs(slot) % 8);
+    const at = new Date(now.getTime() - hours * 3_600_000);
+    return at.getTime() > now.getTime() ? new Date(now.getTime() - 3_600_000) : at;
+  }
+
   const days = daysForDemoBucket(bucket, now);
   const fallback =
     bucket === 'last_week'
       ? daysForDemoBucket('current_month', now)
       : daysForDemoBucket('last_month', now);
   const pool = days.length > 0 ? days : fallback;
-  const ymd = pool[Math.abs(slot) % pool.length] ?? zonedCalendarDate(now).ymd;
-  return johannesburgAt(ymd, 9 + (Math.abs(slot) % 7), (slot * 11) % 50);
+  const ymd = pool[Math.abs(slot) % pool.length] ?? today.ymd;
+  const at = johannesburgAt(ymd, 9 + (Math.abs(slot) % 7), (slot * 11) % 50);
+  return at.getTime() > now.getTime() && bucket !== 'upcoming'
+    ? johannesburgAt(addDaysYmd(today.ymd, -1), 10, 15)
+    : at;
 };

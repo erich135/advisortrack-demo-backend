@@ -7,6 +7,7 @@ import { ManagementPipelineFilters } from '../repositories/managementPipeline.re
 import { managementPipelineService } from '../services/managementPipeline.service';
 import { managementProductionService } from '../services/managementProduction.service';
 import { managementPerformanceService } from '../services/managementPerformance.service';
+import { managementAdvisorSummaryService } from '../services/managementAdvisorSummary.service';
 import { ok } from '../utils/response';
 
 const monthPattern = /^(?:[1-9]\d{3})-(?:0[1-9]|1[0-2])$/;
@@ -86,6 +87,19 @@ export const createManagementRouter = () => {
       const { userId } = asAuthRequest(req);
       const filters = readPipelineFilters(req.query);
       res.json(ok(await managementPipelineService.getPipeline(userId, filters)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/advisors/:advisorId/summary', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      const advisorId = String(req.params.advisorId);
+      if (!uuidPattern.test(advisorId)) {
+        throw new AppError(400, 'advisorId must be a valid UUID', 'VALIDATION_ERROR');
+      }
+      res.json(ok(await managementAdvisorSummaryService.getSummary(userId, advisorId)));
     } catch (error) {
       next(error);
     }

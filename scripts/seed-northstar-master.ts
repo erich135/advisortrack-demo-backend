@@ -1,5 +1,5 @@
 /**
- * Seeds the Phase 12 Northstar Advisory master template into advisortrack_demo.
+ * Seeds the Phase 14 Northstar Advisory master template into advisortrack_demo.
  * Refuses any other database. Archives the Phase 11 template; never deletes.
  *
  * Run: npm run db:seed:demo
@@ -11,6 +11,7 @@ import {
   NORTHSTAR_COMPANY_ID,
   NORTHSTAR_COMPANY_NAME,
   NORTHSTAR_EMAIL_DOMAIN,
+  NORTHSTAR_INVOICE_COUNT,
   NORTHSTAR_PASSWORD_HASH,
   NORTHSTAR_PERSONAS,
   NORTHSTAR_REGIONS,
@@ -22,6 +23,20 @@ import {
   countNorthstarPeople,
   northstarEmail,
 } from '../src/features/demoNorthstar';
+import type { DemoDateBucket } from '../src/features/demoDatePlan';
+import {
+  calculateInvoiceTotals,
+  calculateLine,
+  DEFAULT_VAT_RATE_PERCENT,
+  formatInvoiceNumber,
+} from '../src/features/invoiceMoney';
+
+import {
+  CASE_DOCUMENTS,
+  currentMonthIssuedFor,
+  extraCasesFor,
+  mobileBucketFor,
+} from '../src/features/northstarAdvisorStories';
 
 const DEMO_DB = 'advisortrack_demo';
 const PRODUCTS = [
@@ -43,16 +58,18 @@ const STAGES = [
 const FIRST_NAMES = [
   'Liam', 'Olivia', 'Noah', 'Ava', 'Ethan', 'Isla', 'Leo', 'Mila', 'Kai', 'Sara',
   'Ben', 'Lara', 'Max', 'Nia', 'Jon', 'Eva', 'Sam', 'Zoe', 'Ian', 'Amy',
+  'Ruben', 'Palesa', 'Craig', 'Anika', 'Tumi', 'Helen', 'Pieter', 'Naledi', 'James', 'Amina',
 ];
 const LAST_NAMES = [
   'Wright', 'Adams', 'Baker', 'Cole', 'Diaz', 'Evans', 'Frost', 'Green', 'Hayes', 'Iyer',
   'Jones', 'King', 'Lewis', 'Moore', 'Ng', 'Ortiz', 'Quinn', 'Reed', 'Shah', 'Turner',
+  'Botha', 'Naidoo', 'Mokoena', 'Petersen', 'Khumalo', 'Viljoen', 'Chetty', 'Dlamini', 'Jacobs', 'Steyn',
 ];
 
 type DatePlan = {
-  entityType: 'production' | 'activity' | 'contact' | 'case' | 'goal';
+  entityType: 'production' | 'activity' | 'contact' | 'case' | 'goal' | 'user_mobile' | 'case_document';
   rowId: string;
-  bucket: 'last_week' | 'last_month' | 'year_to_date' | 'current_month' | 'older';
+  bucket: DemoDateBucket;
   slot: number;
 };
 
@@ -61,8 +78,194 @@ const slugLocal = (first: string, last: string): string =>
 
 const contactName = (seed: number): { first: string; last: string } => ({
   first: FIRST_NAMES[seed % FIRST_NAMES.length],
-  last: `${LAST_NAMES[Math.floor(seed / FIRST_NAMES.length) % LAST_NAMES.length]}${seed}`,
+  last: LAST_NAMES[Math.floor(seed / FIRST_NAMES.length) % LAST_NAMES.length],
 });
+
+const isoDaysFromToday = (days: number): string => {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
+async function seedNorthstarCommercial(
+  client: pg.PoolClient,
+  input: { companyId: string; execId: string; execEmail: string; packageId: string }
+): Promise<void> {
+  const pkg = await client.query<{ name: string; slug: string; price_cents: number }>(
+    `SELECT name, slug, price_cents FROM subscription_packages WHERE id = $1`,
+    [input.packageId]
+  );
+  const plan = pkg.rows[0];
+  if (!plan) throw new Error('Northstar commercial seed requires a Pro package');
+
+  const nextBilling = new Date();
+  nextBilling.setUTCMonth(nextBilling.getUTCMonth() + 1, 1);
+  nextBilling.setUTCHours(0, 0, 0, 0);
+
+  await client.query(
+    `INSERT INTO company_subscriptions (
+       company_id, status, package_id, started_at, next_billing_at,
+       vat_registered, vat_rate_percent, billing_contact_user_id,
+       billing_contact_name, billing_contact_email
+     ) VALUES ($1, 'active', $2, NOW() - INTERVAL '11 months', $3, TRUE, 15, $4, $5, $6)
+     ON CONFLICT (company_id) DO UPDATE SET
+       status = EXCLUDED.status,
+       package_id = EXCLUDED.package_id,
+       started_at = EXCLUDED.started_at,
+       next_billing_at = EXCLUDED.next_billing_at,
+       vat_registered = EXCLUDED.vat_registered,
+       vat_rate_percent = EXCLUDED.vat_rate_percent,
+       billing_contact_user_id = EXCLUDED.billing_contact_user_id,
+       billing_contact_name = EXCLUDED.billing_contact_name,
+       billing_contact_email = EXCLUDED.billing_contact_email`,
+    [
+      input.companyId,
+      input.packageId,
+      nextBilling.toISOString(),
+      input.execId,
+      `${NORTHSTAR_PERSONAS.executive.firstName} ${NORTHSTAR_PERSONAS.executive.lastName}`,
+      input.execEmail,
+    ]
+  );
+
+  await client.query(
+    `INSERT INTO company_billing_profiles (
+       company_id, registered_name, trading_name, registration_number,
+       vat_registered, vat_number, vat_rate_percent, billing_contact_name,
+       billing_email, telephone, address, city, province, postal_code, country
+     ) VALUES (
+       $1, 'Northstar Advisory (Pty) Ltd', 'Northstar Advisory', '2021/448821/07',
+       TRUE, '4123456789', 15, $2, $3, '000 000 1000',
+       '12 Harbour View, Foreshore', 'Cape Town', 'Western Cape', '8001', 'South Africa'
+     )
+     ON CONFLICT (company_id) DO UPDATE SET
+       registered_name = EXCLUDED.registered_name,
+       trading_name = EXCLUDED.trading_name,
+       billing_contact_name = EXCLUDED.billing_contact_name,
+       billing_email = EXCLUDED.billing_email`,
+    [
+      input.companyId,
+      `${NORTHSTAR_PERSONAS.executive.firstName} ${NORTHSTAR_PERSONAS.executive.lastName}`,
+      input.execEmail,
+    ]
+  );
+
+  const line = calculateLine({
+    description: `AdvisorTrack ${plan.name} licences (${NORTHSTAR_SEAT_LIMIT} seats)`,
+    quantity: NORTHSTAR_SEAT_LIMIT,
+    unitPriceCents: Number(plan.price_cents),
+    discountCents: 0,
+    vatRatePercent: DEFAULT_VAT_RATE_PERCENT,
+  });
+  const totals = calculateInvoiceTotals([line]);
+
+  const invoices: Array<{
+    status: 'paid' | 'sent';
+    invoiceDate: string;
+    dueDate: string;
+    paymentDate: string | null;
+    issuedOffsetHours: number;
+  }> = [
+    {
+      status: 'paid',
+      invoiceDate: isoDaysFromToday(-45),
+      dueDate: isoDaysFromToday(-15),
+      paymentDate: isoDaysFromToday(-15),
+      issuedOffsetHours: 45 * 24,
+    },
+    {
+      status: 'sent',
+      invoiceDate: isoDaysFromToday(-5),
+      dueDate: isoDaysFromToday(25),
+      paymentDate: null,
+      issuedOffsetHours: 5 * 24,
+    },
+    {
+      status: 'sent',
+      invoiceDate: isoDaysFromToday(-40),
+      dueDate: isoDaysFromToday(-10),
+      paymentDate: null,
+      issuedOffsetHours: 40 * 24,
+    },
+  ];
+  if (invoices.length !== NORTHSTAR_INVOICE_COUNT) {
+    throw new Error(`Expected ${NORTHSTAR_INVOICE_COUNT} Northstar invoices`);
+  }
+
+  for (const invoice of invoices) {
+    const seqResult = await client.query<{ seq: string }>(`SELECT nextval('invoice_number_seq')::text AS seq`);
+    const seq = Number(seqResult.rows[0].seq);
+    const invoiceNumber = formatInvoiceNumber(seq);
+    const inserted = await client.query<{ id: string }>(
+      `INSERT INTO invoices (
+         company_id, invoice_seq, invoice_number, status, invoice_date, due_date,
+         po_reference, notes, payment_terms, currency,
+         snapshot_registered_name, snapshot_trading_name, snapshot_registration_number,
+         snapshot_vat_registered, snapshot_vat_number, snapshot_billing_contact_name,
+         snapshot_billing_email, snapshot_telephone, snapshot_address, snapshot_city,
+         snapshot_province, snapshot_postal_code, snapshot_country,
+         snapshot_plan_slug, snapshot_plan_name,
+         subtotal_cents, vat_cents, total_cents,
+         paid_at, payment_date, issued_at, created_by_user_id
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6, NULL, 'Fictional Northstar demo invoice. No live billing.',
+         'Payment due within 30 days.', 'ZAR',
+         'Northstar Advisory (Pty) Ltd', 'Northstar Advisory', '2021/448821/07',
+         TRUE, '4123456789', $7, $8, '000 000 1000',
+         '12 Harbour View, Foreshore', 'Cape Town', 'Western Cape', '8001', 'South Africa',
+         $9, $10, $11, $12, $13, $14, $15, $16, $17
+       ) RETURNING id`,
+      [
+        input.companyId,
+        seq,
+        invoiceNumber,
+        invoice.status,
+        invoice.invoiceDate,
+        invoice.dueDate,
+        `${NORTHSTAR_PERSONAS.executive.firstName} ${NORTHSTAR_PERSONAS.executive.lastName}`,
+        input.execEmail,
+        plan.slug,
+        plan.name,
+        totals.subtotalCents,
+        totals.vatCents,
+        totals.totalCents,
+        invoice.paymentDate ? `${invoice.paymentDate}T12:00:00Z` : null,
+        invoice.paymentDate,
+        new Date(Date.now() - invoice.issuedOffsetHours * 3600 * 1000).toISOString(),
+        input.execId,
+      ]
+    );
+    await client.query(
+      `INSERT INTO invoice_line_items (
+         invoice_id, sort_order, description, quantity, unit_price_cents, discount_cents,
+         vat_rate_percent, line_subtotal_cents, line_vat_cents, line_total_cents, is_current
+       ) VALUES ($1, 0, $2, $3, $4, 0, $5, $6, $7, $8, TRUE)`,
+      [
+        inserted.rows[0].id,
+        line.description,
+        line.quantity,
+        line.unitPriceCents,
+        line.vatRatePercent,
+        line.lineSubtotalCents,
+        line.lineVatCents,
+        line.lineTotalCents,
+      ]
+    );
+    await client.query(
+      `INSERT INTO invoice_status_events (invoice_id, from_status, to_status, actor_user_id, note)
+       VALUES ($1, NULL, 'draft', $2, 'Created'),
+              ($1, 'draft', 'sent', $2, 'Issued')`,
+      [inserted.rows[0].id, input.execId]
+    );
+    if (invoice.status === 'paid') {
+      await client.query(
+        `INSERT INTO invoice_status_events (invoice_id, from_status, to_status, actor_user_id, note)
+         VALUES ($1, 'sent', 'paid', $2, 'Settled')`,
+        [inserted.rows[0].id, input.execId]
+      );
+    }
+  }
+}
 
 async function archiveCompanyEmails(
   client: pg.PoolClient,
@@ -149,7 +352,7 @@ async function main(): Promise<void> {
          WHERE u.company_id = $1`,
         [active.rows[0].company_id]
       );
-      if ((people.rows[0]?.n ?? 0) >= 50 && (cases.rows[0]?.n ?? 0) >= 250) {
+      if ((people.rows[0]?.n ?? 0) >= 50 && (cases.rows[0]?.n ?? 0) >= 360) {
         await client.query('COMMIT');
         console.log(
           `Northstar master template already active (${people.rows[0].n} users, ${cases.rows[0].n} cases). Skipping.`
@@ -302,7 +505,19 @@ async function main(): Promise<void> {
       stage: (typeof STAGES)[number];
       status: 'open' | 'won';
       product: string;
+      docsReceived?: 0 | 1 | 2 | 3;
+      ficaId?: boolean;
+      ficaResidence?: boolean;
+      ficaBank?: boolean;
+      nextAction?: boolean;
+      nextActionTitle?: string;
     }) => {
+      const won = input.status === 'won';
+      const docsReceived = input.docsReceived ?? (won ? 3 : 3);
+      const ficaId = input.ficaId ?? won;
+      const ficaResidence = input.ficaResidence ?? won;
+      const ficaBank = input.ficaBank ?? won;
+      const nextAction = input.nextAction ?? false;
       const contact = contactName(contactSeq++);
       const contactId = crypto.randomUUID();
       const caseId = crypto.randomUUID();
@@ -315,10 +530,10 @@ async function main(): Promise<void> {
           input.advisorId,
           contact.first,
           contact.last,
-          `${slugLocal(contact.first, contact.last)}.${contactSeq}@client.${NORTHSTAR_EMAIL_DOMAIN}`,
+          `${slugLocal(contact.first, contact.last)}.${contactSeq}.${input.slot}@client.${NORTHSTAR_EMAIL_DOMAIN}`,
           `000 ${String(phoneSeq++).padStart(3, '0')} ${String(contactSeq).padStart(4, '0')}`.slice(0, 30),
           NORTHSTAR_COMPANY_NAME,
-          input.status === 'won' ? 'active' : 'prospect',
+          won ? 'active' : 'prospect',
           input.product,
           'Fictional Northstar demo contact.',
         ]
@@ -328,8 +543,9 @@ async function main(): Promise<void> {
       await client.query(
         `INSERT INTO client_cases (
            id, user_id, contact_id, current_stage, status, title, estimated_commission,
-           quote_product_type, quote_premium, fica_id_received, fica_residence_received
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+           quote_product_type, quote_premium, fica_id_received, fica_residence_received,
+           fica_bank_received, next_step_date
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
         [
           caseId,
           input.advisorId,
@@ -340,12 +556,63 @@ async function main(): Promise<void> {
           input.amount || 18500,
           input.product,
           Math.round((input.amount || 18500) / 12),
-          input.status === 'won',
-          input.status === 'won',
+          ficaId,
+          ficaResidence,
+          ficaBank,
+          nextAction ? '2020-06-01' : null,
         ]
       );
       datePlans.push({ entityType: 'case', rowId: caseId, bucket: input.bucket, slot: input.slot });
       caseCount += 1;
+
+      for (const [docIndex, document] of CASE_DOCUMENTS.entries()) {
+        const documentId = crypto.randomUUID();
+        const received = docIndex < docsReceived;
+        await client.query(
+          `INSERT INTO case_documents (id, case_id, document_type, label, sent_at, received_at, notes)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [
+            documentId,
+            caseId,
+            document.documentType,
+            document.label,
+            received || docsReceived > 0 ? new Date('2020-01-10T08:00:00Z') : null,
+            received ? new Date('2020-01-12T08:00:00Z') : null,
+            'Fictional Northstar demo document.',
+          ]
+        );
+        datePlans.push({
+          entityType: 'case_document',
+          rowId: documentId,
+          bucket: input.bucket,
+          slot: input.slot + docIndex,
+        });
+      }
+
+      if (nextAction) {
+        const activityId = crypto.randomUUID();
+        await client.query(
+          `INSERT INTO activities (
+             id, user_id, contact_id, case_id, title, pipeline_stage, status, tags, notes, legacy_type, duration_minutes
+           ) VALUES ($1,$2,$3,$4,$5,$6,'scheduled', ARRAY[$7]::product_tag[], $8, 'meeting', 30)`,
+          [
+            activityId,
+            input.advisorId,
+            contactId,
+            caseId,
+            input.nextActionTitle ?? 'Call client',
+            input.stage,
+            input.product,
+            'Fictional Northstar demo next action.',
+          ]
+        );
+        datePlans.push({
+          entityType: 'activity',
+          rowId: activityId,
+          bucket: 'upcoming',
+          slot: input.slot,
+        });
+      }
 
       if (input.amount > 0) {
         const productionId = crypto.randomUUID();
@@ -381,6 +648,8 @@ async function main(): Promise<void> {
         });
         productionCount += 1;
       }
+
+      return caseId;
     };
 
     const insertActivity = async (
@@ -460,10 +729,11 @@ async function main(): Promise<void> {
           await assignLicence(faId, advisor.licensed);
 
           const product = PRODUCTS[advisorIndex % PRODUCTS.length];
-          const currentIssued = 41_200 + ((advisorIndex * 1_375) % 38_000);
+          const currentIssued = currentMonthIssuedFor(advisor.archetype, advisorIndex);
           const currentPending = 28_500 + ((advisorIndex * 910) % 24_000);
           const lastWeekIssued = 17_850 + (advisorIndex % 9) * 620;
           const ytdIssued = 52_000 + ((advisorIndex * 2_100) % 45_000);
+          const openDocsComplete = advisor.archetype !== 'missing_docs';
 
           await insertContactCaseProduction({
             advisorId: faId,
@@ -497,6 +767,12 @@ async function main(): Promise<void> {
             stage: 'Recommendation',
             status: 'open',
             product,
+            docsReceived: openDocsComplete ? 3 : 1,
+            ficaId: true,
+            ficaResidence: openDocsComplete,
+            ficaBank: openDocsComplete,
+            nextAction: advisor.archetype !== 'stalled' && advisor.archetype !== 'mixed',
+            nextActionTitle: 'Follow up underwriting',
           });
           await insertContactCaseProduction({
             advisorId: faId,
@@ -522,7 +798,7 @@ async function main(): Promise<void> {
           });
           await insertContactCaseProduction({
             advisorId: faId,
-            bucket: 'current_month',
+            bucket: advisor.archetype === 'stalled' ? 'stale_7' : 'current_month',
             slot: advisorIndex + 40,
             title: `${STAGES[advisorIndex % 4]} pipeline`,
             amount: 0,
@@ -530,10 +806,46 @@ async function main(): Promise<void> {
             stage: STAGES[advisorIndex % 4],
             status: 'open',
             product,
+            docsReceived: openDocsComplete ? 3 : 2,
+            ficaId: true,
+            ficaResidence: true,
+            ficaBank: openDocsComplete,
+            nextAction: advisor.archetype !== 'stalled' && advisor.archetype !== 'mixed',
+            nextActionTitle: 'Call client',
           });
+
+          for (const extra of extraCasesFor(advisor.archetype, advisorIndex, product)) {
+            await insertContactCaseProduction({
+              advisorId: faId,
+              bucket: extra.bucket,
+              slot: advisorIndex * 11 + extra.slotOffset,
+              title: extra.title,
+              amount: extra.amount,
+              issued: extra.issued,
+              stage: extra.stage,
+              status: 'open',
+              product,
+              docsReceived: extra.docsReceived,
+              ficaId: extra.ficaId,
+              ficaResidence: extra.ficaResidence,
+              ficaBank: extra.ficaBank,
+              nextAction: extra.nextAction,
+              nextActionTitle: extra.nextActionTitle,
+            });
+          }
 
           await insertActivity(faId, 'last_week', advisorIndex, 'Follow-up call', 'completed');
           await insertActivity(faId, 'current_month', advisorIndex, 'Review meeting', 'scheduled');
+
+          const mobileBucket = mobileBucketFor(advisor.archetype, advisorIndex);
+          if (mobileBucket) {
+            datePlans.push({
+              entityType: 'user_mobile',
+              rowId: faId,
+              bucket: mobileBucket,
+              slot: advisorIndex,
+            });
+          }
 
           const extraProspect = contactName(contactSeq++);
           const extraId = crypto.randomUUID();
@@ -626,6 +938,13 @@ async function main(): Promise<void> {
     if (advisorIndex !== counts.advisors) {
       throw new Error(`Expected ${counts.advisors} advisors, inserted ${advisorIndex}`);
     }
+
+    await seedNorthstarCommercial(client, {
+      companyId,
+      execId,
+      execEmail: northstarEmail(NORTHSTAR_PERSONAS.executive.firstName, NORTHSTAR_PERSONAS.executive.lastName),
+      packageId: proId,
+    });
 
     await client.query('COMMIT');
     console.log(
