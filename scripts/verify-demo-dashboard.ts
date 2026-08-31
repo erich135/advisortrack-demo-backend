@@ -121,6 +121,12 @@ function runStaticChecks(): void {
   assert(layout.includes('customerBusinessNav'), 'demo nav exposes business screens by role');
   assert(layout.includes('customerManagementNav'), 'demo nav exposes management screens by role');
   assert(layout.includes('isCustomerAuditViewer'), 'Audit sidebar is limited to Exec and RM');
+  assert(!app.includes('EngineeringChangelog'), 'public demo has no Engineering Change Log page');
+  assert(!app.includes('/engineering/changelog'), 'public demo has no Engineering Change Log route');
+  assert(!layout.includes("label: 'Change Log'"), 'public demo sidebar has no Change Log item');
+  assert(!fs.existsSync(path.join(root, 'src/routes/engineering.routes.ts')), 'demo backend has no engineering routes');
+  const demoApiIndex = fs.readFileSync(path.join(root, 'src/routes/index.ts'), 'utf8');
+  assert(!demoApiIndex.includes('createEngineeringRouter'), 'demo API index does not mount engineering changelog');
 
   const users = fs.readFileSync(path.join(frontendRoot, 'src/pages/UsersPage.tsx'), 'utf8');
   assert(users.includes('Demo user created. No real invitation was sent.') || users.includes('created.message'), 'Add User uses demo invitation copy');
