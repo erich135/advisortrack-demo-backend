@@ -179,6 +179,24 @@ export const userRepository = {
   },
 
   /**
+   * Throttled Android resource telemetry. Does not touch last_login_at or updated_at.
+   * Returns true when a new timestamp was written.
+   */
+  async recordLastMobileActivity(userId: string): Promise<boolean> {
+    const result = await getPool().query(
+      `UPDATE users
+       SET last_mobile_activity_at = NOW()
+       WHERE id = $1
+         AND (
+           last_mobile_activity_at IS NULL
+           OR last_mobile_activity_at < NOW() - INTERVAL '10 minutes'
+         )`,
+      [userId]
+    );
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  /**
    * Permanently deletes an advisor account (cascades to related data).
    */
   async deleteById(userId: string): Promise<boolean> {

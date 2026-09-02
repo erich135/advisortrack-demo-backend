@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { asAuthRequest, requireAuth, requireVerifiedEmail } from '../middleware/auth';
+import { asAuthRequest } from '../middleware/auth';
+import { androidResourceAuth } from '../middleware/androidAuth';
 import { ProfileService } from '../services/profile.service';
 import { ok } from '../utils/response';
 import {
@@ -14,7 +15,7 @@ import {
 export const createProfileRouter = (profileService: ProfileService) => {
   const router = Router();
 
-  router.use(requireAuth, requireVerifiedEmail);
+  router.use(...androidResourceAuth);
 
   /**
    * GET /api/v1/profile — user identity + financial profile for Edit Profile.

@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { asAuthRequest, requireAuth, requireVerifiedEmail } from '../middleware/auth';
+import { asAuthRequest } from '../middleware/auth';
+import { androidResourceAuth } from '../middleware/androidAuth';
 import { ProductionService } from '../services';
 import { ok } from '../utils/response';
 import { createProductionSchema, updateProductionSchema } from '../validators/schemas';
@@ -12,7 +13,7 @@ import { productionDashboardRepository } from '../repositories/productionDashboa
 export const createProductionRouter = (productionService: ProductionService) => {
   const router = Router();
 
-  router.use(requireAuth, requireVerifiedEmail);
+  router.use(...androidResourceAuth);
 
   /**
    * GET /api/v1/production/dashboard — chart, gauges, and case list for Production tab.

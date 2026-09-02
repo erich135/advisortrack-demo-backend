@@ -45,7 +45,9 @@ import { clearGracePeriod, reactivateAllRealContacts } from './sandbox.service';
 import { hashPassword } from '../utils/auth';
 import { generateSecureToken } from '../utils/emailTokens';
 import { demoWorkspaceRepository } from '../repositories/demoWorkspace.repository';
-import { demoOutboxService, demoSimulatedInvitationResult } from './demoOutbox.service';
+import { demoOutboxService, demoSimulatedInvitationResult, demoSimulatedUserCreatedResult } from './demoOutbox.service';
+import { toNorthstarCloneSafeEmail, visitorKeyFromCompanySlug } from '../features/demoNorthstar';
+import { assertDemoAccountDeleteAllowed } from '../middleware/demoGuard';
 
 /**
  * Slugifies a company name for unique URLs / keys.
@@ -102,6 +104,9 @@ const toMemberDto = (row: MemberRow) => ({
   isPlatformAdmin: row.is_platform_admin,
   isActive: row.is_active,
   lastLoginAt: row.last_login_at ? row.last_login_at.toISOString() : null,
+  lastMobileActivityAt: row.last_mobile_activity_at
+    ? row.last_mobile_activity_at.toISOString()
+    : null,
   subscription: subscriptionDto(row),
   licenceStatus: licenceStatusLabel(row.package_slug, row.subscription_status),
   accountStatus: row.is_active ? 'Active' : 'Inactive',
@@ -396,6 +401,7 @@ export const organisationService = {
    */
   async deleteMyRole(userId: string, roleId: string) {
     await this.assertPermission(userId, 'manage_roles');
+    assertDemoAccountDeleteAllowed();
     const org = await this.getMyOrganisation(userId);
     const existing = await organisationRepository.findRole(org.company.id, roleId);
     if (!existing) {
@@ -499,7 +505,15 @@ export const organisationService = {
       reportsToUserId,
     });
 
-    const existing = await userRepository.findByEmail(input.email);
+    let storedEmail = input.email.trim().toLowerCase();
+    if (env.isDemoMode) {
+      const visitorKey = visitorKeyFromCompanySlug(ctx.scope.company.slug);
+      if (visitorKey) {
+        storedEmail = toNorthstarCloneSafeEmail(storedEmail, visitorKey);
+      }
+    }
+
+    const existing = await userRepository.findByEmail(storedEmail);
     if (existing) {
       throw new AppError(409, 'An account with this email already exists', 'EMAIL_EXISTS');
     }
@@ -509,7 +523,7 @@ export const organisationService = {
       const created = await organisationRepository.createMember({
         firstName: input.firstName.trim(),
         lastName: input.lastName.trim(),
-        email: input.email,
+        email: storedEmail,
         phone: input.phone?.trim() || null,
         passwordHash,
         profileRole: RANK_LABELS[nextRank],
@@ -558,7 +572,7 @@ export const organisationService = {
           true
         ),
         invitationSent: invited,
-        ...(demoSimulated ? demoSimulatedInvitationResult(created.email) : {}),
+        ...(demoSimulated ? demoSimulatedUserCreatedResult(created.email) : {}),
       };
     } catch (error) {
       const structureConflict = structureConflictFrom(error);
@@ -596,8 +610,10 @@ export const organisationService = {
     }
     const target = this.requireMutableMember(ctx, userId, memberId);
 
-    if (input.email && input.email.toLowerCase() !== target.email.toLowerCase()) {
-      const existing = await userRepository.findByEmail(input.email);
+    const emailInput = env.isDemoMode ? undefined : input.email;
+
+    if (emailInput && emailInput.toLowerCase() !== target.email.toLowerCase()) {
+      const existing = await userRepository.findByEmail(emailInput);
       if (existing && existing.id !== memberId) {
         throw new AppError(409, 'An account with this email already exists', 'EMAIL_EXISTS');
       }
@@ -640,7 +656,7 @@ export const organisationService = {
       const updated = await organisationRepository.updateMember(ctx.scope.company.id, memberId, {
         firstName: input.firstName?.trim(),
         lastName: input.lastName?.trim(),
-        email: input.email,
+        email: emailInput,
         phone: input.phone === undefined ? undefined : input.phone?.trim() || null,
         companyRoleId: input.roleId,
         reportsToUserId:
@@ -673,6 +689,17 @@ export const organisationService = {
           ...auditBase,
           previousValue: 'Active',
           newValue: 'Inactive',
+        });
+      }
+      if (
+        (input.firstName !== undefined && input.firstName.trim() !== target.first_name) ||
+        (input.lastName !== undefined && input.lastName.trim() !== target.last_name) ||
+        (input.phone !== undefined && (input.phone?.trim() || null) !== target.phone)
+      ) {
+        await organisationRepository.recordAuditEvent(userId, 'user_updated', 'user', {
+          ...auditBase,
+          previousValue: `${target.first_name} ${target.last_name}`.trim(),
+          newValue: `${reloaded.first_name} ${reloaded.last_name}`.trim(),
         });
       }
       if (input.roleId && input.roleId !== target.company_role_id) {

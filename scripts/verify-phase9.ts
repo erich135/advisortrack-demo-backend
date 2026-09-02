@@ -26,6 +26,7 @@ const REQUIRED_MIGRATIONS = [
   '026_company_subscriptions.sql',
   '027_internal_invoicing.sql',
   '028_invoice_delivery_metadata.sql',
+  '029_last_mobile_activity.sql',
 ] as const;
 
 const ANDROID_CORE_TABLES = ['users', 'companies', 'user_subscriptions', 'production_entries', 'contacts'];
@@ -181,6 +182,15 @@ async function runRuntimeChecks(): Promise<void> {
      ) AS exists`
   );
   assert(seq.rows[0]?.exists === true, 'invoice_number_seq exists for INV100000+ numbering');
+
+  const mobileCol = await pool.query<{ data_type: string; is_nullable: string }>(
+    `SELECT data_type, is_nullable
+     FROM information_schema.columns
+     WHERE table_name = 'users' AND column_name = 'last_mobile_activity_at'`
+  );
+  assert(mobileCol.rows.length === 1, 'users.last_mobile_activity_at exists');
+  assert(mobileCol.rows[0]?.data_type === 'timestamp with time zone', 'last_mobile_activity_at is timestamptz');
+  assert(mobileCol.rows[0]?.is_nullable === 'YES', 'last_mobile_activity_at is nullable');
 }
 
 async function main(): Promise<void> {

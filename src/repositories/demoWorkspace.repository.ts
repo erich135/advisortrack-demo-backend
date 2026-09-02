@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { getPool } from '../config/database';
 import { AppError } from '../middleware/errorHandler';
-import { cloneOperationalData } from './demoWorkspaceClone';
+import { cloneCommercialData, cloneOperationalData } from './demoWorkspaceClone';
 
 export type ClonedDemoWorkspace = {
   companyId: string;
@@ -251,6 +251,7 @@ export const demoWorkspaceRepository = {
       );
 
       await cloneOperationalData(client, templateCompanyId);
+      await cloneCommercialData(client, templateCompanyId, companyId);
 
       if (companyId === templateCompanyId) {
         throw new AppError(500, 'Demo clone must not return the master template', 'DEMO_TEMPLATE_IMMUTABLE');

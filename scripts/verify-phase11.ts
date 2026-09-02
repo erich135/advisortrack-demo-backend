@@ -30,10 +30,7 @@ function assert(condition: unknown, message: string): void {
 }
 
 const root = path.resolve(__dirname, '..');
-const frontendRoot = path.resolve(
-  __dirname,
-  '../../../_Old-And-Other-Apps/AdvisorTrack/AdvisorTrack Frontend'
-);
+const frontendRoot = path.resolve(__dirname, '../../advisortrack-demo-frontend');
 
 type Envelope<T> = {
   success?: boolean;

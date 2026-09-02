@@ -41,10 +41,7 @@ function expectThrow(fn: () => unknown, needle: string, message: string): void {
 }
 
 const root = path.resolve(__dirname, '..');
-const frontendRoot = path.resolve(
-  __dirname,
-  '../../../_Old-And-Other-Apps/AdvisorTrack/AdvisorTrack Frontend'
-);
+const frontendRoot = path.resolve(__dirname, '../../advisortrack-demo-frontend');
 
 function bootEnv(extra: NodeJS.ProcessEnv): { status: number | null; output: string } {
   const result = spawnSync('npx', ['tsx', 'scripts/boot-env.ts'], {
@@ -313,9 +310,11 @@ async function runDatabaseAndHttpTests(): Promise<void> {
         '026_company_subscriptions.sql',
         '027_internal_invoicing.sql',
         '028_invoice_delivery_metadata.sql',
+        '029_last_mobile_activity.sql',
         'demo/001_demo_sessions.sql',
         'demo/002_demo_personas.sql',
         'demo/003_demo_outbox_and_date_plan.sql',
+        'demo/004_date_plan_attention.sql',
       ]]
     );
     const applied = new Set(migrations.rows.map((row: { filename: string }) => row.filename));
@@ -325,9 +324,11 @@ async function runDatabaseAndHttpTests(): Promise<void> {
       '026_company_subscriptions.sql',
       '027_internal_invoicing.sql',
       '028_invoice_delivery_metadata.sql',
+      '029_last_mobile_activity.sql',
       'demo/001_demo_sessions.sql',
       'demo/002_demo_personas.sql',
       'demo/003_demo_outbox_and_date_plan.sql',
+      'demo/004_date_plan_attention.sql',
     ]) {
       assert(applied.has(filename), `demo schema includes ${filename}`);
     }
@@ -339,8 +340,8 @@ async function runDatabaseAndHttpTests(): Promise<void> {
       `SELECT status, seed_version FROM demo_workspace_templates WHERE status = 'active'`
     );
     assert(
-      templates.rows.some((row: { seed_version: number }) => row.seed_version >= 12),
-      'active Phase 12 Northstar master template is present'
+      templates.rows.some((row: { seed_version: number }) => row.seed_version >= 13),
+      'active Phase 13 Northstar master template is present'
     );
 
     const sessions = await demo.query(

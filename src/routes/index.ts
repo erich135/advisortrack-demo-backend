@@ -64,6 +64,7 @@ export const createApiRouter = (store: DataStore) => {
             'GET /management/production/entries?month=YYYY-MM',
             'GET /management/pipeline?advisorId=UUID&stage=PIPELINE_STAGE&status=CASE_STATUS&search=TERM',
             'GET /management/performance?period=last_week|last_month|year_to_date',
+            'GET /management/advisors/:advisorId/summary',
           ],
           dashboard: ['GET /dashboard'],
           planning: ['GET /planning/targets', 'GET /planning/settings', 'PATCH /planning/settings'],

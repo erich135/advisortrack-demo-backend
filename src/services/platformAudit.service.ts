@@ -63,4 +63,9 @@ export const platformAuditService = {
     const rows = await organisationRepository.listAdminAudit(filters);
     return { events: rows.map(auditDto) };
   },
+
+  async listForCompany(companyId: string, permittedUserIds?: string[]) {
+    const rows = await organisationRepository.listAdminAudit({ companyId, permittedUserIds });
+    return { events: rows.map(auditDto) };
+  },
 };

@@ -1,5 +1,5 @@
 import { env } from '../config/env';
-import { DEMO_ACTION_SIMULATED_MESSAGE } from '../features/demoMessages';
+import { DEMO_ACTION_SIMULATED_MESSAGE, DEMO_USER_CREATED_MESSAGE } from '../features/demoMessages';
 import { demoOutboxRepository } from '../repositories/demoOutbox.repository';
 
 export const demoOutboxService = {
@@ -21,4 +21,11 @@ export const demoSimulatedInvitationResult = (email: string) => ({
   email,
   demoSimulated: true as const,
   message: DEMO_ACTION_SIMULATED_MESSAGE,
+});
+
+export const demoSimulatedUserCreatedResult = (email: string) => ({
+  sent: true,
+  email,
+  demoSimulated: true as const,
+  message: DEMO_USER_CREATED_MESSAGE,
 });

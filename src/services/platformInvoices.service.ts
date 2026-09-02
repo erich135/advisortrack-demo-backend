@@ -820,4 +820,26 @@ export const platformInvoicesService = {
     const lines = await invoiceRepository.listCurrentLines(invoice.id);
     return renderInvoicePdf(invoice, lines);
   },
+
+  async customerList(companyId: string) {
+    const rows = await invoiceRepository.listInvoices(companyId);
+    return { invoices: rows.map(invoiceSummaryDto) };
+  },
+
+  async customerGet(companyId: string, invoiceId: string) {
+    const invoice = await requireInvoice(invoiceId);
+    if (invoice.company_id !== companyId) {
+      throw new AppError(404, 'Invoice not found', 'NOT_FOUND');
+    }
+    return loadDetail(invoice);
+  },
+
+  async customerPdf(companyId: string, invoiceId: string) {
+    const invoice = await requireInvoice(invoiceId);
+    if (invoice.company_id !== companyId) {
+      throw new AppError(404, 'Invoice not found', 'NOT_FOUND');
+    }
+    const lines = await invoiceRepository.listCurrentLines(invoice.id);
+    return renderInvoicePdf(invoice, lines);
+  },
 };

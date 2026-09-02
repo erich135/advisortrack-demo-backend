@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { asAuthRequest, requireAuth, requireVerifiedEmail } from '../middleware/auth';
+import { asAuthRequest } from '../middleware/auth';
+import { androidResourceAuth } from '../middleware/androidAuth';
 import { ActivityService } from '../services';
 import { ok } from '../utils/response';
 import { createActivitySchema, updateActivitySchema, activityOutcomeSchema } from '../validators/schemas';
@@ -14,7 +15,7 @@ const log = createLogger('activities');
 export const createActivitiesRouter = (activityService: ActivityService) => {
   const router = Router();
 
-  router.use(requireAuth, requireVerifiedEmail);
+  router.use(...androidResourceAuth);
 
   /**
    * GET /api/v1/activities

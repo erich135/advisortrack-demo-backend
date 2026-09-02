@@ -15,6 +15,7 @@ export interface ManagementPipelineCase {
     lastName: string;
   };
   contactName: string | null;
+  title: string | null;
   currentStage: string;
   status: string;
   createdAt: string;
@@ -45,6 +46,7 @@ interface ManagementPipelineCaseRow {
   advisor_first_name: string;
   advisor_last_name: string;
   contact_name: string | null;
+  title: string | null;
   current_stage: string;
   status: string;
   created_at: Date;
@@ -73,6 +75,7 @@ const mapCase = (row: ManagementPipelineCaseRow): ManagementPipelineCase => ({
     lastName: row.advisor_last_name,
   },
   contactName: row.contact_name,
+  title: row.title,
   currentStage: row.current_stage,
   status: row.status,
   createdAt: toIsoString(row.created_at),
@@ -186,6 +189,7 @@ export const managementPipelineRepository = {
          u.first_name AS advisor_first_name,
          u.last_name AS advisor_last_name,
          NULLIF(CONCAT_WS(' ', ct.first_name, ct.last_name), '') AS contact_name,
+         c.title,
          c.current_stage::text AS current_stage,
          c.status::text AS status,
          c.created_at,

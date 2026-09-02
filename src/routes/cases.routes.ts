@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { asAuthRequest, requireAuth, requireVerifiedEmail } from '../middleware/auth';
+import { asAuthRequest } from '../middleware/auth';
+import { androidResourceAuth } from '../middleware/androidAuth';
 import { ok } from '../utils/response';
 import { caseService } from '../services/case.service';
 import {
@@ -14,7 +15,7 @@ import {
  */
 export const createCasesRouter = () => {
   const router = Router();
-  router.use(requireAuth, requireVerifiedEmail);
+  router.use(...androidResourceAuth);
 
   /**
    * GET /api/v1/cases/contact/:contactId/open-count — number of open cases for a contact.
