@@ -207,6 +207,109 @@ export const productionRepository = {
   },
 
   /**
+   * Inclusive date-range totals using the same issued rule as getManagementMonthlySummary:
+   * issued = is_issued OR application_status = 'accepted_issued'.
+   * Bucket date is COALESCE(due_date, created_at::date).
+   */
+  async getManagementRangeSummary(
+    userIds: string[],
+    startDate: string,
+    endDate: string,
+  ): Promise<{ totals: ManagementProductionTotals; advisors: ManagementProductionSummaryRow[] }> {
+    if (userIds.length === 0) {
+      return {
+        totals: { issuedAmount: 0, issuedCount: 0, nonIssuedAmount: 0, nonIssuedCount: 0 },
+        advisors: [],
+      };
+    }
+
+    const pool = getPool();
+    const [totalsResult, advisorsResult] = await Promise.all([
+      pool.query<{
+        issued_amount: string;
+        issued_count: string;
+        non_issued_amount: string;
+        non_issued_count: string;
+      }>(
+        `SELECT
+           COALESCE(SUM(pe.amount) FILTER (
+             WHERE pe.is_issued OR pe.application_status = 'accepted_issued'
+           ), 0)::text AS issued_amount,
+           COUNT(*) FILTER (
+             WHERE pe.is_issued OR pe.application_status = 'accepted_issued'
+           )::text AS issued_count,
+           COALESCE(SUM(pe.amount) FILTER (
+             WHERE NOT (pe.is_issued OR COALESCE(pe.application_status = 'accepted_issued', FALSE))
+           ), 0)::text AS non_issued_amount,
+           COUNT(*) FILTER (
+             WHERE NOT (pe.is_issued OR COALESCE(pe.application_status = 'accepted_issued', FALSE))
+           )::text AS non_issued_count
+         FROM production_entries pe
+         WHERE pe.user_id = ANY($1::uuid[])
+           AND COALESCE(pe.due_date, pe.created_at::date) >= $2::date
+           AND COALESCE(pe.due_date, pe.created_at::date) <= $3::date`,
+        [userIds, startDate, endDate],
+      ),
+      pool.query<{
+        user_id: string;
+        first_name: string;
+        last_name: string;
+        issued_amount: string;
+        issued_count: string;
+        non_issued_amount: string;
+        non_issued_count: string;
+      }>(
+        `SELECT
+           u.id AS user_id,
+           u.first_name,
+           u.last_name,
+           COALESCE(SUM(pe.amount) FILTER (
+             WHERE pe.is_issued OR pe.application_status = 'accepted_issued'
+           ), 0)::text AS issued_amount,
+           COUNT(pe.id) FILTER (
+             WHERE pe.is_issued OR pe.application_status = 'accepted_issued'
+           )::text AS issued_count,
+           COALESCE(SUM(pe.amount) FILTER (
+             WHERE NOT (pe.is_issued OR COALESCE(pe.application_status = 'accepted_issued', FALSE))
+           ), 0)::text AS non_issued_amount,
+           COUNT(pe.id) FILTER (
+             WHERE NOT (pe.is_issued OR COALESCE(pe.application_status = 'accepted_issued', FALSE))
+           )::text AS non_issued_count
+         FROM users u
+         LEFT JOIN production_entries pe
+           ON pe.user_id = u.id
+          AND COALESCE(pe.due_date, pe.created_at::date) >= $2::date
+          AND COALESCE(pe.due_date, pe.created_at::date) <= $3::date
+         WHERE u.id = ANY($1::uuid[])
+         GROUP BY u.id, u.first_name, u.last_name
+         ORDER BY u.last_name ASC, u.first_name ASC, u.id ASC`,
+        [userIds, startDate, endDate],
+      ),
+    ]);
+
+    const totals = totalsResult.rows[0];
+    return {
+      totals: {
+        issuedAmount: Number(totals?.issued_amount ?? 0),
+        issuedCount: Number(totals?.issued_count ?? 0),
+        nonIssuedAmount: Number(totals?.non_issued_amount ?? 0),
+        nonIssuedCount: Number(totals?.non_issued_count ?? 0),
+      },
+      advisors: advisorsResult.rows.map((row) => ({
+        userId: row.user_id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        issuedAmount: Number(row.issued_amount),
+        issuedCount: Number(row.issued_count),
+        nonIssuedAmount: Number(row.non_issued_amount),
+        nonIssuedCount: Number(row.non_issued_count),
+        goalAmount: null,
+        attainmentPercent: null,
+      })),
+    };
+  },
+
+  /**
    * Case-level production rows for one calendar month in a management scope.
    * Uses the same month and issued rules as getManagementMonthlySummary.
    */

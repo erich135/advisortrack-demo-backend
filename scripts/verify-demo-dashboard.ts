@@ -138,7 +138,9 @@ function runStaticChecks(): void {
 
   const invoices = fs.readFileSync(path.join(frontendRoot, 'src/pages/InvoicesPage.tsx'), 'utf8');
   assert(invoices.includes('listCompanyInvoices'), 'customer invoices use company-scoped API');
-  assert(invoices.includes('sendCompanyInvoice'), 'customer invoice send is company-scoped');
+  assert(invoices.includes('customerMode'), 'customer invoices stay in customer mode');
+  const companyApi = fs.readFileSync(path.join(frontendRoot, 'src/api/companyApi.ts'), 'utf8');
+  assert(companyApi.includes('sendCompanyInvoice'), 'simulated invoice send stays on the company API');
   assert(!invoices.includes('Mark paid') || invoices.includes('!customerMode'), 'mark paid stays staff-only');
 
   const portal = fs.readFileSync(path.join(root, 'src/services/companyCustomerPortal.service.ts'), 'utf8');
@@ -160,6 +162,9 @@ function runStaticChecks(): void {
   const clone = fs.readFileSync(path.join(root, 'src/repositories/demoWorkspaceClone.ts'), 'utf8');
   assert(clone.includes('cloneCommercialData'), 'clone copies commercial records');
   assert(clone.includes("nextval('invoice_number_seq')"), 'cloned invoices allocate real invoice numbers');
+  assert(clone.includes('enterprise_contracts'), 'clone copies Northstar enterprise contracts');
+  assert(clone.includes('RESET EMPTY'), 'clone documents empty reset of transactional history');
+  assert(clone.includes('Organisation Admin: Executive rank'), 'clone documents Executive Organisation Admin proxy');
 }
 
 async function runHttp(baseUrl: string, databaseUrl?: string): Promise<void> {
@@ -426,7 +431,34 @@ async function runHttp(baseUrl: string, databaseUrl?: string): Promise<void> {
   }>(baseUrl, '/api/v1/company/subscription', { token: execToken });
   assert(subscription.status === 200, 'Executive can view company subscription');
   assert(Boolean(subscription.body.data?.plan?.name), 'subscription shows a plan name');
+  assert(
+    String(subscription.body.data?.plan?.name).includes('Enterprise'),
+    'subscription plan is AdvisorTrack Enterprise'
+  );
   assert(subscription.body.data?.licencePool?.purchased === NORTHSTAR_SEAT_LIMIT, 'subscription pool purchased is 50');
+  const enterprise = (subscription.body.data as { enterprise?: { planName?: string; vatCharged?: boolean } })
+    ?.enterprise;
+  assert(enterprise?.planName === 'AdvisorTrack Enterprise', 'customer summary names AdvisorTrack Enterprise');
+  assert(enterprise?.vatCharged === false, 'customer summary does not charge VAT');
+
+  const seatContext = await api<{
+    purchased?: number | null;
+    assigned?: number;
+    available?: number | null;
+    additionalSeatPolicy?: string | null;
+    requests?: unknown[];
+  }>(baseUrl, '/api/v1/company/licence-requests', { token: execToken });
+  assert(seatContext.status === 200, 'Executive can open additional-licence request context');
+  assert(seatContext.body.data?.purchased === NORTHSTAR_SEAT_LIMIT, 'seat request shows purchased 50');
+  assert(typeof seatContext.body.data?.assigned === 'number', 'seat request shows assigned count');
+  assert(seatContext.body.data?.additionalSeatPolicy === 'next_invoice', 'Northstar seat policy is next invoice');
+  const requested = await api<{ additionalRequested?: number; status?: string }>(baseUrl, '/api/v1/company/licence-requests', {
+    method: 'POST',
+    token: execToken,
+    body: { additional: 5, notes: 'Demo showcase request' },
+  });
+  assert(requested.status === 201, 'Executive can submit a demo licence increase request');
+  assert(requested.body.data?.additionalRequested === 5, 'demo request stores additional seats');
 
   const invoices = await api<InvoiceList>(baseUrl, '/api/v1/company/invoices', { token: execToken });
   assert(invoices.status === 200, 'Executive can list invoices');
@@ -490,6 +522,16 @@ async function runHttp(baseUrl: string, databaseUrl?: string): Promise<void> {
   );
   const resetInvoices = await api<InvoiceList>(baseUrl, '/api/v1/company/invoices', { token: reset.body.data!.token });
   assert((resetInvoices.body.data?.invoices ?? []).length === NORTHSTAR_INVOICE_COUNT, 'reset clone has pristine invoices');
+  const resetSub = await api<{
+    plan?: { name?: string | null };
+    enterprise?: { vatCharged?: boolean; currentPurchasedLicences?: number | null };
+  }>(baseUrl, '/api/v1/company/subscription', { token: reset.body.data!.token });
+  assert(resetSub.body.data?.plan?.name?.includes('Enterprise'), 'reset restores AdvisorTrack Enterprise summary');
+  assert(resetSub.body.data?.enterprise?.vatCharged === false, 'reset invoices/contract remain VAT-off');
+  const resetRequests = await api<{ requests?: unknown[] }>(baseUrl, '/api/v1/company/licence-requests', {
+    token: reset.body.data!.token,
+  });
+  assert((resetRequests.body.data?.requests ?? []).length === 0, 'reset does not clone visitor licence requests');
 
   if (databaseUrl) {
     const client = new pg.Client({ connectionString: databaseUrl });
@@ -503,7 +545,7 @@ async function runHttp(baseUrl: string, databaseUrl?: string): Promise<void> {
       const template = await client.query<{ seed_version: number; company_id: string }>(
         `SELECT seed_version, company_id FROM demo_workspace_templates WHERE status = 'active' LIMIT 1`
       );
-      assert((template.rows[0]?.seed_version ?? 0) >= 14, 'active template is Phase 14 Northstar');
+      assert((template.rows[0]?.seed_version ?? 0) >= 15, 'active template is Task 15 Northstar');
       const masterTouched = await client.query<{ last_name: string }>(
         `SELECT last_name FROM users WHERE company_id = $1 AND first_name = 'Maya' AND last_name LIKE 'Brooks%' LIMIT 1`,
         [template.rows[0].company_id]
@@ -526,6 +568,16 @@ async function runHttp(baseUrl: string, databaseUrl?: string): Promise<void> {
         [companyA]
       );
       assert((mailtrap.rows[0]?.n ?? 0) === 0, 'Mailtrap/live email providers received nothing');
+      const contracts = await client.query<{ n: number }>(
+        `SELECT COUNT(*)::int AS n FROM enterprise_contracts WHERE company_id = $1`,
+        [reset.body.data!.session.companyId]
+      );
+      assert((contracts.rows[0]?.n ?? 0) === 1, 'reset clone received the Northstar enterprise contract');
+      const leftoverRequests = await client.query<{ n: number }>(
+        `SELECT COUNT(*)::int AS n FROM licence_increase_requests WHERE company_id = $1`,
+        [reset.body.data!.session.companyId]
+      );
+      assert((leftoverRequests.rows[0]?.n ?? 0) === 0, 'fresh clone has no visitor licence-increase history');
     } finally {
       await client.end();
     }

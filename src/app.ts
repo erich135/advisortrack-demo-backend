@@ -27,6 +27,9 @@ export const createApp = async () => {
       credentials: true,
     })
   );
+  const bulkImportJson = express.json({ limit: '6mb' });
+  app.use('/api/v1/company/members/import/preview', bulkImportJson);
+  app.use('/api/v1/company/members/import/confirm', bulkImportJson);
   app.use(express.json({ limit: '1mb' }));
 
   setupSwagger(app);

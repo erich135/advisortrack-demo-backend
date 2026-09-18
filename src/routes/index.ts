@@ -26,6 +26,7 @@ import { createCompanyRouter } from './company.routes';
 import { createPlatformRouter } from './platform.routes';
 import { createManagementRouter } from './management.routes';
 import { createDemoRouter } from './demo.routes';
+import { createAssistantRouter } from './assistant.routes';
 
 /**
  * Builds the versioned API router with all resource endpoints.
@@ -115,6 +116,7 @@ export const createApiRouter = (store: DataStore) => {
   router.use('/subscription', createSubscriptionRouter());
   router.use('/cases', createCasesRouter());
   router.use('/company', createCompanyRouter());
+  router.use('/assistant', createAssistantRouter());
   router.use('/platform', createPlatformRouter());
   router.use('/management', createManagementRouter());
   router.use('/demo', createDemoRouter());

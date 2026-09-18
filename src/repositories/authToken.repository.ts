@@ -106,4 +106,15 @@ export const authTokenRepository = {
       [tokenId]
     );
   },
+
+  /**
+   * Invalidates outstanding reset/invitation secrets without deleting history rows.
+   */
+  async invalidatePasswordResetTokens(userId: string): Promise<void> {
+    await getPool().query(
+      `UPDATE password_reset_tokens SET used_at = COALESCE(used_at, NOW())
+       WHERE user_id = $1 AND used_at IS NULL`,
+      [userId]
+    );
+  },
 };

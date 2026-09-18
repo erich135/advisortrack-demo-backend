@@ -1,13 +1,14 @@
 import {
   calculateInvoiceTotals,
   calculateLine,
-  DEFAULT_VAT_RATE_PERCENT,
   formatQuantity,
   randToCents,
   vatRateToString,
 } from '../features/invoiceMoney';
 import { INVOICING_AVAILABLE_MESSAGE } from '../features/companySubscription';
+import { vatRateForNewInvoiceLine, sellerChargesVat } from '../features/advisortrackVat';
 import { presentationStatus, toDateOnly } from '../features/invoiceLifecycle';
+import { prefillFromEnterpriseContract } from '../features/invoiceDraft';
 import { AppError } from '../middleware/errorHandler';
 import {
   BillingProfileRow,
@@ -20,8 +21,12 @@ import {
   invoiceRepository,
 } from '../repositories/invoice.repository';
 import { organisationRepository } from '../repositories/organisation.repository';
+import { enterpriseContractService } from './enterpriseContract.service';
+import { enterpriseBillingAdjustmentRepository } from '../repositories/enterpriseSeatChange.repository';
+import { demoOutboxService } from './demoOutbox.service';
 import { renderInvoicePdf } from './invoicePdf';
 import { sendInvoiceEmail } from './invoiceMail';
+import { env } from '../config/env';
 
 type LineInput = {
   description: string;
@@ -43,6 +48,13 @@ type InvoiceWriteInput = {
   poReference?: string | null;
   notes?: string | null;
   paymentTerms?: string | null;
+  billingPeriodStart?: string | null;
+  billingPeriodEnd?: string | null;
+  customerReference?: string | null;
+  sourceContractId?: string | null;
+  fromContract?: boolean;
+  attachBillingAdjustmentIds?: string[];
+  attachPendingAdjustments?: boolean;
   billing?: BillingSnapshot;
   saveBillingProfile?: boolean;
   lines?: LineInput[];
@@ -76,8 +88,8 @@ const moneyError = (error: unknown): never => {
 
 const unitPriceCentsFrom = (line: LineInput): number => {
   if (line.unitPriceCents != null) {
-    if (!Number.isInteger(line.unitPriceCents) || line.unitPriceCents < 0) {
-      throw new AppError(400, 'unitPriceCents must be a non-negative integer', 'VALIDATION_ERROR');
+    if (!Number.isInteger(line.unitPriceCents)) {
+      throw new AppError(400, 'unitPriceCents must be an integer', 'VALIDATION_ERROR');
     }
     return line.unitPriceCents;
   }
@@ -106,14 +118,12 @@ const discountCentsFrom = (line: LineInput): number => {
   }
 };
 
-const prepareLines = (rawLines: LineInput[], vatRegistered: boolean): InsertLine[] => {
+const prepareLines = (rawLines: LineInput[], _vatRegistered: boolean): InsertLine[] => {
   if (rawLines.length === 0) {
     throw new AppError(400, 'At least one line item is required', 'VALIDATION_ERROR');
   }
   return rawLines.map((line, index) => {
-    const vatRate = vatRegistered
-      ? vatRateToString(line.vatRatePercent ?? DEFAULT_VAT_RATE_PERCENT)
-      : '0.00';
+    const vatRate = vatRateForNewInvoiceLine(line.vatRatePercent);
     let calculated;
     try {
       calculated = calculateLine({
@@ -154,6 +164,9 @@ const assertTotals = (
   claimed?: { subtotalCents?: number; vatCents?: number; totalCents?: number }
 ) => {
   const totals = calculateInvoiceTotals(lines);
+  if (totals.totalCents < 0) {
+    throw new AppError(400, 'Invoice total cannot be negative', 'VALIDATION_ERROR');
+  }
   if (claimed?.subtotalCents != null && claimed.subtotalCents !== totals.subtotalCents) {
     throw new AppError(400, 'Subtotal does not match server calculation', 'TOTALS_MISMATCH');
   }
@@ -316,10 +329,20 @@ const invoiceDetailDto = (
   invoice: InvoiceRow,
   lines: InvoiceLineRow[],
   events: InvoiceStatusEventRow[],
-  deliveries: InvoiceDeliveryEventRow[]
+  deliveries: InvoiceDeliveryEventRow[],
+  extras?: {
+    billingPeriodStart: string | null;
+    billingPeriodEnd: string | null;
+    customerReference: string | null;
+    sourceContractId: string | null;
+  } | null
 ) => ({
   ...invoiceSummaryDto(invoice),
   poReference: invoice.po_reference,
+  customerReference: extras?.customerReference ?? null,
+  billingPeriodStart: extras?.billingPeriodStart ?? null,
+  billingPeriodEnd: extras?.billingPeriodEnd ?? null,
+  sourceContractId: extras?.sourceContractId ?? null,
   notes: invoice.notes,
   paymentTerms: invoice.payment_terms,
   snapshot: {
@@ -348,6 +371,10 @@ const invoiceDetailDto = (
   statusEvents: events.map(eventDto),
   deliveryEvents: deliveries.map(deliveryDto),
   lastDelivery: deliveries.length ? deliveryDto(deliveries[deliveries.length - 1]) : null,
+  editable: invoice.status === 'draft',
+  locked: invoice.status !== 'draft',
+  vatCharged: false as const,
+  sellerVatRegistered: sellerChargesVat(),
 });
 
 const requireCustomerCompany = async (companyId: string) => {
@@ -406,7 +433,7 @@ const persistBillingProfile = async (companyId: string, billing: BillingSnapshot
     registrationNumber: billing.registrationNumber,
     vatRegistered: billing.vatRegistered,
     vatNumber: billing.vatNumber,
-    vatRatePercent: vatRatePercent ?? (billing.vatRegistered ? DEFAULT_VAT_RATE_PERCENT : 15),
+    vatRatePercent: vatRateForNewInvoiceLine(vatRatePercent),
     billingContactName: billing.billingContactName,
     billingEmail: billing.billingEmail,
     telephone: billing.telephone,
@@ -439,12 +466,30 @@ const seedBillingProfile = async (companyId: string): Promise<BillingProfileRow>
 };
 
 const loadDetail = async (invoice: InvoiceRow) => {
-  const [lines, events, deliveries] = await Promise.all([
+  const [lines, events, deliveries, extras] = await Promise.all([
     invoiceRepository.listCurrentLines(invoice.id),
     invoiceRepository.listStatusEvents(invoice.id),
     invoiceRepository.listDeliveryEvents(invoice.id),
+    invoiceRepository.getCommercialDetails(invoice.id),
   ]);
-  return invoiceDetailDto(invoice, lines, events, deliveries);
+  return invoiceDetailDto(invoice, lines, events, deliveries, extras);
+};
+
+const saveCommercialDetails = async (invoiceId: string, input: InvoiceWriteInput) => {
+  if (
+    input.billingPeriodStart === undefined &&
+    input.billingPeriodEnd === undefined &&
+    input.customerReference === undefined &&
+    input.sourceContractId === undefined
+  ) {
+    return;
+  }
+  await invoiceRepository.upsertCommercialDetails(invoiceId, {
+    billingPeriodStart: input.billingPeriodStart,
+    billingPeriodEnd: input.billingPeriodEnd,
+    customerReference: input.customerReference,
+    sourceContractId: input.sourceContractId,
+  });
 };
 
 const snapshotRefFor = (invoice: InvoiceRow): string =>
@@ -520,7 +565,7 @@ export const platformInvoicesService = {
       registrationNumber: snapshot.registrationNumber,
       vatRegistered: snapshot.vatRegistered,
       vatNumber: snapshot.vatNumber,
-      vatRatePercent: input.vatRatePercent ?? (snapshot.vatRegistered ? DEFAULT_VAT_RATE_PERCENT : 15),
+      vatRatePercent: vatRateForNewInvoiceLine(input.vatRatePercent),
       billingContactName: snapshot.billingContactName,
       billingEmail: snapshot.billingEmail,
       telephone: snapshot.telephone,
@@ -578,6 +623,15 @@ export const platformInvoicesService = {
       invoiceNumber: created.invoice_number,
       newValue: created.invoice_number,
     });
+    await saveCommercialDetails(created.id, input);
+    const attachIds =
+      input.attachBillingAdjustmentIds ??
+      (input.attachPendingAdjustments || input.sourceContractId
+        ? (await enterpriseBillingAdjustmentRepository.listPendingForCompany(input.companyId)).map((row) => row.id)
+        : []);
+    if (attachIds.length > 0) {
+      await enterpriseBillingAdjustmentRepository.attachToInvoice(created.id, attachIds);
+    }
     return loadDetail(created);
   },
 
@@ -609,8 +663,73 @@ export const platformInvoicesService = {
       const totals = assertTotals(lines, input);
       await invoiceRepository.replaceDraftLines(invoiceId, lines, totals);
     }
+    await invoiceRepository.insertLifecycleEvent({
+      invoiceId,
+      fromStatus: 'draft',
+      toStatus: 'draft',
+      actorUserId,
+      note: 'Draft edited',
+    });
+    await organisationRepository.recordAuditEvent(actorUserId, 'invoice_draft_edited', 'invoice', {
+      companyId: invoice.company_id,
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoice_number,
+    });
+    await saveCommercialDetails(invoiceId, input);
     const updated = await requireInvoice(invoiceId);
     return loadDetail(updated);
+  },
+
+  async prefillFromContract(actorUserId: string, companyId: string) {
+    await requireInternalAdmin(actorUserId);
+    const company = await requireCustomerCompany(companyId);
+    const contract = await enterpriseContractService.getByCompany(companyId);
+    const pending = await enterpriseBillingAdjustmentRepository.listPendingForCompany(companyId);
+    return prefillFromEnterpriseContract({
+      company: { id: company.id, name: company.name },
+      contract,
+      pendingAdjustments: pending.map((row) => ({
+        id: row.id,
+        description: row.description || 'Additional licences',
+        amountCents: Number(row.amount_cents),
+      })),
+    });
+  },
+
+  async issue(actorUserId: string, invoiceId: string) {
+    await requireInternalAdmin(actorUserId);
+    const invoice = await requireInvoice(invoiceId);
+    requireDraft(invoice);
+    const lines = await invoiceRepository.listCurrentLines(invoice.id);
+    if (lines.length === 0) {
+      throw new AppError(400, 'At least one line item is required before issuing', 'VALIDATION_ERROR');
+    }
+    validateDates(toDateOnly(invoice.invoice_date), toDateOnly(invoice.due_date));
+    if (Number(invoice.total_cents) < 0) {
+      throw new AppError(400, 'Invoice total cannot be negative', 'VALIDATION_ERROR');
+    }
+    const snapshot = snapshotFromInvoice(invoice);
+    if (!snapshot.registeredName.trim()) {
+      throw new AppError(400, 'Registered company name is required', 'VALIDATION_ERROR');
+    }
+    if (!snapshot.billingEmail?.trim() && !snapshot.billingContactName?.trim()) {
+      throw new AppError(400, 'Billing contact or billing email is required before issuing', 'VALIDATION_ERROR');
+    }
+    await invoiceRepository.applyStatus({
+      invoiceId,
+      fromStatus: 'draft',
+      toStatus: 'sent',
+      actorUserId,
+      note: 'Issued',
+    });
+    await organisationRepository.recordAuditEvent(actorUserId, 'invoice_issued', 'invoice', {
+      companyId: invoice.company_id,
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoice_number,
+      previousValue: 'draft',
+      newValue: 'sent',
+    });
+    return loadDetail(await requireInvoice(invoiceId));
   },
 
   async send(actorUserId: string, invoiceId: string) {
@@ -641,6 +760,44 @@ export const platformInvoicesService = {
         'This invoice has no billing email. Add a billing email on the draft snapshot before sending.',
         'RECIPIENT_REQUIRED'
       );
+    }
+
+    if (env.isDemoMode) {
+      await demoOutboxService.record({
+        companyId: invoice.company_id,
+        actorUserId,
+        action: 'invoice_send',
+        recipient,
+        payload: { invoiceId: invoice.id, invoiceNumber: invoice.invoice_number, kind: 'simulate' },
+      });
+      await invoiceRepository.insertDeliveryEvent({
+        invoiceId,
+        status: 'sent',
+        recipientEmail: recipient,
+        actorUserId,
+        providerMessageId: 'demo-outbox',
+        snapshotRef,
+      });
+      if (invoice.status === 'draft') {
+        await invoiceRepository.applyStatus({
+          invoiceId,
+          fromStatus: 'draft',
+          toStatus: 'sent',
+          actorUserId,
+          note: 'Demo send simulated',
+        });
+      }
+      await organisationRepository.recordAuditEvent(actorUserId, 'invoice_sent', 'invoice', {
+        companyId: invoice.company_id,
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoice_number,
+        recipientEmail: recipient,
+        snapshotRef,
+        previousValue: invoice.status,
+        newValue: invoice.status === 'draft' ? 'sent' : invoice.status,
+        demoSimulated: true,
+      });
+      return loadDetail(await requireInvoice(invoiceId));
     }
 
     const result = await sendInvoiceEmail({

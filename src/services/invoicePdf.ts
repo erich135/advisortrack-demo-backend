@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import { env } from '../config/env';
 import { centsToRand } from '../features/invoiceMoney';
+import { sellerChargesVat } from '../features/advisortrackVat';
 import { presentationStatus, toDateOnly } from '../features/invoiceLifecycle';
 import type { InvoiceLineRow, InvoiceRow } from '../repositories/invoice.repository';
 
@@ -72,7 +73,7 @@ export const renderInvoicePdf = (
       continued: false,
     });
     doc.fillColor(MUTED).font('Helvetica').fontSize(9).text(env.mailFromEmail, left, 50);
-    doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(18).text('TAX INVOICE', left, 28, {
+    doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(18).text(sellerChargesVat() ? 'TAX INVOICE' : 'INVOICE', left, 28, {
       width: right - left,
       align: 'right',
     });
@@ -99,9 +100,7 @@ export const renderInvoicePdf = (
         ? `Trading as ${invoice.snapshot_trading_name}`
         : null,
       invoice.snapshot_registration_number ? `Reg ${invoice.snapshot_registration_number}` : null,
-      invoice.snapshot_vat_registered
-        ? `VAT ${invoice.snapshot_vat_number || 'registered'}`
-        : 'Not VAT registered',
+      sellerChargesVat() && invoice.snapshot_vat_number ? `VAT ${invoice.snapshot_vat_number}` : null,
       invoice.snapshot_billing_contact_name,
       invoice.snapshot_billing_email,
       invoice.snapshot_telephone,
@@ -135,6 +134,7 @@ export const renderInvoicePdf = (
       metaY += 16;
     }
 
+    const showVat = sellerChargesVat();
     const tableTop = Math.max(partyY, metaY) + 24;
     const cols = {
       description: left,
@@ -151,7 +151,9 @@ export const renderInvoicePdf = (
     doc.text('QTY', cols.qty, tableTop + 8, { width: 44, align: 'right' });
     doc.text('UNIT', cols.unit, tableTop + 8, { width: 54, align: 'right' });
     doc.text('DISC.', cols.discount, tableTop + 8, { width: 54, align: 'right' });
-    doc.text('VAT', cols.vat, tableTop + 8, { width: 48, align: 'right' });
+    if (showVat) {
+      doc.text('VAT', cols.vat, tableTop + 8, { width: 48, align: 'right' });
+    }
     doc.text('AMOUNT', cols.amount - 70, tableTop + 8, { width: 70, align: 'right' });
     doc.moveTo(left, tableTop + 24).lineTo(right, tableTop + 24).strokeColor(NAVY).lineWidth(1).stroke();
 
@@ -165,7 +167,9 @@ export const renderInvoicePdf = (
       doc.text(qty, cols.qty, rowY, { width: 44, align: 'right' });
       doc.text(formatZar(Number(line.unit_price_cents)), cols.unit, rowY, { width: 54, align: 'right' });
       doc.text(formatZar(Number(line.discount_cents)), cols.discount, rowY, { width: 54, align: 'right' });
-      doc.text(vatRate, cols.vat, rowY, { width: 48, align: 'right' });
+      if (showVat) {
+        doc.text(vatRate, cols.vat, rowY, { width: 48, align: 'right' });
+      }
       doc.text(formatZar(Number(line.line_total_cents)), cols.amount - 70, rowY, { width: 70, align: 'right' });
       rowY += rowHeight + 10;
       if (rowY > 700) {
@@ -177,13 +181,18 @@ export const renderInvoicePdf = (
     doc.moveTo(left, rowY).lineTo(right, rowY).strokeColor(RULE).lineWidth(1).stroke();
     const totalsX = 360;
     let totalsY = rowY + 16;
-    const totals = [
-      ['Subtotal', formatZar(Number(invoice.subtotal_cents))],
-      ['VAT', formatZar(Number(invoice.vat_cents))],
-      ['Total', formatZar(Number(invoice.total_cents))],
-    ];
+    const totals = showVat
+      ? [
+          ['Subtotal', formatZar(Number(invoice.subtotal_cents))],
+          ['VAT', formatZar(Number(invoice.vat_cents))],
+          ['Total', formatZar(Number(invoice.total_cents))],
+        ]
+      : [
+          ['Amount', formatZar(Number(invoice.subtotal_cents))],
+          ['Total Due', formatZar(Number(invoice.total_cents))],
+        ];
     for (const [label, value] of totals) {
-      const grand = label === 'Total';
+      const grand = label === 'Total' || label === 'Total Due';
       doc.font(grand ? 'Helvetica-Bold' : 'Helvetica')
         .fontSize(grand ? 12 : 9)
         .fillColor(NAVY)

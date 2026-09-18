@@ -47,6 +47,14 @@ export const requireAuth = async (
       });
     }
 
+    if (isDatabaseActive()) {
+      const user = await userRepository.findById(payload.userId);
+      if (user && user.isActive === false) {
+        next(new AppError(403, 'This account has been deactivated.', 'ACCOUNT_INACTIVE'));
+        return;
+      }
+    }
+
     next();
   } catch (error) {
     if (error instanceof AppError) {

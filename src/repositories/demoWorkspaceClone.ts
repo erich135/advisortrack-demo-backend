@@ -325,8 +325,21 @@ async function tableExists(client: PoolClient, table: string): Promise<boolean> 
 }
 
 /**
- * Copies company subscription, billing profile, and invoices into the visitor clone.
- * Invoice numbers are allocated from invoice_number_seq so clones never reuse master numbers.
+ * Copies company subscription, billing profile, invoices, and the enterprise contract
+ * into the visitor clone. Invoice numbers are allocated from invoice_number_seq so
+ * clones never reuse master numbers.
+ *
+ * Reset / clone commercial policy (Task 15):
+ * CLONE from Northstar master: company_subscriptions, company_billing_profiles,
+ *   invoices + current line items, invoice_commercial_details, enterprise_contracts
+ * REGENERATE: invoice numbers (invoice_number_seq), clone-safe emails, demo date plan
+ * RESET EMPTY (do not clone master/visitor transactional history):
+ *   licence_increase_requests, enterprise_contract_seat_changes,
+ *   enterprise_billing_adjustments, enterprise_contract_events,
+ *   demo_outbox_events. Bulk import jobs and member_invitations have no demo tables.
+ * Organisation Admin: Executive rank is the public-demo Organisation Admin proxy —
+ *   organisation_admin_assignments is not cloned because the isolated demo does not
+ *   persist that additive grant table.
  */
 export const cloneCommercialData = async (
   client: PoolClient,
@@ -346,8 +359,8 @@ export const cloneCommercialData = async (
          cs.package_id,
          cs.started_at,
          cs.next_billing_at,
-         cs.vat_registered,
-         cs.vat_rate_percent,
+         FALSE,
+         0,
          (SELECT new_id FROM demo_user_map WHERE old_id = cs.billing_contact_user_id),
          cs.billing_contact_name,
          COALESCE(
@@ -379,7 +392,7 @@ export const cloneCommercialData = async (
        )
        SELECT
          $2, registered_name, trading_name, registration_number,
-         vat_registered, vat_number, vat_rate_percent, billing_contact_name,
+         FALSE, NULL, 0, billing_contact_name,
          COALESCE(
            (SELECT u.email FROM demo_user_map m INNER JOIN users u ON u.id = m.new_id
             INNER JOIN company_subscriptions cs ON cs.billing_contact_user_id = m.old_id
@@ -406,6 +419,142 @@ export const cloneCommercialData = async (
          country = EXCLUDED.country`,
       [templateCompanyId, companyId]
     );
+  }
+
+  if (await tableExists(client, 'enterprise_contracts')) {
+    await client.query(
+      `CREATE TEMP TABLE demo_contract_map (
+         old_id UUID PRIMARY KEY,
+         new_id UUID NOT NULL
+       ) ON COMMIT DROP`
+    );
+    const contractColumns = await tableColumns(client, 'enterprise_contracts');
+    const hasAutoActivate = contractColumns.includes('additional_seats_auto_activate');
+    const contracts = await client.query<{
+      id: string;
+      commercial_status: string;
+      contract_start_date: Date | string | null;
+      contract_end_date: Date | string | null;
+      auto_renew: boolean;
+      committed_licences: number | null;
+      billing_model: string;
+      billing_frequency: string;
+      pricing_basis: string;
+      negotiated_unit_price_cents: number | null;
+      negotiated_fixed_amount_cents: number | null;
+      currency: string;
+      payment_terms_code: string;
+      payment_terms_custom: string | null;
+      po_reference: string | null;
+      billing_contact_name: string | null;
+      billing_email: string | null;
+      billing_notes: string | null;
+      internal_notes: string | null;
+      additional_seat_policy: string;
+      seat_reduction_policy: string;
+      additional_seats_auto_activate?: boolean;
+      created_by_user_id: string;
+    }>(
+      `SELECT id, commercial_status, contract_start_date, contract_end_date, auto_renew,
+              committed_licences, billing_model, billing_frequency, pricing_basis,
+              negotiated_unit_price_cents, negotiated_fixed_amount_cents, currency,
+              payment_terms_code, payment_terms_custom, po_reference,
+              billing_contact_name, billing_email, billing_notes, internal_notes,
+              additional_seat_policy, seat_reduction_policy,
+              ${hasAutoActivate ? 'additional_seats_auto_activate,' : ''}
+              created_by_user_id
+       FROM enterprise_contracts
+       WHERE company_id = $1`,
+      [templateCompanyId]
+    );
+
+    let clonedContracts = 0;
+    for (const contract of contracts.rows) {
+      const createdBy =
+        (
+          await client.query<{ new_id: string }>(`SELECT new_id FROM demo_user_map WHERE old_id = $1`, [
+            contract.created_by_user_id,
+          ])
+        ).rows[0]?.new_id ??
+        (await client.query<{ new_id: string }>(`SELECT new_id FROM demo_user_map LIMIT 1`)).rows[0]?.new_id;
+      if (!createdBy) continue;
+      const inserted = await client.query<{ id: string }>(
+        `INSERT INTO enterprise_contracts (
+           company_id, onboarding_id, commercial_status, contract_start_date, contract_end_date,
+           auto_renew, committed_licences, billing_model, billing_frequency, pricing_basis,
+           negotiated_unit_price_cents, negotiated_fixed_amount_cents, currency,
+           vat_applicable, vat_rate_percent, payment_terms_code, payment_terms_custom,
+           po_reference, billing_contact_name, billing_email, billing_notes, internal_notes,
+           additional_seat_policy, seat_reduction_policy
+           ${hasAutoActivate ? ', additional_seats_auto_activate' : ''},
+           created_by_user_id
+         ) VALUES (
+           $1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+           FALSE, 0, $13, $14, $15, $16, $17, $18, $19, $20, $21
+           ${hasAutoActivate ? ', $23' : ''},
+           $22
+         ) RETURNING id`,
+        [
+          companyId,
+          contract.commercial_status,
+          contract.contract_start_date,
+          contract.contract_end_date,
+          contract.auto_renew,
+          contract.committed_licences,
+          contract.billing_model,
+          contract.billing_frequency,
+          contract.pricing_basis,
+          contract.negotiated_unit_price_cents,
+          contract.negotiated_fixed_amount_cents,
+          contract.currency,
+          contract.payment_terms_code,
+          contract.payment_terms_custom,
+          contract.po_reference,
+          contract.billing_contact_name,
+          contract.billing_email,
+          contract.billing_notes,
+          contract.internal_notes,
+          contract.additional_seat_policy,
+          contract.seat_reduction_policy,
+          createdBy,
+          ...(hasAutoActivate ? [Boolean(contract.additional_seats_auto_activate)] : []),
+        ]
+      );
+      await client.query(`INSERT INTO demo_contract_map (old_id, new_id) VALUES ($1, $2)`, [
+        contract.id,
+        inserted.rows[0].id,
+      ]);
+      clonedContracts += 1;
+    }
+
+    if (clonedContracts === 0) {
+      const createdBy = (await client.query<{ new_id: string }>(`SELECT new_id FROM demo_user_map LIMIT 1`)).rows[0]
+        ?.new_id;
+      if (createdBy) {
+        await client.query(
+          `INSERT INTO enterprise_contracts (
+             company_id, commercial_status, contract_start_date, contract_end_date, auto_renew,
+             committed_licences, billing_model, billing_frequency, pricing_basis,
+             negotiated_unit_price_cents, currency, vat_applicable, vat_rate_percent,
+             payment_terms_code, po_reference, billing_contact_name, billing_email,
+             billing_notes, internal_notes, additional_seat_policy, seat_reduction_policy
+             ${hasAutoActivate ? ', additional_seats_auto_activate' : ''},
+             created_by_user_id
+           ) VALUES (
+             $1, 'active', '2026-09-01', '2027-08-31', TRUE,
+             50, 'annual', 'annual', 'per_seat',
+             7500, 'ZAR', FALSE, 0,
+             'days_30', 'NS-ENT-2026', 'Northstar Finance', 'finance@northstar.demo.invalid',
+             'AdvisorTrack Enterprise annual agreement for Northstar Advisory.',
+             'Demo internal commercial notes. Never return on customer APIs.',
+             'next_invoice', 'renewal_only'
+             ${hasAutoActivate ? ', FALSE' : ''},
+             $2
+           )`,
+          [companyId, createdBy]
+        );
+      }
+    }
   }
 
   if (!(await tableExists(client, 'invoices'))) return;
@@ -521,8 +670,8 @@ export const cloneCommercialData = async (
         invoice.snapshot_registered_name,
         invoice.snapshot_trading_name,
         invoice.snapshot_registration_number,
-        invoice.snapshot_vat_registered,
-        invoice.snapshot_vat_number,
+        false,
+        null,
         invoice.snapshot_billing_contact_name,
         billingEmail,
         invoice.snapshot_telephone,
@@ -534,8 +683,8 @@ export const cloneCommercialData = async (
         invoice.snapshot_plan_slug,
         invoice.snapshot_plan_name,
         invoice.subtotal_cents,
-        invoice.vat_cents,
-        invoice.total_cents,
+        0,
+        invoice.subtotal_cents,
         invoice.paid_at,
         invoice.payment_date,
         invoice.issued_at,
@@ -556,9 +705,34 @@ export const cloneCommercialData = async (
        vat_rate_percent, line_subtotal_cents, line_vat_cents, line_total_cents, is_current
      )
      SELECT map.new_id, li.sort_order, li.description, li.quantity, li.unit_price_cents, li.discount_cents,
-            li.vat_rate_percent, li.line_subtotal_cents, li.line_vat_cents, li.line_total_cents, li.is_current
+            0, li.line_subtotal_cents, 0, li.line_subtotal_cents, li.is_current
      FROM invoice_line_items li
      INNER JOIN demo_invoice_map map ON map.old_id = li.invoice_id
      WHERE li.is_current = TRUE`
   );
+
+  if (await tableExists(client, 'invoice_commercial_details')) {
+    const contractMapExists = (
+      await client.query<{ exists: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1 FROM pg_catalog.pg_class c
+           JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+           WHERE n.nspname LIKE 'pg_temp%' AND c.relname = 'demo_contract_map'
+         ) AS exists`
+      )
+    ).rows[0]?.exists;
+    await client.query(
+      `INSERT INTO invoice_commercial_details (
+         invoice_id, billing_period_start, billing_period_end, customer_reference, source_contract_id
+       )
+       SELECT map.new_id, d.billing_period_start, d.billing_period_end, d.customer_reference,
+              ${
+                contractMapExists
+                  ? `(SELECT new_id FROM demo_contract_map WHERE old_id = d.source_contract_id)`
+                  : 'NULL'
+              }
+       FROM invoice_commercial_details d
+       INNER JOIN demo_invoice_map map ON map.old_id = d.invoice_id`
+    );
+  }
 };

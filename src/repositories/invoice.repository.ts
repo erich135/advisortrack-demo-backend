@@ -620,4 +620,90 @@ export const invoiceRepository = {
     );
     return Number(result.rows[0]?.count ?? 0);
   },
+
+  async insertLifecycleEvent(input: {
+    invoiceId: string;
+    fromStatus: string | null;
+    toStatus: string;
+    actorUserId: string;
+    note?: string | null;
+  }): Promise<void> {
+    await getPool().query(
+      `INSERT INTO invoice_status_events (invoice_id, from_status, to_status, actor_user_id, note)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [input.invoiceId, input.fromStatus, input.toStatus, input.actorUserId, input.note ?? null]
+    );
+  },
+
+  async getCommercialDetails(invoiceId: string): Promise<{
+    billingPeriodStart: string | null;
+    billingPeriodEnd: string | null;
+    customerReference: string | null;
+    sourceContractId: string | null;
+  } | null> {
+    try {
+      const result = await getPool().query<{
+        billing_period_start: Date | string | null;
+        billing_period_end: Date | string | null;
+        customer_reference: string | null;
+        source_contract_id: string | null;
+      }>(
+        `SELECT billing_period_start, billing_period_end, customer_reference, source_contract_id
+         FROM invoice_commercial_details WHERE invoice_id = $1`,
+        [invoiceId]
+      );
+      const row = result.rows[0];
+      if (!row) return null;
+      const dateOnly = (value: Date | string | null): string | null => {
+        if (!value) return null;
+        return typeof value === 'string' ? value.slice(0, 10) : value.toISOString().slice(0, 10);
+      };
+      return {
+        billingPeriodStart: dateOnly(row.billing_period_start),
+        billingPeriodEnd: dateOnly(row.billing_period_end),
+        customerReference: row.customer_reference,
+        sourceContractId: row.source_contract_id,
+      };
+    } catch (error) {
+      if (typeof error === 'object' && error && 'code' in error && (error as { code: string }).code === '42P01') {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  async upsertCommercialDetails(
+    invoiceId: string,
+    input: {
+      billingPeriodStart?: string | null;
+      billingPeriodEnd?: string | null;
+      customerReference?: string | null;
+      sourceContractId?: string | null;
+    }
+  ): Promise<void> {
+    try {
+      await getPool().query(
+        `INSERT INTO invoice_commercial_details (
+           invoice_id, billing_period_start, billing_period_end, customer_reference, source_contract_id
+         ) VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (invoice_id) DO UPDATE SET
+           billing_period_start = EXCLUDED.billing_period_start,
+           billing_period_end = EXCLUDED.billing_period_end,
+           customer_reference = EXCLUDED.customer_reference,
+           source_contract_id = EXCLUDED.source_contract_id`,
+        [
+          invoiceId,
+          input.billingPeriodStart ?? null,
+          input.billingPeriodEnd ?? null,
+          input.customerReference ?? null,
+          input.sourceContractId ?? null,
+        ]
+      );
+    } catch (error) {
+      if (typeof error === 'object' && error && 'code' in error && (error as { code: string }).code === '42P01') {
+        return;
+      }
+      throw error;
+    }
+  },
 };

@@ -28,6 +28,12 @@ export const johannesburgToday = (now = new Date()): string =>
     day: '2-digit',
   }).format(now);
 
+export const addCalendarDays = (isoDate: string, days: number): string => {
+  const [year, month, day] = toDateOnly(isoDate).split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return date.toISOString().slice(0, 10);
+};
+
 export const presentationStatus = (
   status: string,
   dueDate: Date | string,

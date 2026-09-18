@@ -17,7 +17,7 @@ export interface ManagementPipelineResponse {
   cases: ManagementPipelineCase[];
 }
 
-const summarise = (cases: ManagementPipelineCase[]) => {
+export const summariseManagementPipelineCases = (cases: ManagementPipelineCase[]) => {
   const advisorIds = new Set<string>();
   const stageCounts: Record<string, number> = {};
   let totalEstimatedCommission = 0;
@@ -61,7 +61,7 @@ export const managementPipelineService = {
       status: filters.status,
       search: filters.search,
     });
-    const overview = summarise(overviewCases);
+    const overview = summariseManagementPipelineCases(overviewCases);
     const cases = filters.stage
       ? overviewCases.filter((clientCase) => clientCase.currentStage === filters.stage)
       : overviewCases;

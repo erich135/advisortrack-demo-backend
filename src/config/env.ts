@@ -37,7 +37,7 @@ const envSchema = z.object({
   CORS_ORIGINS: z
     .string()
     .default(
-      'http://localhost:5173,http://localhost:8081,http://localhost:19006,http://127.0.0.1:5173'
+      'http://localhost:5173,http://localhost:5174,http://localhost:8081,http://localhost:19006,http://127.0.0.1:5173,http://127.0.0.1:5174'
     ),
   DATABASE_URL: z.string().optional(),
   /** Base64-encoded 32-byte key for AES-256-GCM encryption of contact PII (POPIA). */
@@ -50,6 +50,17 @@ const envSchema = z.object({
   MAIL_FROM_NAME: z.string().default('AdvisorTrack'),
   /** Deep link scheme used in verification / reset emails (matches app.json scheme). */
   APP_DEEP_LINK_SCHEME: z.string().default('advisortrack'),
+  /** AdvisorTrack Assistant runtime model. Default disabled. `xai` uses Grok 4.6. */
+  ASSISTANT_MODEL_PROVIDER: z.enum(['disabled', 'http', 'xai']).default('disabled'),
+  ASSISTANT_MODEL_URL: z.string().optional(),
+  ASSISTANT_MODEL_API_KEY: z.string().optional(),
+  ASSISTANT_MODEL_TIMEOUT_MS: z.coerce.number().int().positive().default(8000),
+  XAI_API_KEY: z.string().optional(),
+  /** Chat Completions base URL. Default global; set US regional later without a code change. */
+  ASSISTANT_MODEL_BASE_URL: z.string().optional(),
+  ASSISTANT_MODEL_NAME: z.string().optional(),
+  ASSISTANT_MODEL_REASONING: z.enum(['low', 'medium', 'high', 'xhigh']).default('medium'),
+  ASSISTANT_MODEL_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().max(4096).default(1536),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -97,5 +108,14 @@ export const env = {
   mailFromEmail: data.MAIL_FROM_EMAIL,
   mailFromName: data.MAIL_FROM_NAME,
   appDeepLinkScheme: data.APP_DEEP_LINK_SCHEME,
+  assistantModelProvider: data.ASSISTANT_MODEL_PROVIDER,
+  assistantModelUrl: data.ASSISTANT_MODEL_URL?.trim() || '',
+  assistantModelApiKey: data.ASSISTANT_MODEL_API_KEY?.trim() || '',
+  assistantModelTimeoutMs: data.ASSISTANT_MODEL_TIMEOUT_MS,
+  xaiApiKey: data.XAI_API_KEY?.trim() || data.ASSISTANT_MODEL_API_KEY?.trim() || '',
+  assistantModelBaseUrl: data.ASSISTANT_MODEL_BASE_URL?.trim() || 'https://api.x.ai/v1',
+  assistantModelName: data.ASSISTANT_MODEL_NAME?.trim() || 'grok-4.6',
+  assistantModelReasoning: data.ASSISTANT_MODEL_REASONING,
+  assistantModelMaxOutputTokens: data.ASSISTANT_MODEL_MAX_OUTPUT_TOKENS,
   isDev: data.NODE_ENV === 'development',
 };

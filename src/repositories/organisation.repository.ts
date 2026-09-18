@@ -870,6 +870,38 @@ export const organisationRepository = {
   },
 
   /**
+   * Active users who still report to this manager. Historical inactive rows are ignored.
+   */
+  async countActiveDirectReports(companyId: string, managerUserId: string): Promise<number> {
+    const result = await getPool().query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count
+       FROM users
+       WHERE company_id = $1
+         AND reports_to_user_id = $2
+         AND is_active = TRUE`,
+      [companyId, managerUserId]
+    );
+    return Number(result.rows[0]?.count ?? 0);
+  },
+
+  /**
+   * Active Executive reporting-rank accounts in a company (demo last-admin overlay).
+   */
+  async countActiveExecutives(companyId: string): Promise<number> {
+    const result = await getPool().query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count
+       FROM users u
+       INNER JOIN company_roles r ON r.id = u.company_role_id
+       WHERE u.company_id = $1
+         AND u.is_active = TRUE
+         AND COALESCE(u.is_platform_admin, FALSE) = FALSE
+         AND r.name = 'Executive'`,
+      [companyId]
+    );
+    return Number(result.rows[0]?.count ?? 0);
+  },
+
+  /**
    * Count of currently licensed (paid, active/trialing) seats in a company.
    */
   async countLicensedSeats(companyId: string): Promise<number> {

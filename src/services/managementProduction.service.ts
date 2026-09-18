@@ -1,5 +1,6 @@
 import { organisationService } from './organisation.service';
 import { productionRepository } from '../repositories/production.repository';
+import { AppError } from '../middleware/errorHandler';
 
 export type ManagementProductionSummary = {
   period: string;
@@ -46,6 +47,26 @@ export const managementProductionService = {
       period: month,
       ...summary.totals,
       entries,
+    };
+  },
+
+  async getRangeSummary(
+    userId: string,
+    startDate: string,
+    endDate: string,
+    memberIds?: string[],
+  ): Promise<ManagementProductionSummary> {
+    const scope = await organisationService.resolveManagementScope(userId);
+    if (memberIds?.length && memberIds.some((id) => !scope.userIds.includes(id))) {
+      throw new AppError(404, 'Member not found', 'NOT_FOUND');
+    }
+    const userIds = memberIds?.length ? memberIds : scope.userIds;
+    const summary = await productionRepository.getManagementRangeSummary(userIds, startDate, endDate);
+    return {
+      period: `${startDate}:${endDate}`,
+      advisorCount: userIds.length,
+      ...summary.totals,
+      advisors: summary.advisors,
     };
   },
 };

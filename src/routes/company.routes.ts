@@ -7,6 +7,9 @@ import {
   createCompanyRegionSchema,
   createCompanyRoleSchema,
   createCompanyTeamSchema,
+  confirmBulkUserImportSchema,
+  previewBulkUserImportSchema,
+  requestLicenceIncreaseSchema,
   updateCompanyMemberSchema,
   updateCompanyRegionSchema,
   updateCompanyRoleSchema,
@@ -14,6 +17,7 @@ import {
 } from '../validators/schemas';
 import { organisationStructureService } from '../services/organisationStructure.service';
 import { companyCustomerPortalService } from '../services/companyCustomerPortal.service';
+import { bulkUserImportService } from '../services/bulkUserImport.service';
 
 /**
  * Company-scoped APIs for the signed-in advisor's organisation.
@@ -111,11 +115,40 @@ export const createCompanyRouter = () => {
     }
   });
 
+  router.post('/members/import/preview', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      const body = previewBulkUserImportSchema.parse(req.body);
+      res.json(ok(await bulkUserImportService.preview(userId, body)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/members/import/confirm', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      const body = confirmBulkUserImportSchema.parse(req.body);
+      res.status(201).json(ok(await bulkUserImportService.confirm(userId, body)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.patch('/members/:memberId', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = asAuthRequest(req);
       const body = updateCompanyMemberSchema.parse(req.body);
       res.json(ok(await organisationService.updateMyMember(userId, String(req.params.memberId), body)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/members/:memberId/deactivate', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      res.json(ok(await organisationService.deactivateCompanyMember(userId, String(req.params.memberId))));
     } catch (error) {
       next(error);
     }
@@ -143,6 +176,34 @@ export const createCompanyRouter = () => {
     try {
       const { userId } = asAuthRequest(req);
       res.json(ok(await organisationService.getLicencePool(userId)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/licence-requests', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      res.json(ok(await organisationService.listLicenceIncreaseRequests(userId)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/licence-requests', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      const body = requestLicenceIncreaseSchema.parse(req.body);
+      res.status(201).json(ok(await organisationService.requestLicenceIncrease(userId, body)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/licence-requests/:requestId/cancel', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      res.json(ok(await organisationService.cancelLicenceIncreaseRequest(userId, String(req.params.requestId))));
     } catch (error) {
       next(error);
     }

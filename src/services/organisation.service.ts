@@ -4,6 +4,7 @@ import {
   canManageRank,
   hasPortalAccess,
   HierarchyRank,
+  invitationChannelForMember,
   isInternalRoleName,
   ManagementScopeKind,
   RANK_LABELS,
@@ -12,7 +13,14 @@ import {
   toHierarchyDto,
 } from '../features/customerHierarchy';
 import { licenceStatusLabel } from '../features/memberLicence';
+import {
+  HIERARCHY_REASSIGNMENT_MESSAGE,
+  HIERARCHY_REASSIGNMENT_REQUIRED,
+  LAST_ORGANISATION_ADMIN,
+  LAST_ORGANISATION_ADMIN_MESSAGE,
+} from '../features/memberOffboarding';
 import { NO_LICENCES_MESSAGE, toLicencePool } from '../features/licencePool';
+import { assertMemberPhone } from '../features/memberPhone';
 import {
   isOrganisationPermissionKey,
   ORGANISATION_PERMISSIONS,
@@ -22,9 +30,10 @@ import {
   MemberRow,
   organisationRepository,
 } from '../repositories/organisation.repository';
-import { isDatabaseActive } from '../config/database';
+import { getPool, isDatabaseActive } from '../config/database';
 import { env } from '../config/env';
 import { userRepository } from '../repositories/user.repository';
+import { licenceIncreaseService } from './licenceIncrease.service';
 import {
   organisationStructureRepository,
   RegionRow,
@@ -263,6 +272,11 @@ export const organisationService = {
       permissions,
     });
 
+    // Public demo: Executive is the Organisation Admin proxy. The isolated demo
+    // does not persist organisation_admin_assignments. This does not widen
+    // reporting scope — hierarchy rank still governs pipeline/reporting.
+    const isOrganisationAdmin = rank === 'executive';
+
     return {
       company: {
         id: membership.company_id,
@@ -277,6 +291,7 @@ export const organisationService = {
       permissions,
       reportsToUserId: membership.reports_to_user_id,
       isPlatformAdmin: env.isDemoMode ? false : membership.is_platform_admin,
+      isOrganisationAdmin,
       hierarchy: toHierarchyDto(rank),
     };
   },
@@ -297,7 +312,9 @@ export const organisationService = {
    */
   async hasPermission(userId: string, key: string): Promise<boolean> {
     const org = await this.getMyOrganisation(userId);
-    return org.isPlatformAdmin || org.permissions.includes(key);
+    if (org.isPlatformAdmin) return true;
+    if (org.isOrganisationAdmin && key === 'manage_members') return true;
+    return org.permissions.includes(key);
   },
 
   /**
@@ -423,6 +440,16 @@ export const organisationService = {
   },
 
   /**
+   * Reporting-line members only. Organisation Admin overlay is ignored.
+   * Empty for Financial Advisors and Organisation Admin without a leadership rank.
+   */
+  async listReportingMembers(userId: string) {
+    const ctx = await this.loadReportingMemberContext(userId);
+    if (!ctx) return [];
+    return ctx.scopedMembers.map((row) => this.toScopedMemberDto(row, ctx, false));
+  },
+
+  /**
    * Returns one member only when that member is visible through the same scope
    * as listMyMembers. A missing or out-of-scope member deliberately returns 404.
    */
@@ -485,8 +512,11 @@ export const organisationService = {
       reportsToUserId?: string | null;
       regionId?: string | null;
       teamId?: string | null;
+      organisationAdmin?: boolean;
+      assignLicence?: boolean;
+      sendInvitation?: boolean;
     },
-    options?: { companyId?: string }
+    options?: { companyId?: string; phoneRequired?: boolean }
   ) {
     await this.assertPermission(userId, 'manage_members');
     const ctx = await this.memberContextFor(userId, options?.companyId);
@@ -494,6 +524,7 @@ export const organisationService = {
       await demoWorkspaceRepository.assertNotTemplateCompany(ctx.scope.company.id);
     }
     const nextRank = await this.assertAssignableRole(ctx, input.roleId);
+    const phone = assertMemberPhone(input.phone, { required: options?.phoneRequired === true });
     const reportsToUserId = await this.resolvePlacementReportsTo(ctx, nextRank, {
       teamId: input.teamId,
       regionId: input.regionId,
@@ -504,6 +535,11 @@ export const organisationService = {
       nextRank,
       reportsToUserId,
     });
+
+    const assignLicence = Boolean(input.assignLicence);
+    const organisationAdmin = Boolean(input.organisationAdmin);
+    const sendInvitation = input.sendInvitation !== false;
+    const invitationChannel = invitationChannelForMember(nextRank, organisationAdmin);
 
     let storedEmail = input.email.trim().toLowerCase();
     if (env.isDemoMode) {
@@ -519,37 +555,53 @@ export const organisationService = {
     }
 
     const passwordHash = await hashPassword(generateSecureToken());
+    let createdId: string | null = null;
     try {
       const created = await organisationRepository.createMember({
         firstName: input.firstName.trim(),
         lastName: input.lastName.trim(),
         email: storedEmail,
-        phone: input.phone?.trim() || null,
+        phone,
         passwordHash,
         profileRole: RANK_LABELS[nextRank],
         companyId: ctx.scope.company.id,
         companyRoleId: input.roleId,
         reportsToUserId,
       });
+      createdId = created.id;
       await subscriptionService.assignDefaultSubscription(created.id);
       let invited = false;
       let demoSimulated = false;
-      if (env.isDemoMode) {
+      if (sendInvitation) {
+        if (env.isDemoMode) {
+          await demoOutboxService.record({
+            companyId: ctx.scope.company.id,
+            actorUserId: userId,
+            action: 'member_invitation',
+            recipient: created.email,
+            payload: { memberId: created.id, kind: 'create', channel: invitationChannel },
+          });
+          invited = true;
+          demoSimulated = true;
+        } else {
+          invited = await sendMemberInvitationEmail({
+            id: created.id,
+            email: created.email,
+            firstName: created.first_name,
+          });
+        }
+      }
+      if (organisationAdmin && env.isDemoMode) {
         await demoOutboxService.record({
           companyId: ctx.scope.company.id,
           actorUserId: userId,
-          action: 'member_invitation',
+          action: 'organisation_admin_grant',
           recipient: created.email,
-          payload: { memberId: created.id, kind: 'create' },
+          payload: { memberId: created.id, simulated: true },
         });
-        invited = true;
-        demoSimulated = true;
-      } else {
-        invited = await sendMemberInvitationEmail({
-          id: created.id,
-          email: created.email,
-          firstName: created.first_name,
-        });
+      }
+      if (assignLicence) {
+        await this.assignMemberLicence(userId, created.id, options?.companyId);
       }
       await this.applyStructureAssignment(ctx, created.id, nextRank, {
         regionId: input.regionId,
@@ -562,6 +614,10 @@ export const organisationService = {
           email: created.email,
           roleId: input.roleId,
           roleName: RANK_LABELS[nextRank],
+          organisationAdmin,
+          assignLicence,
+          sendInvitation,
+          invitationChannel,
         },
       });
       const reloaded = await this.reloadMemberRow(ctx.scope.company.id, created.id);
@@ -572,9 +628,18 @@ export const organisationService = {
           true
         ),
         invitationSent: invited,
+        invitationRequested: sendInvitation,
+        invitationChannel,
+        organisationAdminGranted: organisationAdmin,
+        licenceAssigned: assignLicence,
         ...(demoSimulated ? demoSimulatedUserCreatedResult(created.email) : {}),
       };
     } catch (error) {
+      if (createdId) {
+        await organisationRepository
+          .updateMember(ctx.scope.company.id, createdId, { isActive: false })
+          .catch(() => undefined);
+      }
       const structureConflict = structureConflictFrom(error);
       if (structureConflict) throw structureConflict;
       if (error instanceof Error && 'code' in error && error.code === '23505') {
@@ -582,6 +647,214 @@ export const organisationService = {
       }
       throw error;
     }
+  },
+
+  /**
+   * Deactivates a company member without deleting history.
+   * Returns an assigned company licence to the available pool when one is consumed.
+   */
+  async deactivateCompanyMember(
+    userId: string,
+    memberId: string,
+    options?: { companyId?: string }
+  ) {
+    await this.assertPermission(userId, 'manage_members');
+    const ctx = await this.memberContextFor(userId, options?.companyId);
+    if (env.isDemoMode) {
+      await demoWorkspaceRepository.assertNotTemplateCompany(ctx.scope.company.id);
+    }
+    const companyId = ctx.scope.company.id;
+    if (memberId === userId) {
+      const selfRow = ctx.companyMembers.find((row) => row.id === userId);
+      if (selfRow?.is_active) {
+        const selfPermissions = ctx.permissionsByRole.get(selfRow.company_role_id ?? '') ?? [];
+        if (rankForMemberRow(selfRow, selfPermissions) === 'executive') {
+          const executives = await organisationRepository.countActiveExecutives(companyId);
+          if (executives <= 1) {
+            throw new AppError(409, LAST_ORGANISATION_ADMIN_MESSAGE, LAST_ORGANISATION_ADMIN);
+          }
+        }
+      }
+    }
+    const target = this.requireMutableMember(ctx, userId, memberId);
+    const licensed = licenceStatusLabel(target.package_slug, target.subscription_status) === 'Licensed';
+    const alreadyInactive = !target.is_active;
+    const targetPermissions = ctx.permissionsByRole.get(target.company_role_id ?? '') ?? [];
+    const targetRank = rankForMemberRow(target, targetPermissions);
+
+    if (target.is_active) {
+      if (targetRank === 'executive') {
+        const executives = await organisationRepository.countActiveExecutives(companyId);
+        if (executives <= 1) {
+          throw new AppError(409, LAST_ORGANISATION_ADMIN_MESSAGE, LAST_ORGANISATION_ADMIN);
+        }
+      }
+      const [ledTeam, managedRegion, activeReports] = await Promise.all([
+        organisationStructureRepository.findActiveTeamByLeader(companyId, memberId),
+        organisationStructureRepository.findActiveRegionByManager(companyId, memberId),
+        organisationRepository.countActiveDirectReports(companyId, memberId),
+      ]);
+      if (ledTeam || managedRegion || activeReports > 0) {
+        throw new AppError(409, HIERARCHY_REASSIGNMENT_MESSAGE, HIERARCHY_REASSIGNMENT_REQUIRED, {
+          teamId: ledTeam?.id ?? null,
+          teamName: ledTeam?.name ?? null,
+          regionId: managedRegion?.id ?? null,
+          regionName: managedRegion?.name ?? null,
+          activeDirectReports: activeReports,
+        });
+      }
+    }
+
+    const client = await getPool().connect();
+    let licenceReturned = false;
+    let organisationAdminRevoked = false;
+    let invitationRevoked = false;
+    try {
+      await client.query('BEGIN');
+      const locked = await client.query<{ id: string; is_active: boolean; company_id: string }>(
+        `SELECT id, is_active, company_id FROM users WHERE id = $1 AND company_id = $2 FOR UPDATE`,
+        [memberId, companyId]
+      );
+      if (!locked.rows[0]) {
+        await client.query('ROLLBACK');
+        throw new AppError(404, 'Member not found', 'NOT_FOUND');
+      }
+
+      if (locked.rows[0].is_active) {
+        await client.query(
+          `UPDATE users SET is_active = FALSE, updated_at = NOW() WHERE id = $1 AND company_id = $2`,
+          [memberId, companyId]
+        );
+      }
+
+      if (licensed) {
+        const free = await subscriptionRepository.findPackageBySlug('free');
+        if (!free) {
+          await client.query('ROLLBACK');
+          throw new AppError(500, 'Free package not configured', 'SUBSCRIPTION_ERROR');
+        }
+        await client.query(
+          `INSERT INTO user_subscriptions (
+             user_id, package_id, status, trial_ends_at, current_period_end
+           )
+           VALUES ($1, $2, 'active', NULL, NULL)
+           ON CONFLICT (user_id) DO UPDATE SET
+             package_id = EXCLUDED.package_id,
+             status = EXCLUDED.status,
+             trial_ends_at = EXCLUDED.trial_ends_at,
+             current_period_end = EXCLUDED.current_period_end,
+             updated_at = NOW()`,
+          [memberId, free.id]
+        );
+        licenceReturned = true;
+      }
+
+      await client.query(
+        `UPDATE password_reset_tokens SET used_at = COALESCE(used_at, NOW())
+         WHERE user_id = $1 AND used_at IS NULL`,
+        [memberId]
+      );
+
+      await client.query('SAVEPOINT invitation_revoke');
+      try {
+        const invitations = await client.query<{ id: string; status: string; channel: string }>(
+          `SELECT id, status, channel FROM member_invitations
+           WHERE company_id = $1 AND user_id = $2
+             AND status NOT IN ('revoked', 'accepted')
+           FOR UPDATE`,
+          [companyId, memberId]
+        );
+        for (const invitation of invitations.rows) {
+          await client.query(
+            `UPDATE member_invitations
+             SET status = 'revoked', revoked_at = COALESCE(revoked_at, NOW()), updated_at = NOW()
+             WHERE id = $1`,
+            [invitation.id]
+          );
+          await client.query(
+            `INSERT INTO member_invitation_events (
+               invitation_id, company_id, user_id, from_status, to_status, channel, actor_user_id, reason
+             ) VALUES ($1, $2, $3, $4, 'revoked', $5, $6, 'Account deactivated')`,
+            [invitation.id, companyId, memberId, invitation.status, invitation.channel, userId]
+          );
+          invitationRevoked = true;
+        }
+      } catch (error) {
+        await client.query('ROLLBACK TO SAVEPOINT invitation_revoke');
+        if (!(typeof error === 'object' && error && 'code' in error && (error as { code: string }).code === '42P01')) {
+          throw error;
+        }
+      }
+
+      if (!alreadyInactive) {
+        await client.query(
+          `INSERT INTO popia_audit_log (user_id, action, resource_type, resource_count, metadata)
+           VALUES ($1, 'user_deactivated', 'user', 1, $2::jsonb)`,
+          [
+            userId,
+            JSON.stringify({
+              companyId,
+              targetUserId: memberId,
+              previousValue: 'Active',
+              newValue: 'Inactive',
+              licenceReturned,
+              previousLicenceState: licensed ? 'Licensed' : 'Unlicensed',
+              organisationAdminRevoked,
+              invitationRevoked,
+              hierarchyAction: 'none',
+            }),
+          ]
+        );
+      }
+      if (licenceReturned) {
+        await client.query(
+          `INSERT INTO popia_audit_log (user_id, action, resource_type, resource_count, metadata)
+           VALUES ($1, 'licence_removed', 'licence', 1, $2::jsonb)`,
+          [
+            userId,
+            JSON.stringify({
+              companyId,
+              targetUserId: memberId,
+              previousValue: 'Licensed',
+              newValue: 'Unlicensed',
+              reason: 'account_deactivated',
+            }),
+          ]
+        );
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    if (env.isDemoMode) {
+      await demoOutboxService
+        .record({
+          companyId,
+          actorUserId: userId,
+          action: 'member_deactivated',
+          recipient: target.email,
+          payload: { memberId, licenceReturned },
+        })
+        .catch(() => undefined);
+    }
+
+    const reloaded = await this.reloadMemberRow(companyId, memberId);
+    const nextCtx = await this.memberContextFor(userId, options?.companyId);
+    const assigned = await organisationRepository.countLicensedSeats(companyId);
+    return {
+      member: this.toScopedMemberDto(reloaded, nextCtx, true),
+      licencePool: toLicencePool(nextCtx.scope.company.seatLimit, assigned),
+      licenceReturned,
+      organisationAdminRevoked,
+      invitationRevoked,
+      alreadyInactive,
+      hierarchyAction: 'none' as const,
+    };
   },
 
   /**
@@ -609,6 +882,11 @@ export const organisationService = {
       await demoWorkspaceRepository.assertNotTemplateCompany(ctx.scope.company.id);
     }
     const target = this.requireMutableMember(ctx, userId, memberId);
+
+    if (input.isActive === false) {
+      const offboarded = await this.deactivateCompanyMember(userId, memberId, options);
+      return offboarded.member;
+    }
 
     const emailInput = env.isDemoMode ? undefined : input.email;
 
@@ -684,13 +962,6 @@ export const organisationService = {
         companyId: ctx.scope.company.id,
         targetUserId: memberId,
       };
-      if (input.isActive === false && target.is_active) {
-        await organisationRepository.recordAuditEvent(userId, 'user_deactivated', 'user', {
-          ...auditBase,
-          previousValue: 'Active',
-          newValue: 'Inactive',
-        });
-      }
       if (
         (input.firstName !== undefined && input.firstName.trim() !== target.first_name) ||
         (input.lastName !== undefined && input.lastName.trim() !== target.last_name) ||
@@ -812,6 +1083,39 @@ export const organisationService = {
     });
     const reloaded = await this.reloadMemberRow(ctx.scope.company.id, memberId);
     return this.toScopedMemberDto(reloaded, await this.memberContextFor(userId, companyId), true);
+  },
+
+  /**
+   * Queues a customer licence-increase request. Does not change purchased seats
+   * unless the contract explicitly allows automatic activation.
+   */
+  async requestLicenceIncrease(
+    userId: string,
+    input: { additional: number; notes?: string | null }
+  ) {
+    await this.assertPermission(userId, 'manage_members');
+    const ctx = await this.loadMemberContext(userId);
+    if (env.isDemoMode) {
+      await demoWorkspaceRepository.assertNotTemplateCompany(ctx.scope.company.id);
+    }
+    return licenceIncreaseService.submitForCompany({
+      companyId: ctx.scope.company.id,
+      userId,
+      additional: input.additional,
+      notes: input.notes ?? null,
+    });
+  },
+
+  async listLicenceIncreaseRequests(userId: string) {
+    await this.assertPermission(userId, 'manage_members');
+    const ctx = await this.loadMemberContext(userId);
+    return licenceIncreaseService.contextForCompany(ctx.scope.company.id);
+  },
+
+  async cancelLicenceIncreaseRequest(userId: string, requestId: string) {
+    await this.assertPermission(userId, 'manage_members');
+    const ctx = await this.loadMemberContext(userId);
+    return licenceIncreaseService.cancelForCompany(userId, ctx.scope.company.id, requestId);
   },
 
   /**
@@ -1028,6 +1332,20 @@ export const organisationService = {
       organisationStructureRepository.listTeams(scope.company.id),
     ]);
     return { actorUserId: userId, scope, companyMembers, scopedMembers, permissionsByRole, regions, teams };
+  },
+
+  /**
+   * Reporting-line members only. Returns null when the caller has no leadership portal access.
+   */
+  async loadReportingMemberContext(userId: string): Promise<MemberContext | null> {
+    try {
+      return await this.loadMemberContext(userId);
+    } catch (error) {
+      if (error instanceof AppError && (error.statusCode === 403 || error.statusCode === 404)) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   /**

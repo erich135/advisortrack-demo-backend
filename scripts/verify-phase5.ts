@@ -69,6 +69,14 @@ async function runIntegrationTests(): Promise<void> {
   const passwordHash = await hashPassword('Phase5Test!1');
 
   await pool.query(
+    `DELETE FROM demo_outbox_events
+     WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[]))
+        OR actor_user_id IN (SELECT id FROM users WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[])))`,
+    [[slug, otherSlug]]
+  ).catch((error: { code?: string }) => {
+    if (error.code !== '42P01') throw error;
+  });
+  await pool.query(
     `DELETE FROM users WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[]))`,
     [[slug, otherSlug]]
   );
@@ -213,8 +221,9 @@ async function runIntegrationTests(): Promise<void> {
     await organisationService.assignMemberLicence(execId, faA1);
     await organisationService.updateMyMember(execId, faA1, { isActive: false });
     licencePool = await organisationService.getLicencePool(execId);
-    assert(licencePool.assigned === 3, 'deactivated user still consumes an assigned licence until it is removed');
-    const inactive = await organisationService.removeMemberLicence(execId, faA1);
+    assert(licencePool.purchased === 3, 'purchased seats do not change on deactivation');
+    assert(licencePool.assigned === 2 && licencePool.available === 1, 'deactivated licensed user returns a licence to the pool');
+    const inactive = await organisationService.getMyMember(execId, faA1);
     assert(inactive.licenceStatus === 'Unlicensed' && inactive.accountStatus === 'Inactive', 'deactivated/unlicensed state behaves correctly');
 
     const audit = await pool.query<{ action: string }>(
@@ -237,6 +246,14 @@ async function runIntegrationTests(): Promise<void> {
       `DELETE FROM contacts WHERE user_id IN (SELECT id FROM users WHERE company_id = ANY($1::uuid[]))`,
       [[companyId, otherCompanyId]]
     );
+    await pool.query(
+      `DELETE FROM demo_outbox_events
+       WHERE company_id = ANY($1::uuid[])
+          OR actor_user_id IN (SELECT id FROM users WHERE company_id = ANY($1::uuid[]))`,
+      [[companyId, otherCompanyId]]
+    ).catch((error: { code?: string }) => {
+      if (error.code !== '42P01') throw error;
+    });
     await pool.query(`DELETE FROM users WHERE company_id = ANY($1::uuid[])`, [[companyId, otherCompanyId]]);
     await pool.query(`DELETE FROM companies WHERE id = ANY($1::uuid[])`, [[companyId, otherCompanyId]]);
   }

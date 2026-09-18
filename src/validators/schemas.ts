@@ -421,7 +421,7 @@ const invoiceLineSchema = z
   .object({
     description: z.string().trim().min(1).max(500),
     quantity: z.union([z.string(), z.number()]),
-    unitPriceCents: z.number().int().nonnegative().optional(),
+    unitPriceCents: z.number().int().optional(),
     unitPrice: z.union([z.string(), z.number()]).optional(),
     discountCents: z.number().int().nonnegative().optional(),
     discount: z.union([z.string(), z.number()]).optional(),
@@ -469,6 +469,13 @@ export const createInvoiceSchema = z.object({
   paymentTerms: z.string().max(4000).nullable().optional(),
   billing: billingSnapshotSchema.optional(),
   saveBillingProfile: z.boolean().optional(),
+  fromContract: z.boolean().optional(),
+  billingPeriodStart: isoDateSchema.nullable().optional(),
+  billingPeriodEnd: isoDateSchema.nullable().optional(),
+  customerReference: z.string().max(64).nullable().optional(),
+  sourceContractId: z.string().uuid().nullable().optional(),
+  attachBillingAdjustmentIds: z.array(z.string().uuid()).optional(),
+  attachPendingAdjustments: z.boolean().optional(),
   lines: z.array(invoiceLineSchema).min(1),
   ...invoiceTotalsClaimSchema,
 });
@@ -482,6 +489,10 @@ export const updateDraftInvoiceSchema = z
     paymentTerms: z.string().max(4000).nullable().optional(),
     billing: billingSnapshotSchema.optional(),
     saveBillingProfile: z.boolean().optional(),
+    billingPeriodStart: isoDateSchema.nullable().optional(),
+    billingPeriodEnd: isoDateSchema.nullable().optional(),
+    customerReference: z.string().max(64).nullable().optional(),
+    sourceContractId: z.string().uuid().nullable().optional(),
     lines: z.array(invoiceLineSchema).min(1).optional(),
     ...invoiceTotalsClaimSchema,
   })
@@ -543,6 +554,43 @@ export const createCompanyMemberSchema = z.object({
   reportsToUserId: z.string().uuid().nullable().optional(),
   regionId: z.string().uuid().nullable().optional(),
   teamId: z.string().uuid().nullable().optional(),
+  organisationAdmin: z.boolean().optional(),
+  assignLicence: z.boolean().optional(),
+  sendInvitation: z.boolean().optional(),
+});
+
+const bulkImportRowSchema = z.object({
+  rowNumber: z.number().int().positive(),
+  first_name: z.string().max(200).optional().default(''),
+  last_name: z.string().max(200).optional().default(''),
+  email: z.string().max(320).optional().default(''),
+  mobile: z.string().max(60).optional().default(''),
+  role: z.string().max(200).optional().default(''),
+  region: z.string().max(200).optional().default(''),
+  team: z.string().max(200).optional().default(''),
+  organisation_admin: z.string().max(40).optional().default(''),
+  assign_licence: z.string().max(40).optional().default(''),
+  send_invitation: z.string().max(40).optional().default(''),
+  hasFormula: z.boolean().optional(),
+});
+
+export const previewBulkUserImportSchema = z.object({
+  fileName: z.string().max(260).optional().nullable(),
+  rows: z.array(bulkImportRowSchema).min(1).max(5000),
+});
+
+export const confirmBulkUserImportSchema = previewBulkUserImportSchema.extend({
+  fingerprint: z.string().min(16).max(128),
+});
+
+export const requestLicenceIncreaseSchema = z.object({
+  additional: z.number().int().positive(),
+  notes: z.string().max(2000).optional().nullable(),
+});
+
+export const reviewLicenceIncreaseSchema = z.object({
+  notes: z.string().max(4000).optional().nullable(),
+  amountCents: z.number().int().nonnegative().optional().nullable(),
 });
 
 export const createCompanyRegionSchema = z.object({

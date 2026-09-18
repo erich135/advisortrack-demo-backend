@@ -766,7 +766,7 @@ async function runDemoHttpChecks(baseUrl: string, databaseUrl?: string): Promise
       const template = await client.query<{ company_id: string; status: string; seed_version: number }>(
         `SELECT company_id, status, seed_version FROM demo_workspace_templates WHERE status = 'active'`
       );
-      assert(template.rows[0]?.seed_version >= 14, 'active template is the Phase 14 Northstar master');
+      assert(template.rows[0]?.seed_version >= 15, 'active template is the Task 15 Northstar master');
       const templateUsers = await client.query<{ n: number }>(
         `SELECT COUNT(*)::int AS n FROM users WHERE company_id = $1 AND is_active = TRUE`,
         [template.rows[0].company_id]

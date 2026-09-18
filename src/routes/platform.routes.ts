@@ -11,6 +11,7 @@ import { platformSubscriptionsService } from '../services/platformSubscriptions.
 import { platformInvoicesService } from '../services/platformInvoices.service';
 import { platformCustomersService } from '../services/platformCustomers.service';
 import { platformAuditService } from '../services/platformAudit.service';
+import { licenceIncreaseService } from '../services/licenceIncrease.service';
 import {
   adjustPurchasedLicencesSchema,
   companySubscriptionActionSchema,
@@ -19,6 +20,7 @@ import {
   createInvoiceSchema,
   invoiceActionNoteSchema,
   markInvoicePaidSchema,
+  reviewLicenceIncreaseSchema,
   updateCompanyMemberSchema,
   setPurchasedLicencesSchema,
   updateCompanySchema,
@@ -302,6 +304,24 @@ export const createPlatformRouter = () => {
   );
 
   router.post(
+    '/customers/:companyId/members/:memberId/deactivate',
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { userId } = asAuthRequest(req);
+        res.json(
+          ok(
+            await organisationService.deactivateCompanyMember(userId, String(req.params.memberId), {
+              companyId: String(req.params.companyId),
+            })
+          )
+        );
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.post(
     '/customers/:companyId/members/:memberId/licence',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
@@ -394,6 +414,57 @@ export const createPlatformRouter = () => {
     }
   });
 
+  router.get('/companies/:companyId/invoice-prefill', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      const companyId = String(req.params.companyId);
+      if (!uuidPattern.test(companyId)) {
+        throw new AppError(400, 'companyId must be a valid UUID', 'VALIDATION_ERROR');
+      }
+      res.json(ok(await platformInvoicesService.prefillFromContract(userId, companyId)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/licence-requests', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      asAuthRequest(req);
+      res.json(ok(await licenceIncreaseService.listStaff()));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/licence-requests/:requestId', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      asAuthRequest(req);
+      res.json(ok(await licenceIncreaseService.getStaff(String(req.params.requestId))));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/licence-requests/:requestId/approve', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      const body = reviewLicenceIncreaseSchema.parse(req.body ?? {});
+      res.json(ok(await licenceIncreaseService.approve(userId, String(req.params.requestId), body)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/licence-requests/:requestId/reject', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      const body = reviewLicenceIncreaseSchema.parse(req.body ?? {});
+      res.json(ok(await licenceIncreaseService.reject(userId, String(req.params.requestId), body.notes)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get('/invoices', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = asAuthRequest(req);
@@ -443,6 +514,15 @@ export const createPlatformRouter = () => {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${pdf.filename}"`);
       res.send(pdf.buffer);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/invoices/:invoiceId/issue', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      res.json(ok(await platformInvoicesService.issue(userId, String(req.params.invoiceId))));
     } catch (error) {
       next(error);
     }

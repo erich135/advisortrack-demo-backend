@@ -16,7 +16,7 @@ import {
   randToCents,
   roundHalfAwayFromZero,
 } from '../src/features/invoiceMoney';
-import { presentationStatus } from '../src/features/invoiceLifecycle';
+import { addCalendarDays, johannesburgToday, presentationStatus } from '../src/features/invoiceLifecycle';
 import { AppError } from '../src/middleware/errorHandler';
 import { invoiceRepository } from '../src/repositories/invoice.repository';
 import { organisationRepository } from '../src/repositories/organisation.repository';
@@ -135,10 +135,25 @@ async function cleanupCompanies(slugs: string[]): Promise<void> {
     [slugs]
   );
   await pool.query(
+    `DELETE FROM demo_outbox_events
+     WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[]))
+        OR actor_user_id IN (SELECT id FROM users WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[])))`,
+    [slugs]
+  ).catch((error: { code?: string }) => {
+    if (error.code !== '42P01') throw error;
+  });
+  await pool.query(
     `DELETE FROM invoice_status_events
      WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[])))`,
     [slugs]
   );
+  await pool.query(
+    `DELETE FROM invoice_commercial_details
+     WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[])))`,
+    [slugs]
+  ).catch((error: { code?: string }) => {
+    if (error.code !== '42P01') throw error;
+  });
   await pool.query(
     `DELETE FROM invoice_line_items
      WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[])))`,
@@ -286,10 +301,14 @@ async function runIntegrationTests(): Promise<void> {
     assert(billing.vatRegistered === false, 'non-VAT customer billing profile is not VAT registered');
     assert(billing.vatNumber == null, 'non-VAT customer does not require a VAT number');
 
+    const invoiceDate = johannesburgToday();
+    const dueDate = addCalendarDays(invoiceDate, 30);
+    const paymentDate = invoiceDate;
+
     const nonVatInvoice = await platformInvoicesService.create(adminId, {
       companyId,
-      invoiceDate: '2026-08-01',
-      dueDate: '2026-08-31',
+      invoiceDate,
+      dueDate,
       poReference: 'PO-7',
       notes: 'Net 30',
       paymentTerms: 'Payment due within 30 days.',
@@ -336,8 +355,8 @@ async function runIntegrationTests(): Promise<void> {
     await expectAppError('TOTALS_MISMATCH', 400, () =>
       platformInvoicesService.create(adminId, {
         companyId,
-        invoiceDate: '2026-08-01',
-        dueDate: '2026-08-31',
+        invoiceDate,
+        dueDate,
         billing: {
           registeredName: 'Phase 7 Verify Co',
           vatRegistered: false,
@@ -413,8 +432,8 @@ async function runIntegrationTests(): Promise<void> {
     assert(!pdfText.includes('Phase 7 Renamed Co'), 'PDF does not use the current company name');
     assert(!pdfText.includes('99 Changed Road'), 'PDF does not use later billing address');
 
-    const paid = await platformInvoicesService.markPaid(adminId, issued.id, '2026-08-15');
-    assert(paid.status === 'paid' && paid.paymentDate === '2026-08-15', 'mark paid stores the payment date');
+    const paid = await platformInvoicesService.markPaid(adminId, issued.id, paymentDate);
+    assert(paid.status === 'paid' && paid.paymentDate === paymentDate, 'mark paid stores the payment date');
     const paidRow = await invoiceRepository.findInvoice(issued.id);
     assert(paidRow?.status === 'paid' && paidRow.payment_date != null, 'paid invoice remains stored');
 
@@ -485,7 +504,7 @@ async function runIntegrationTests(): Promise<void> {
       lines: [{ description: 'VAT draft', quantity: '1', unitPriceCents: 10000, vatRatePercent: '15' }],
     });
     const vatSent = await platformInvoicesService.send(adminId, vatIssued.id);
-    assert(vatSent.vatCents === 1500 && vatSent.totalCents === 11500, 'VAT calculation on issued VAT invoice');
+    assert(vatSent.vatCents === 0 && vatSent.totalCents === 10000, 'AdvisorTrack does not charge VAT while unregistered');
 
     const otherInvoice = await platformInvoicesService.create(adminId, {
       companyId: otherCompanyId,
@@ -545,8 +564,8 @@ async function runIntegrationTests(): Promise<void> {
 
     const faCreate = await apiRequest(baseUrl, 'POST', '/api/v1/platform/invoices', faToken, {
       companyId,
-      invoiceDate: '2026-08-01',
-      dueDate: '2026-08-31',
+      invoiceDate,
+      dueDate,
       lines: [{ description: 'Nope', quantity: '1', unitPriceCents: 100 }],
     });
     assert(faCreate.status === 403 && faCreate.code === 'FORBIDDEN', 'customer role cannot create invoices');

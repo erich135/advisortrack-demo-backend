@@ -1,0 +1,2265 @@
+{
+  "version": "a2-foundation",
+  "categories": [
+    {
+      "id": "getting-started",
+      "label": "Getting Started",
+      "environment": "both",
+      "description": "Portal versus Android, who signs in where, and account activation."
+    },
+    {
+      "id": "people-access",
+      "label": "People & Access",
+      "environment": "both",
+      "description": "Users, roles, Organisation Admin, invitations, offboarding, and Bulk Import."
+    },
+    {
+      "id": "licences-capacity",
+      "label": "Licences & Capacity",
+      "environment": "both",
+      "description": "Purchased, Assigned, and Available licences, assignment, and additional licences."
+    },
+    {
+      "id": "organisation-structure",
+      "label": "Organisation Structure",
+      "environment": "both",
+      "description": "Regions, Teams, and reporting-line relationships."
+    },
+    {
+      "id": "reporting-performance",
+      "label": "Reporting & Performance",
+      "environment": "both",
+      "description": "Dashboard, Team Pipeline, Advisors, Production, and Performance visibility."
+    },
+    {
+      "id": "commercial",
+      "label": "Commercial",
+      "environment": "both",
+      "description": "Subscription, invoices, and AdvisorTrack VAT treatment."
+    },
+    {
+      "id": "troubleshooting",
+      "label": "Troubleshooting",
+      "environment": "both",
+      "description": "Why a page or action is unavailable, and who can help."
+    },
+    {
+      "id": "glossary",
+      "label": "Glossary",
+      "environment": "both",
+      "description": "Meanings of licences, roles, and portal terms."
+    },
+    {
+      "id": "demo-tips",
+      "label": "Demo Tips",
+      "environment": "demo",
+      "description": "Public-demo chrome: Reset Demo, Viewing as, simulated side effects, Demo badge."
+    }
+  ],
+  "homeTopics": [
+    {
+      "id": "people-access",
+      "label": "People & Access",
+      "categoryId": "people-access",
+      "environment": "both"
+    },
+    {
+      "id": "licences-capacity",
+      "label": "Licences & Capacity",
+      "categoryId": "licences-capacity",
+      "environment": "both"
+    },
+    {
+      "id": "bulk-import",
+      "label": "Bulk Import",
+      "categoryId": "people-access",
+      "environment": "both",
+      "routeIds": [
+        "bulk-import"
+      ]
+    },
+    {
+      "id": "organisation-structure",
+      "label": "Organisation Structure",
+      "categoryId": "organisation-structure",
+      "environment": "both"
+    },
+    {
+      "id": "reporting-performance",
+      "label": "Reporting & Performance",
+      "categoryId": "reporting-performance",
+      "environment": "both"
+    },
+    {
+      "id": "commercial",
+      "label": "Commercial",
+      "categoryId": "commercial",
+      "environment": "both"
+    },
+    {
+      "id": "troubleshooting",
+      "label": "Troubleshooting",
+      "categoryId": "troubleshooting",
+      "environment": "both"
+    },
+    {
+      "id": "getting-started",
+      "label": "Getting Started",
+      "categoryId": "getting-started",
+      "environment": "both"
+    },
+    {
+      "id": "demo-tips",
+      "label": "Demo Tips",
+      "categoryId": "demo-tips",
+      "environment": "demo"
+    }
+  ],
+  "routes": [
+    {
+      "routeId": "activate",
+      "path": "/activate",
+      "label": "Set up your AdvisorTrack portal account",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": null
+    },
+    {
+      "routeId": "dashboard",
+      "path": "/",
+      "label": "Dashboard",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewDashboard"
+    },
+    {
+      "routeId": "team-pipeline",
+      "path": "/team-pipeline",
+      "label": "Team Pipeline",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewPipeline"
+    },
+    {
+      "routeId": "advisors",
+      "path": "/advisors",
+      "label": "Advisors",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisors"
+    },
+    {
+      "routeId": "advisor-detail",
+      "path": "/advisors/:id",
+      "label": "Advisor details",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisors"
+    },
+    {
+      "routeId": "production",
+      "path": "/production",
+      "label": "Production",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewProduction"
+    },
+    {
+      "routeId": "users",
+      "path": "/users",
+      "label": "Users & Access",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewUsers"
+    },
+    {
+      "routeId": "users-regions",
+      "path": "/users?tab=regions",
+      "label": "Regions & Teams",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewRegionsTeams"
+    },
+    {
+      "routeId": "users-teams",
+      "path": "/users?tab=teams",
+      "label": "Teams",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewRegionsTeams"
+    },
+    {
+      "routeId": "licences",
+      "path": "/licences",
+      "label": "Licences",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewLicences"
+    },
+    {
+      "routeId": "bulk-import",
+      "path": "/bulk-import",
+      "label": "Bulk Import",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canBulkImport"
+    },
+    {
+      "routeId": "settings",
+      "path": "/settings",
+      "label": "Settings & Roles",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewSettings"
+    },
+    {
+      "routeId": "subscription",
+      "path": "/subscription",
+      "label": "Subscription",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewSubscription"
+    },
+    {
+      "routeId": "invoices",
+      "path": "/invoices",
+      "label": "Invoices",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewInvoices"
+    },
+    {
+      "routeId": "performance",
+      "path": "/performance",
+      "label": "Performance",
+      "environment": "both",
+      "classification": "internal",
+      "demoLabel": "Performance",
+      "classificationProduction": "internal",
+      "classificationDemo": "customer",
+      "productionCapability": "isPlatformStaff",
+      "demoCapability": "canViewPerformance"
+    },
+    {
+      "routeId": "audit",
+      "path": "/audit",
+      "label": "Audit",
+      "environment": "both",
+      "classification": "internal",
+      "demoLabel": "Audit",
+      "classificationProduction": "internal",
+      "classificationDemo": "customer",
+      "productionCapability": "isPlatformStaff",
+      "demoCapability": "canViewAudit"
+    },
+    {
+      "routeId": "companies",
+      "path": "/companies",
+      "label": "Companies",
+      "environment": "both",
+      "classification": "internal",
+      "demoLabel": "Company Details",
+      "classificationProduction": "internal",
+      "classificationDemo": "customer",
+      "productionCapability": "isPlatformStaff",
+      "demoCapability": "canViewSettings"
+    },
+    {
+      "routeId": "company-account",
+      "path": "/companies/:companyId",
+      "label": "Customer account",
+      "environment": "both",
+      "classification": "internal",
+      "classificationProduction": "internal",
+      "classificationDemo": "internal",
+      "productionCapability": "isPlatformStaff"
+    },
+    {
+      "routeId": "subscriptions-platform",
+      "path": "/subscriptions",
+      "label": "Subscriptions",
+      "environment": "both",
+      "classification": "internal",
+      "classificationProduction": "internal",
+      "classificationDemo": "internal",
+      "productionCapability": "isPlatformStaff",
+      "demoCapability": "canViewSettings"
+    },
+    {
+      "routeId": "support",
+      "path": "/support",
+      "label": "Support",
+      "environment": "both",
+      "classification": "internal",
+      "classificationProduction": "internal",
+      "classificationDemo": "internal",
+      "productionCapability": "isPlatformStaff"
+    },
+    {
+      "routeId": "enterprise-customers",
+      "path": "/enterprise-customers",
+      "label": "Enterprise Customers",
+      "environment": "production",
+      "classification": "internal",
+      "classificationProduction": "internal",
+      "classificationDemo": "internal",
+      "productionCapability": "isPlatformStaff"
+    },
+    {
+      "routeId": "enterprise-customer-onboarding",
+      "path": "/enterprise-customers/:onboardingId",
+      "label": "Enterprise customer onboarding",
+      "environment": "production",
+      "classification": "internal",
+      "classificationProduction": "internal",
+      "classificationDemo": "internal",
+      "productionCapability": "isPlatformStaff"
+    },
+    {
+      "routeId": "licence-requests",
+      "path": "/licence-requests",
+      "label": "Licence Requests",
+      "environment": "production",
+      "classification": "internal",
+      "classificationProduction": "internal",
+      "classificationDemo": "internal",
+      "productionCapability": "isPlatformStaff"
+    },
+    {
+      "routeId": "engineering-changelog",
+      "path": "/engineering/changelog",
+      "label": "Change Log",
+      "environment": "production",
+      "classification": "internal",
+      "classificationProduction": "internal",
+      "classificationDemo": "internal",
+      "productionCapability": "canAccessEngineeringChangelog"
+    },
+    {
+      "routeId": "team-pipeline-demo",
+      "path": "/team-pipeline-demo",
+      "label": "Team Pipeline",
+      "environment": "production",
+      "classification": "internal",
+      "classificationProduction": "internal",
+      "classificationDemo": "internal",
+      "productionCapability": null
+    }
+  ],
+  "rules": [
+    {
+      "id": "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY",
+      "title": "Financial Advisors do advisor work in Android",
+      "statement": "Financial Advisors perform their advisor work in the Android app. A Financial Advisor who also holds Organisation Administrator permission may use the Management Portal only for the organisation/account administration functions that permission grants; it does not grant leadership reporting scope. Ordinary Financial Advisors do not use Team Pipeline, Advisors, Production, or Performance in the portal."
+    },
+    {
+      "id": "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK",
+      "title": "Organisation Admin is not a reporting rank",
+      "statement": "Organisation Administrator is not a reporting rank. It is a company-scoped grant stored separately from Executive, Regional Manager, Team Leader, and Financial Advisor, and it is not users.role. It does not replace hierarchy-controlled reporting scope."
+    },
+    {
+      "id": "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED",
+      "title": "Reporting scope remains hierarchy-controlled",
+      "statement": "Visibility and writes are resolved server-side from reporting lines: Executive → Regional Manager → Team Leader → Financial Advisor. Clients must not supply authorised user IDs. Organisation Admin does not expand reporting scope to the whole company for pipeline or production."
+    },
+    {
+      "id": "RULE.LICENCE.POOL_IS_PURCHASED_MINUS_ASSIGNED",
+      "title": "Purchased / Assigned / Available licence meaning",
+      "statement": "Purchased is the company’s operational seat pool (companies.seat_limit). Assigned is the number of currently licensed members. Available is Purchased minus Assigned, or Unlimited when Purchased is unlimited. Assigning a licence consumes Available. Removing a licence returns it to Available. Purchased does not change when a licence is assigned or removed."
+    },
+    {
+      "id": "RULE.LICENCE.REQUEST_NEEDS_CONFIRMATION",
+      "title": "Additional licence requests need AdvisorTrack confirmation",
+      "statement": "Customers request extra licences from Licences. The request does not increase Purchased until AdvisorTrack confirms it according to the company’s contract workflow. Do not tell customers to use the internal Licence Requests queue."
+    },
+    {
+      "id": "RULE.DATA.NO_HARD_DELETE",
+      "title": "No hard deletion of business history",
+      "statement": "AdvisorTrack does not hard-delete customer business records as a cleanup strategy. Use deactivate, revoke, expire, archive, or supersede. Removing a licence or deactivating a user retains advisor data."
+    },
+    {
+      "id": "RULE.BILLING.INVOICE_NUMBERING_FROM_INV100000",
+      "title": "Invoice numbers start at INV100000",
+      "statement": "AdvisorTrack invoice numbers are INV100000 and increment by one. They are unique, sequential, and never reused."
+    },
+    {
+      "id": "RULE.VAT.ADVISORTRACK_NOT_REGISTERED",
+      "title": "AdvisorTrack is not currently VAT registered",
+      "statement": "AdvisorTrack is not currently registered for VAT. Customer invoices must not add VAT, imply VAT included, or print an AdvisorTrack VAT number. The on-screen label is “VAT not charged”. Charging VAT is a future configuration change, not a customer setting."
+    },
+    {
+      "id": "RULE.TELEMETRY.LAST_MOBILE_ACTIVITY_IS_NOT_PERFORMANCE",
+      "title": "Last Mobile Activity is Android resource telemetry only",
+      "statement": "Last Mobile Activity is Android resource telemetry. It records when the mobile app last used AdvisorTrack resources. It must never be described as productivity, performance, attendance, or how hard an advisor is working. An empty value is not inactivity."
+    },
+    {
+      "id": "RULE.LICENCE.NO_ASSIGN_WHEN_POOL_EXHAUSTED",
+      "title": "Licence assignment requires Available licences",
+      "statement": "A licence cannot be assigned when Available is 0. The portal then prompts to request additional licences. Do not exceed the purchased pool."
+    }
+  ],
+  "cards": [
+    {
+      "id": "START.PORTAL_VS_ANDROID",
+      "kind": "concept",
+      "title": "Portal versus Android",
+      "aliases": [
+        "web vs app",
+        "management portal vs mobile",
+        "where do I log in"
+      ],
+      "questionForms": [
+        "What is the difference between the portal and the mobile app?",
+        "Where should I sign in?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "dashboard",
+        "activate"
+      ],
+      "category": "getting-started",
+      "summary": "The Management Portal is for leadership reporting and for Organisation Administrators. Financial Advisors do advisor work in the Android app. A Financial Advisor who is also Organisation Administrator may use organisation/account administration in the portal; that grant is not leadership reporting scope. Portal users set a password from an activation email. Advisors activate on the phone unless they also hold Organisation Admin.",
+      "steps": [],
+      "blockedGuidance": "BLOCK.ADVISOR_USES_MOBILE",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY"
+      ]
+    },
+    {
+      "id": "START.WHO_USES_PORTAL",
+      "kind": "concept",
+      "title": "Who uses the Management Portal",
+      "aliases": [
+        "portal users",
+        "who can log into the dashboard"
+      ],
+      "questionForms": [
+        "Who uses the Management Portal?",
+        "Can my advisors use the web dashboard?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "dashboard"
+      ],
+      "category": "getting-started",
+      "summary": "Executives, Regional Managers, and Team Leaders use the Management Portal for reporting and organisation work. Organisation Administrators use it for users, licences, subscription, and invoices even if they are not a leadership rank. Financial Advisors do advisor work in Android; Organisation Admin is a separate portal grant and does not add reporting scope.",
+      "steps": [],
+      "blockedGuidance": "BLOCK.ADVISOR_USES_MOBILE",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY",
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK"
+      ]
+    },
+    {
+      "id": "START.WHO_USES_MOBILE",
+      "kind": "concept",
+      "title": "Who uses the mobile app",
+      "aliases": [
+        "android app",
+        "advisor app",
+        "phone app"
+      ],
+      "questionForms": [
+        "Who uses the mobile app?",
+        "Where do advisors work?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "advisors"
+      ],
+      "category": "getting-started",
+      "summary": "Financial Advisors use the AdvisorTrack Android app for their own pipeline, contacts, and production. Organisation Admin does not move that advisor work into the portal. Last Mobile Activity on advisor details is Android resource telemetry, not a productivity score.",
+      "steps": [],
+      "blockedGuidance": "BLOCK.ADVISOR_USES_MOBILE",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY",
+        "RULE.TELEMETRY.LAST_MOBILE_ACTIVITY_IS_NOT_PERFORMANCE"
+      ]
+    },
+    {
+      "id": "START.ACCOUNT_ACTIVATION",
+      "kind": "task",
+      "title": "Account activation",
+      "aliases": [
+        "set password",
+        "activation link",
+        "invite email"
+      ],
+      "questionForms": [
+        "How do I activate my account?",
+        "I received an invitation email, what do I do?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "activate"
+      ],
+      "category": "getting-started",
+      "summary": "Portal users open the invitation link, then use Set up your AdvisorTrack portal account to choose a password (at least 8 characters, with a letter and a number). Financial Advisors activate on the Android app, not this page. Organisation Administrators always activate on the portal.",
+      "steps": [
+        {
+          "label": "Open the invitation email"
+        },
+        {
+          "label": "Choose a password on Set up your AdvisorTrack portal account",
+          "routeId": "activate"
+        },
+        {
+          "label": "Sign in to the Management Portal"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY"
+      ]
+    },
+    {
+      "id": "PEOPLE.ADD_USER",
+      "kind": "task",
+      "title": "Add User",
+      "aliases": [
+        "create user",
+        "new advisor",
+        "invite user"
+      ],
+      "questionForms": [
+        "How do I add a user?",
+        "How do I invite a new advisor?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewUsers"
+      ],
+      "routes": [
+        "users",
+        "licences"
+      ],
+      "category": "people-access",
+      "summary": "Open Users & Access and choose Add user. Choose the reporting role, region or team when required, and whether to assign a licence. Financial Advisors are invited to the Android app. Leadership and Organisation Administrators are invited to the portal. Assigning a licence needs an Available licence.",
+      "steps": [
+        {
+          "label": "Open Users & Access",
+          "routeId": "users"
+        },
+        {
+          "label": "Choose Add user"
+        },
+        {
+          "label": "Complete the person, role, and licence options"
+        },
+        {
+          "label": "Send the invitation"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [
+        "licencePool"
+      ],
+      "businessRules": [
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY",
+        "RULE.LICENCE.POOL_IS_PURCHASED_MINUS_ASSIGNED",
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK"
+      ]
+    },
+    {
+      "id": "PEOPLE.ORGANISATION_ADMIN",
+      "kind": "concept",
+      "title": "Organisation Administrator",
+      "aliases": [
+        "org admin",
+        "company admin grant",
+        "organisation administrator"
+      ],
+      "questionForms": [
+        "What is an Organisation Administrator?",
+        "Is Organisation Admin a role like Team Leader?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "users",
+        "licences",
+        "subscription",
+        "invoices"
+      ],
+      "category": "people-access",
+      "summary": "Organisation Administrator is a company-scoped grant, not a reporting rank. It is separate from Executive, Regional Manager, Team Leader, and Financial Advisor. Org Admins manage users, licences, Bulk Import, subscription, and invoices. A Financial Advisor who holds this grant may use those portal screens; it does not grant company-wide pipeline, Advisors, Production, or Performance.",
+      "steps": [],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK",
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED",
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY"
+      ]
+    },
+    {
+      "id": "PEOPLE.RESEND_INVITATION",
+      "kind": "task",
+      "title": "Resend invitation",
+      "aliases": [
+        "resend invite",
+        "invitation expired",
+        "send invite again"
+      ],
+      "questionForms": [
+        "How do I resend an invitation?",
+        "The user did not get the invite email"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewUsers"
+      ],
+      "routes": [
+        "users"
+      ],
+      "category": "people-access",
+      "summary": "On Users & Access, open the person and choose Resend invitation. Portal users receive a new activation link for Set up your AdvisorTrack portal account. Financial Advisors receive a mobile invitation. The previous invitation is superseded, not deleted.",
+      "steps": [
+        {
+          "label": "Open Users & Access",
+          "routeId": "users"
+        },
+        {
+          "label": "Find the person"
+        },
+        {
+          "label": "Choose Resend invitation"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.DATA.NO_HARD_DELETE",
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY"
+      ]
+    },
+    {
+      "id": "PEOPLE.DEACTIVATE_USER",
+      "kind": "task",
+      "title": "Deactivate User",
+      "aliases": [
+        "offboard",
+        "remove user",
+        "delete user",
+        "disable account"
+      ],
+      "questionForms": [
+        "How do I deactivate a user?",
+        "My team leader left",
+        "How do I offboard someone?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewUsers"
+      ],
+      "routes": [
+        "users"
+      ],
+      "category": "people-access",
+      "summary": "Use Deactivate User on Users & Access. AdvisorTrack does not hard-delete people. If they had a licence it returns to Available. Reassign their team, region, or reporting line first when they still lead a structure. You cannot deactivate the last Organisation Administrator until another is granted.",
+      "steps": [
+        {
+          "label": "Open Users & Access",
+          "routeId": "users"
+        },
+        {
+          "label": "Reassign Region, Team, or reporting line if they still lead one",
+          "routeId": "users-regions"
+        },
+        {
+          "label": "Choose Deactivate User"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [
+        "licencePool"
+      ],
+      "businessRules": [
+        "RULE.DATA.NO_HARD_DELETE",
+        "RULE.LICENCE.POOL_IS_PURCHASED_MINUS_ASSIGNED"
+      ]
+    },
+    {
+      "id": "PEOPLE.REPORTING_ROLE_DIFFERENCES",
+      "kind": "concept",
+      "title": "Reporting-role differences",
+      "aliases": [
+        "executive vs team leader",
+        "hierarchy ranks",
+        "who sees what"
+      ],
+      "questionForms": [
+        "What is the difference between Executive, Regional Manager, and Team Leader?",
+        "Why can I only see my team?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "dashboard",
+        "users",
+        "team-pipeline"
+      ],
+      "category": "people-access",
+      "summary": "Executive sees the company, Regional Manager sees their region, Team Leader sees their team. Financial Advisors do advisor work in Android, not leadership reporting pages. Organisation Admin is a separate grant and does not change this reporting scope. A Team Leader asking for company-wide numbers is limited to their team.",
+      "steps": [],
+      "blockedGuidance": "BLOCK.SCOPE_LIMITED_TO_TEAM",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED",
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK",
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY"
+      ]
+    },
+    {
+      "id": "PEOPLE.BULK_IMPORT_TEMPLATE",
+      "kind": "task",
+      "title": "Download Excel template",
+      "aliases": [
+        "xlsx template",
+        "bulk import template",
+        "excel workbook"
+      ],
+      "questionForms": [
+        "How do I download the import template?",
+        "Where is the XLSX template?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canBulkImport"
+      ],
+      "routes": [
+        "bulk-import"
+      ],
+      "category": "people-access",
+      "summary": "Open Bulk Import and choose Download Excel Template. Complete the Users to Import sheet only. Download a new template if Regions or Teams have changed. No users are created until you Confirm Import.",
+      "steps": [
+        {
+          "label": "Open Bulk Import",
+          "routeId": "bulk-import"
+        },
+        {
+          "label": "Choose Download Excel Template"
+        },
+        {
+          "label": "Complete the Users to Import sheet"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK"
+      ]
+    },
+    {
+      "id": "PEOPLE.BULK_IMPORT_UPLOAD",
+      "kind": "task",
+      "title": "Upload workbook",
+      "aliases": [
+        "upload xlsx",
+        "import spreadsheet"
+      ],
+      "questionForms": [
+        "How do I upload users from Excel?",
+        "How do I import a workbook?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canBulkImport"
+      ],
+      "routes": [
+        "bulk-import"
+      ],
+      "category": "people-access",
+      "summary": "On Bulk Import choose Upload Completed Workbook and select the .xlsx file. AdvisorTrack inspects the file, then validates every row on the server. Nothing is created at upload.",
+      "steps": [
+        {
+          "label": "Open Bulk Import",
+          "routeId": "bulk-import"
+        },
+        {
+          "label": "Choose Upload Completed Workbook"
+        },
+        {
+          "label": "Wait for validation results"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [],
+      "businessRules": []
+    },
+    {
+      "id": "PEOPLE.BULK_IMPORT_PREVIEW_CONFIRM",
+      "kind": "task",
+      "title": "Validation, preview, and confirm",
+      "aliases": [
+        "confirm import",
+        "preview import",
+        "bulk import errors"
+      ],
+      "questionForms": [
+        "How does bulk import validation work?",
+        "When are imported users actually created?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canBulkImport"
+      ],
+      "routes": [
+        "bulk-import"
+      ],
+      "category": "people-access",
+      "summary": "After upload, Bulk Import shows Total rows, Valid, Errors, role counts, and licence demand versus Available. No users, licences, or invitations are created until you click Confirm Import. Failed rows are not left as an unclear half-import. You can download AdvisorTrack User Import Errors.xlsx.",
+      "steps": [
+        {
+          "label": "Review Valid and Errors on Bulk Import",
+          "routeId": "bulk-import"
+        },
+        {
+          "label": "Fix errors and re-upload if needed"
+        },
+        {
+          "label": "Choose Confirm Import"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [
+        "licencePool"
+      ],
+      "businessRules": [
+        "RULE.LICENCE.POOL_IS_PURCHASED_MINUS_ASSIGNED"
+      ]
+    },
+    {
+      "id": "PEOPLE.BULK_IMPORT_REGION_TEAM",
+      "kind": "troubleshoot",
+      "title": "Region and Team validation",
+      "aliases": [
+        "unknown region",
+        "team not found",
+        "region mismatch"
+      ],
+      "questionForms": [
+        "Why did bulk import reject my region or team?",
+        "Do region and team names have to match exactly?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canBulkImport"
+      ],
+      "routes": [
+        "bulk-import",
+        "users-regions"
+      ],
+      "category": "people-access",
+      "summary": "Region and Team values must match names that already exist in Regions & Teams. Download a new Excel template after structure changes. A team must belong to the named region. AdvisorTrack re-checks every value on the server.",
+      "steps": [
+        {
+          "label": "Check Regions & Teams names",
+          "routeId": "users-regions"
+        },
+        {
+          "label": "Download a fresh Excel template",
+          "routeId": "bulk-import"
+        },
+        {
+          "label": "Use the listed Region and Team names"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "LIC.POOL_MEANING",
+      "kind": "concept",
+      "title": "Purchased, Assigned, and Available",
+      "aliases": [
+        "licence pool",
+        "seats",
+        "available licences",
+        "purchased licences"
+      ],
+      "questionForms": [
+        "What do Purchased, Assigned and Available mean?",
+        "How many licences do we have left?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewLicences"
+      ],
+      "routes": [
+        "licences"
+      ],
+      "category": "licences-capacity",
+      "summary": "On Licences, Purchased is the company pool, Assigned is how many people currently have a licence, and Available is Purchased minus Assigned (or Unlimited). Assigning consumes Available. Removing a licence returns it to Available. Purchased only changes after AdvisorTrack confirms additional licences.",
+      "steps": [
+        {
+          "label": "Open Licences",
+          "routeId": "licences"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [
+        "licencePool"
+      ],
+      "businessRules": [
+        "RULE.LICENCE.POOL_IS_PURCHASED_MINUS_ASSIGNED",
+        "RULE.LICENCE.REQUEST_NEEDS_CONFIRMATION"
+      ]
+    },
+    {
+      "id": "LIC.ASSIGN",
+      "kind": "task",
+      "title": "Assign licence",
+      "aliases": [
+        "give licence",
+        "allocate seat",
+        "license user"
+      ],
+      "questionForms": [
+        "How do I assign a licence?",
+        "Why can’t I assign a licence?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewLicences"
+      ],
+      "routes": [
+        "licences",
+        "users"
+      ],
+      "category": "licences-capacity",
+      "summary": "Open Licences or Users & Access and choose Assign licence for an unlicensed person. You need Available licences. If Available is 0, request additional licences instead. Assigning does not change Purchased.",
+      "steps": [
+        {
+          "label": "Open Licences",
+          "routeId": "licences"
+        },
+        {
+          "label": "Find an unlicensed person"
+        },
+        {
+          "label": "Choose Assign licence"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [
+        "licencePool"
+      ],
+      "businessRules": [
+        "RULE.LICENCE.POOL_IS_PURCHASED_MINUS_ASSIGNED",
+        "RULE.LICENCE.NO_ASSIGN_WHEN_POOL_EXHAUSTED"
+      ]
+    },
+    {
+      "id": "LIC.REMOVE",
+      "kind": "task",
+      "title": "Remove licence",
+      "aliases": [
+        "unassign licence",
+        "reclaim seat",
+        "take licence away"
+      ],
+      "questionForms": [
+        "How do I remove a licence?",
+        "How do I free up a seat?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewLicences"
+      ],
+      "routes": [
+        "licences",
+        "users"
+      ],
+      "category": "licences-capacity",
+      "summary": "On Licences or Users & Access choose Remove licence. The licence returns to Available. The person’s Advisor data is retained. This does not delete the user and does not change Purchased.",
+      "steps": [
+        {
+          "label": "Open Licences",
+          "routeId": "licences"
+        },
+        {
+          "label": "Choose Remove licence"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [
+        "licencePool"
+      ],
+      "businessRules": [
+        "RULE.LICENCE.POOL_IS_PURCHASED_MINUS_ASSIGNED",
+        "RULE.DATA.NO_HARD_DELETE"
+      ]
+    },
+    {
+      "id": "LIC.REQUEST_MORE",
+      "kind": "task",
+      "title": "Request additional licences",
+      "aliases": [
+        "buy licences",
+        "more seats",
+        "increase licence count",
+        "I need 20 more licences"
+      ],
+      "questionForms": [
+        "I need 20 more licences",
+        "How do I request additional licences?",
+        "I hired 50 new advisors"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewLicences"
+      ],
+      "routes": [
+        "licences"
+      ],
+      "category": "licences-capacity",
+      "summary": "On Licences choose Add / Request Licences and enter how many extra licences you need. Purchased does not increase until AdvisorTrack confirms the request according to your contract. After confirmation, assign licences and add people via Add user or Bulk Import. Advisors then activate on Android.",
+      "steps": [
+        {
+          "label": "Open Licences",
+          "routeId": "licences"
+        },
+        {
+          "label": "Review Purchased, Assigned and Available"
+        },
+        {
+          "label": "Choose Add / Request Licences for the shortfall"
+        },
+        {
+          "label": "After confirmation, add people and assign licences",
+          "routeId": "users"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [
+        "licencePool",
+        "pendingLicenceRequests"
+      ],
+      "businessRules": [
+        "RULE.LICENCE.REQUEST_NEEDS_CONFIRMATION",
+        "RULE.LICENCE.POOL_IS_PURCHASED_MINUS_ASSIGNED",
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY"
+      ]
+    },
+    {
+      "id": "LIC.POOL_EXHAUSTED",
+      "kind": "troubleshoot",
+      "title": "Licence pool exhausted",
+      "aliases": [
+        "no licences available",
+        "available is 0",
+        "cannot assign"
+      ],
+      "questionForms": [
+        "No licences available",
+        "Why can’t I assign a licence when Available is 0?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewLicences"
+      ],
+      "routes": [
+        "licences"
+      ],
+      "category": "licences-capacity",
+      "summary": "When Available is 0, Assign licence is blocked. Request additional licences from Licences, or remove a licence from someone who no longer needs one. Do not exceed the purchased pool.",
+      "steps": [
+        {
+          "label": "Open Licences",
+          "routeId": "licences"
+        },
+        {
+          "label": "Request additional licences, or Remove licence from someone who no longer needs it"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [
+        "licencePool"
+      ],
+      "businessRules": [
+        "RULE.LICENCE.NO_ASSIGN_WHEN_POOL_EXHAUSTED",
+        "RULE.LICENCE.REQUEST_NEEDS_CONFIRMATION"
+      ]
+    },
+    {
+      "id": "STRUCT.REGIONS",
+      "kind": "task",
+      "title": "Regions",
+      "aliases": [
+        "create region",
+        "regional structure"
+      ],
+      "questionForms": [
+        "How do I manage regions?",
+        "Where are Regions & Teams?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewRegionsTeams"
+      ],
+      "routes": [
+        "users-regions"
+      ],
+      "category": "organisation-structure",
+      "summary": "Open Regions & Teams (Users & Access with the Regions tab). Executives can create and archive regions and assign a Regional Manager. Regional Managers can view regions. Regions are not deleted; they are archived. Team Leaders do not manage regions.",
+      "steps": [
+        {
+          "label": "Open Regions & Teams",
+          "routeId": "users-regions"
+        },
+        {
+          "label": "Use the Regions tab"
+        }
+      ],
+      "blockedGuidance": "BLOCK.SCOPE_LIMITED_TO_TEAM",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED",
+        "RULE.DATA.NO_HARD_DELETE"
+      ]
+    },
+    {
+      "id": "STRUCT.TEAMS",
+      "kind": "task",
+      "title": "Teams",
+      "aliases": [
+        "create team",
+        "team structure"
+      ],
+      "questionForms": [
+        "How do I manage teams?",
+        "Where do I add a team?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewRegionsTeams"
+      ],
+      "routes": [
+        "users-teams",
+        "users-regions"
+      ],
+      "category": "organisation-structure",
+      "summary": "Teams live under Regions & Teams on the Teams tab. A team belongs to a region and has a Team Leader. Team Leaders do not get the Teams tab. Archive a team instead of deleting it.",
+      "steps": [
+        {
+          "label": "Open Regions & Teams",
+          "routeId": "users-regions"
+        },
+        {
+          "label": "Use the Teams tab",
+          "routeId": "users-teams"
+        }
+      ],
+      "blockedGuidance": "BLOCK.SCOPE_LIMITED_TO_TEAM",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED",
+        "RULE.DATA.NO_HARD_DELETE"
+      ]
+    },
+    {
+      "id": "STRUCT.TEAM_LEADER",
+      "kind": "concept",
+      "title": "Team Leader relationship",
+      "aliases": [
+        "team leader left",
+        "replace team leader",
+        "who leads a team"
+      ],
+      "questionForms": [
+        "My team leader left",
+        "How is a Team Leader linked to a team?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewRegionsTeams"
+      ],
+      "routes": [
+        "users-teams",
+        "users"
+      ],
+      "category": "organisation-structure",
+      "summary": "Each team has a Team Leader. If a Team Leader leaves, reassign the team to a replacement on Regions & Teams before deactivating them. Reporting scope for the new leader is that team. Historical reporting records are kept.",
+      "steps": [
+        {
+          "label": "Open Regions & Teams",
+          "routeId": "users-regions"
+        },
+        {
+          "label": "Assign a new Team Leader on the team"
+        },
+        {
+          "label": "Then Deactivate User on the person who left",
+          "routeId": "users"
+        }
+      ],
+      "blockedGuidance": "BLOCK.SCOPE_LIMITED_TO_TEAM",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED",
+        "RULE.DATA.NO_HARD_DELETE"
+      ]
+    },
+    {
+      "id": "STRUCT.REGIONAL_MANAGER",
+      "kind": "concept",
+      "title": "Regional Manager relationship",
+      "aliases": [
+        "region manager",
+        "replace regional manager"
+      ],
+      "questionForms": [
+        "How is a Regional Manager linked to a region?",
+        "Who can change the Regional Manager?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewRegionsTeams"
+      ],
+      "routes": [
+        "users-regions"
+      ],
+      "category": "organisation-structure",
+      "summary": "Each region has a Regional Manager. Executives assign the Regional Manager on the Regions tab. A Regional Manager sees their region’s teams and advisors. Reassign the region before deactivating a Regional Manager who still holds it.",
+      "steps": [
+        {
+          "label": "Open Regions & Teams",
+          "routeId": "users-regions"
+        },
+        {
+          "label": "Edit the region’s Regional Manager"
+        }
+      ],
+      "blockedGuidance": "BLOCK.SCOPE_LIMITED_TO_REGION",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED",
+        "RULE.DATA.NO_HARD_DELETE"
+      ]
+    },
+    {
+      "id": "REPORT.DASHBOARD",
+      "kind": "route",
+      "title": "Dashboard",
+      "aliases": [
+        "home",
+        "overview",
+        "issued performance",
+        "top performer",
+        "needs attention"
+      ],
+      "questionForms": [
+        "What is on the Dashboard?",
+        "Where is the overview?",
+        "What is Top Performer?",
+        "What does Needs Attention mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewDashboard"
+      ],
+      "routes": [
+        "dashboard"
+      ],
+      "category": "reporting-performance",
+      "summary": "Dashboard is the Management Portal home. Leadership sees issued-performance overview for their reporting scope. Top Performer and the Dashboard Needs Attention card are the highest and lowest issued totals at the comparison rank already used by AdvisorTrack Performance: Executive compares Regional Managers, Regional Manager compares Team Leaders, Team Leader compares Financial Advisors, for Last Week, Last Month, or Year to Date. Advisor details Needs Attention is separate — it uses the product’s canonical reasons (stalled cases, missing documents, no next action, and Last Mobile Activity of 3+ days as Android telemetry, not performance). Organisation Administrators who are not leaders still land here but do not get company-wide pipeline from this page. Figures follow hierarchy scope.",
+      "steps": [
+        {
+          "label": "Open Dashboard",
+          "routeId": "dashboard"
+        }
+      ],
+      "blockedGuidance": "BLOCK.ADVISOR_USES_MOBILE",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "REPORT.TEAM_PIPELINE",
+      "kind": "route",
+      "title": "Team Pipeline",
+      "aliases": [
+        "pipeline",
+        "cases",
+        "client cases"
+      ],
+      "questionForms": [
+        "Where is Team Pipeline?",
+        "How do I see my team’s cases?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewPipeline"
+      ],
+      "routes": [
+        "team-pipeline"
+      ],
+      "category": "reporting-performance",
+      "summary": "Team Pipeline shows management-scoped client cases. Executives, Regional Managers, and Team Leaders see cases in their reporting line. Organisation Admin does not by itself unlock company-wide pipeline. Open an advisor name to reach advisor details.",
+      "steps": [
+        {
+          "label": "Open Team Pipeline",
+          "routeId": "team-pipeline"
+        }
+      ],
+      "blockedGuidance": "BLOCK.SCOPE_LIMITED_TO_TEAM",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "REPORT.ADVISOR_DETAILS",
+      "kind": "route",
+      "title": "Advisor details",
+      "aliases": [
+        "advisor drilldown",
+        "advisor page",
+        "last mobile activity"
+      ],
+      "questionForms": [
+        "How do I open an advisor’s details?",
+        "What does Last Mobile Activity mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisors"
+      ],
+      "routes": [
+        "advisors",
+        "advisor-detail"
+      ],
+      "category": "reporting-performance",
+      "summary": "Open Advisors, or click an advisor name from Team Pipeline, Dashboard, or Production. Last Mobile Activity is Android resource telemetry — when the mobile app last used AdvisorTrack resources. It is not productivity, performance, or attendance. An empty value is not inactivity. Needs Attention on this page uses the same canonical reasons as AdvisorTrack: stalled open cases, missing documents, no next action, and mobile inactivity of 3+ days when Last Mobile Activity is recorded.",
+      "steps": [
+        {
+          "label": "Open Advisors",
+          "routeId": "advisors"
+        },
+        {
+          "label": "Open the advisor’s name"
+        }
+      ],
+      "blockedGuidance": "BLOCK.SCOPE_LIMITED_TO_TEAM",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.TELEMETRY.LAST_MOBILE_ACTIVITY_IS_NOT_PERFORMANCE",
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "REPORT.PRODUCTION",
+      "kind": "route",
+      "title": "Production",
+      "aliases": [
+        "commission",
+        "submitted vs issued"
+      ],
+      "questionForms": [
+        "Where is Production?",
+        "Where do I see issued commission?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewProduction"
+      ],
+      "routes": [
+        "production"
+      ],
+      "category": "reporting-performance",
+      "summary": "Production shows submitted versus issued commission for advisors in your reporting scope. Leadership uses this page. It is not the same as Performance, and Last Mobile Activity is not a production metric.",
+      "steps": [
+        {
+          "label": "Open Production",
+          "routeId": "production"
+        }
+      ],
+      "blockedGuidance": "BLOCK.SCOPE_LIMITED_TO_TEAM",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED",
+        "RULE.TELEMETRY.LAST_MOBILE_ACTIVITY_IS_NOT_PERFORMANCE"
+      ]
+    },
+    {
+      "id": "REPORT.PERFORMANCE_VISIBILITY",
+      "kind": "troubleshoot",
+      "title": "Performance visibility",
+      "aliases": [
+        "why no performance",
+        "reports page",
+        "performance menu"
+      ],
+      "questionForms": [
+        "Why can’t I see Performance?",
+        "Where is the Performance page?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "dashboard",
+        "production"
+      ],
+      "category": "reporting-performance",
+      "summary": "In the production Management Portal, Performance is an AdvisorTrack staff page. Customers use Dashboard, Team Pipeline, Advisors, and Production for reporting in their hierarchy scope. On the public demo, leadership can open Performance as a showcase. Last Mobile Activity is not a performance score.",
+      "steps": [
+        {
+          "label": "Use Dashboard for issued-performance overview",
+          "routeId": "dashboard"
+        },
+        {
+          "label": "Use Production for submitted versus issued commission",
+          "routeId": "production"
+        }
+      ],
+      "blockedGuidance": "BLOCK.STAFF_ONLY",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.TELEMETRY.LAST_MOBILE_ACTIVITY_IS_NOT_PERFORMANCE",
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "REPORT.PERFORMANCE_DEMO",
+      "kind": "route",
+      "title": "Performance (public demo)",
+      "aliases": [
+        "demo performance"
+      ],
+      "questionForms": [
+        "Where is Performance on the demo?"
+      ],
+      "audience": "customer",
+      "environment": "demo",
+      "requiredCapabilities": [
+        "canViewPerformance"
+      ],
+      "routes": [
+        "performance"
+      ],
+      "category": "reporting-performance",
+      "summary": "On the public demo, leadership can open Performance from Management. This showcase is not available to customers on the production portal. Last Mobile Activity remains telemetry, not a performance score.",
+      "steps": [
+        {
+          "label": "Open Performance",
+          "routeId": "performance"
+        }
+      ],
+      "blockedGuidance": "BLOCK.FEATURE_NOT_AVAILABLE_IN_DEMO",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.TELEMETRY.LAST_MOBILE_ACTIVITY_IS_NOT_PERFORMANCE"
+      ]
+    },
+    {
+      "id": "COMM.SUBSCRIPTION",
+      "kind": "route",
+      "title": "Subscription",
+      "aliases": [
+        "enterprise contract",
+        "our plan",
+        "commercial terms"
+      ],
+      "questionForms": [
+        "Where is our subscription?",
+        "Where do I see our contract?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewSubscription"
+      ],
+      "routes": [
+        "subscription"
+      ],
+      "category": "commercial",
+      "summary": "Organisation Administrators open Subscription to view the organisation’s AdvisorTrack Enterprise contract. Customers can view, not edit, these terms. Additional licences are requested from Licences, not by changing this page.",
+      "steps": [
+        {
+          "label": "Open Subscription",
+          "routeId": "subscription"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.LICENCE.REQUEST_NEEDS_CONFIRMATION",
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK"
+      ]
+    },
+    {
+      "id": "COMM.INVOICES",
+      "kind": "route",
+      "title": "Invoices",
+      "aliases": [
+        "bills",
+        "tax invoices",
+        "download invoice"
+      ],
+      "questionForms": [
+        "Where do I find invoices?",
+        "How do I download an invoice PDF?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewInvoices"
+      ],
+      "routes": [
+        "invoices"
+      ],
+      "category": "commercial",
+      "summary": "Organisation Administrators open Invoices to view and download invoices for the organisation. Customer users cannot create, send, or void invoices. Invoice numbers start at INV100000 and are never reused. AdvisorTrack does not currently charge VAT.",
+      "steps": [
+        {
+          "label": "Open Invoices",
+          "routeId": "invoices"
+        },
+        {
+          "label": "Open an invoice to view or download the PDF"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.BILLING.INVOICE_NUMBERING_FROM_INV100000",
+        "RULE.VAT.ADVISORTRACK_NOT_REGISTERED",
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK"
+      ]
+    },
+    {
+      "id": "COMM.VAT_NOT_REGISTERED",
+      "kind": "policy",
+      "title": "AdvisorTrack is not VAT registered",
+      "aliases": [
+        "VAT",
+        "tax",
+        "VAT number",
+        "VAT not charged"
+      ],
+      "questionForms": [
+        "Why is there no VAT on my invoice?",
+        "Is AdvisorTrack VAT registered?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewInvoices"
+      ],
+      "routes": [
+        "invoices",
+        "subscription"
+      ],
+      "category": "commercial",
+      "summary": "AdvisorTrack is not currently registered for VAT. Invoices show VAT not charged. They must not add VAT, imply VAT included, or print an AdvisorTrack VAT number. This is AdvisorTrack’s seller status, not a setting you change on Subscription.",
+      "steps": [
+        {
+          "label": "Open Invoices to view the VAT not charged label",
+          "routeId": "invoices"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.VAT.ADVISORTRACK_NOT_REGISTERED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PAGE_DENIED",
+      "kind": "troubleshoot",
+      "title": "Why can’t I see this page?",
+      "aliases": [
+        "permission denied",
+        "missing menu item",
+        "access denied"
+      ],
+      "questionForms": [
+        "Why can’t I see this page?",
+        "Why is a menu item missing?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "dashboard"
+      ],
+      "category": "troubleshooting",
+      "summary": "The Management Portal only shows pages your rank, Organisation Admin grant, and permissions allow. Ordinary Financial Advisors do advisor work in Android, not leadership reporting pages. A Financial Advisor who is also Organisation Administrator may see organisation/account administration only. Team Leaders see their team, not the company. Some commercial pages are Organisation Admin only. Ask your Organisation Administrator, or contact AdvisorTrack support.",
+      "steps": [],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED",
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY",
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK"
+      ]
+    },
+    {
+      "id": "TROUBLE.CANNOT_ASSIGN_LICENCE",
+      "kind": "troubleshoot",
+      "title": "Why can’t I assign a licence?",
+      "aliases": [
+        "assign licence blocked",
+        "assign button disabled"
+      ],
+      "questionForms": [
+        "Why can’t I assign a licence?",
+        "The Assign licence button is disabled"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "licences"
+      ],
+      "category": "troubleshooting",
+      "summary": "Licence assignment is done on Licences or Users & Access by an Organisation Administrator (or someone with member-management permission). If you can open Licences but Assign licence is blocked, Available is 0 — request additional licences or remove an unused licence. Purchased does not change until AdvisorTrack confirms extra licences.",
+      "steps": [
+        {
+          "label": "Open Licences if you manage licences",
+          "routeId": "licences"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [
+        "licencePool"
+      ],
+      "businessRules": [
+        "RULE.LICENCE.NO_ASSIGN_WHEN_POOL_EXHAUSTED",
+        "RULE.LICENCE.REQUEST_NEEDS_CONFIRMATION",
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK"
+      ]
+    },
+    {
+      "id": "TROUBLE.CANNOT_IMPORT_USERS",
+      "kind": "troubleshoot",
+      "title": "Why can’t I import users?",
+      "aliases": [
+        "bulk import missing",
+        "no import page"
+      ],
+      "questionForms": [
+        "Why can’t I import users?",
+        "Where is Bulk Import?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "users"
+      ],
+      "category": "troubleshooting",
+      "summary": "Bulk Import is for Organisation Administrators, platform staff, or users with manage_members. Leadership access alone is not enough. If you do not see Bulk Import, ask your Organisation Administrator to import the workbook or grant the right access.",
+      "steps": [
+        {
+          "label": "Ask your Organisation Administrator, or open Bulk Import if you have it"
+        }
+      ],
+      "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK"
+      ]
+    },
+    {
+      "id": "TROUBLE.CANNOT_SEE_PERFORMANCE",
+      "kind": "troubleshoot",
+      "title": "Why can’t I see Performance?",
+      "aliases": [
+        "performance hidden",
+        "no reports menu"
+      ],
+      "questionForms": [
+        "Why can’t I see Performance?",
+        "Why is Performance missing from the menu?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "dashboard",
+        "production",
+        "team-pipeline"
+      ],
+      "category": "troubleshooting",
+      "summary": "On portal.advisortrack.co.za, Performance is AdvisorTrack staff-only. Use Dashboard, Team Pipeline, Advisors, and Production instead. On the public demo, leadership can open Performance. Last Mobile Activity is Android telemetry, not a performance rating.",
+      "steps": [
+        {
+          "label": "Open Dashboard",
+          "routeId": "dashboard"
+        },
+        {
+          "label": "Open Team Pipeline",
+          "routeId": "team-pipeline"
+        },
+        {
+          "label": "Open Production",
+          "routeId": "production"
+        }
+      ],
+      "blockedGuidance": "BLOCK.STAFF_ONLY",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.TELEMETRY.LAST_MOBILE_ACTIVITY_IS_NOT_PERFORMANCE"
+      ]
+    },
+    {
+      "id": "GLOSS.LICENCE",
+      "kind": "glossary",
+      "title": "Licence",
+      "aliases": [
+        "seat",
+        "paid licence"
+      ],
+      "questionForms": [
+        "What is a licence?",
+        "Is a seat the same as a licence?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "licences"
+      ],
+      "category": "glossary",
+      "summary": "A licence is a purchased AdvisorTrack seat assigned to a person. Purchased is the pool, Assigned is in use, Available is what you can still assign. “Seats” in conversation means licences.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.LICENCE.POOL_IS_PURCHASED_MINUS_ASSIGNED"
+      ]
+    },
+    {
+      "id": "GLOSS.ORGANISATION_ADMIN",
+      "kind": "glossary",
+      "title": "Organisation Administrator",
+      "aliases": [
+        "org admin"
+      ],
+      "questionForms": [
+        "What does Organisation Administrator mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "users"
+      ],
+      "category": "glossary",
+      "summary": "A company-scoped grant for users, licences, Bulk Import, subscription, and invoices. It is not a reporting rank and does not replace Executive, Regional Manager, Team Leader, or Financial Advisor. A Financial Advisor who holds it may use those portal screens; it does not grant leadership reporting.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK"
+      ]
+    },
+    {
+      "id": "GLOSS.FINANCIAL_ADVISOR",
+      "kind": "glossary",
+      "title": "Financial Advisor",
+      "aliases": [
+        "advisor",
+        "consultant",
+        "rep"
+      ],
+      "questionForms": [
+        "What is a Financial Advisor in AdvisorTrack?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [
+        "advisors"
+      ],
+      "category": "glossary",
+      "summary": "The customer rank that does advisor work in the Android app. Organisation Admin is a separate grant and may allow organisation/account administration in the portal; it does not grant leadership reporting. Advisor work appears to leadership through Team Pipeline, Advisors, and Production.",
+      "steps": [],
+      "blockedGuidance": "BLOCK.ADVISOR_USES_MOBILE",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY"
+      ]
+    },
+    {
+      "id": "GLOSS.LAST_MOBILE_ACTIVITY",
+      "kind": "glossary",
+      "title": "Last Mobile Activity",
+      "aliases": [
+        "last seen",
+        "mobile activity",
+        "app usage"
+      ],
+      "questionForms": [
+        "What is Last Mobile Activity?",
+        "Does Last Mobile Activity mean the advisor is productive?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisors"
+      ],
+      "routes": [
+        "advisor-detail"
+      ],
+      "category": "glossary",
+      "summary": "Last Mobile Activity is Android resource telemetry. It shows when the mobile app last used AdvisorTrack resources. It must never be described as productivity, performance, or attendance. An empty value is not inactivity — the field may still be empty.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.TELEMETRY.LAST_MOBILE_ACTIVITY_IS_NOT_PERFORMANCE"
+      ]
+    },
+    {
+      "id": "BLOCK.NOT_ORG_ADMIN",
+      "kind": "blocked",
+      "title": "Organisation Administrator required",
+      "aliases": [
+        "not org admin",
+        "ask organisation admin"
+      ],
+      "questionForms": [
+        "I do not have Organisation Admin access"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [],
+      "category": "troubleshooting",
+      "summary": "This action is for your Organisation Administrator (or AdvisorTrack staff). Organisation Admin is a company grant, not a reporting rank. Ask your Organisation Administrator, or contact AdvisorTrack support. The assistant will not describe internal staff tools.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK"
+      ]
+    },
+    {
+      "id": "BLOCK.ADVISOR_USES_MOBILE",
+      "kind": "blocked",
+      "title": "Financial Advisors use the Android app",
+      "aliases": [
+        "advisor no portal"
+      ],
+      "questionForms": [
+        "Can a Financial Advisor use the portal?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [],
+      "category": "troubleshooting",
+      "summary": "Financial Advisors do advisor work in the Android app. A Financial Advisor who is also Organisation Administrator may use organisation/account administration in the portal; it does not grant Team Pipeline or other leadership reporting. Invite ordinary advisors to the mobile app, not to leadership portal sign-in.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY"
+      ]
+    },
+    {
+      "id": "BLOCK.SCOPE_LIMITED_TO_TEAM",
+      "kind": "blocked",
+      "title": "Scope limited to your team",
+      "aliases": [
+        "only my team",
+        "team scope"
+      ],
+      "questionForms": [
+        "Why can I only see my team?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [],
+      "category": "troubleshooting",
+      "summary": "Team Leaders see their own team. Reporting scope is hierarchy-controlled and resolved on the server. Organisation Admin does not expand pipeline or production to the whole company. Ask your Regional Manager or Executive for a wider view.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "BLOCK.SCOPE_LIMITED_TO_REGION",
+      "kind": "blocked",
+      "title": "Scope limited to your region",
+      "aliases": [
+        "only my region",
+        "region scope"
+      ],
+      "questionForms": [
+        "Why can I only see my region?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [],
+      "category": "troubleshooting",
+      "summary": "Regional Managers see their region. Company-wide reporting belongs to Executives. Organisation Admin does not replace reporting rank. Ask your Executive if you need a company view.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "BLOCK.STAFF_ONLY",
+      "kind": "blocked",
+      "title": "AdvisorTrack staff only",
+      "aliases": [
+        "internal only",
+        "platform only"
+      ],
+      "questionForms": [
+        "Why is this an internal page?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [],
+      "category": "troubleshooting",
+      "summary": "This is an AdvisorTrack staff tool, not a customer page. Use the customer screens in your menu, or contact AdvisorTrack support. The assistant does not describe internal approval queues or engineering tools to customers.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "BLOCK.FEATURE_NOT_AVAILABLE_IN_DEMO",
+      "kind": "blocked",
+      "title": "Not available in the public demo",
+      "aliases": [
+        "missing in demo",
+        "demo limitation"
+      ],
+      "questionForms": [
+        "Why is this missing on the demo?"
+      ],
+      "audience": "customer",
+      "environment": "demo",
+      "requiredCapabilities": [],
+      "routes": [],
+      "category": "troubleshooting",
+      "summary": "Some AdvisorTrack staff tools are production-only and are not in the public demo. The demo uses isolated Northstar data. Emails and payments are simulated. Customer portal features stay in parity with production.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": []
+    },
+    {
+      "id": "DEMO.RESET",
+      "kind": "task",
+      "title": "Reset Demo",
+      "aliases": [
+        "reset workspace",
+        "start demo over"
+      ],
+      "questionForms": [
+        "How do I reset the demo?",
+        "What does Reset Demo do?"
+      ],
+      "audience": "customer",
+      "environment": "demo",
+      "requiredCapabilities": [],
+      "routes": [
+        "dashboard"
+      ],
+      "category": "demo-tips",
+      "summary": "On the public demo, Reset Demo restores the isolated Northstar workspace. It is a demo-only control in the top bar. It does not affect production AdvisorTrack customers.",
+      "steps": [
+        {
+          "label": "Choose Reset Demo in the demo top bar"
+        }
+      ],
+      "blockedGuidance": "BLOCK.FEATURE_NOT_AVAILABLE_IN_DEMO",
+      "requiredFacts": [],
+      "businessRules": []
+    },
+    {
+      "id": "DEMO.VIEWING_AS",
+      "kind": "concept",
+      "title": "Viewing as",
+      "aliases": [
+        "role switcher",
+        "switch demo role"
+      ],
+      "questionForms": [
+        "What does Viewing as do?",
+        "How do I switch demo roles?"
+      ],
+      "audience": "customer",
+      "environment": "demo",
+      "requiredCapabilities": [],
+      "routes": [
+        "dashboard"
+      ],
+      "category": "demo-tips",
+      "summary": "Viewing as is the public-demo role switcher in the top bar. It lets you look at the portal as Executive, Regional Manager, Team Leader, or Organisation Admin. It is demo-only and is not how production users change identity.",
+      "steps": [
+        {
+          "label": "Use Viewing as in the demo top bar"
+        }
+      ],
+      "blockedGuidance": "BLOCK.FEATURE_NOT_AVAILABLE_IN_DEMO",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "DEMO.SIMULATED_SIDE_EFFECTS",
+      "kind": "policy",
+      "title": "Simulated emails and payments",
+      "aliases": [
+        "fake email",
+        "demo outbox",
+        "simulated payment"
+      ],
+      "questionForms": [
+        "Will the demo send a real email?",
+        "Are demo payments real?"
+      ],
+      "audience": "customer",
+      "environment": "demo",
+      "requiredCapabilities": [],
+      "routes": [
+        "users",
+        "invoices"
+      ],
+      "category": "demo-tips",
+      "summary": "On the public demo, invitation emails and payments are simulated. Nothing is billed and no live customer mailbox is contacted. Production sends real activation email and records real invoices.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": []
+    },
+    {
+      "id": "DEMO.BADGE",
+      "kind": "concept",
+      "title": "Demo badge",
+      "aliases": [
+        "AdvisorTrack Demo pill",
+        "demo label"
+      ],
+      "questionForms": [
+        "What is the AdvisorTrack Demo badge?",
+        "How do I know I am on the demo?"
+      ],
+      "audience": "customer",
+      "environment": "demo",
+      "requiredCapabilities": [],
+      "routes": [
+        "dashboard"
+      ],
+      "category": "demo-tips",
+      "summary": "The AdvisorTrack Demo pill in the sidebar marks the public demo portal. Production at portal.advisortrack.co.za does not show this badge.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": []
+    },
+    {
+      "id": "STAFF.ENTERPRISE_CUSTOMERS",
+      "kind": "route",
+      "title": "Enterprise Customers",
+      "aliases": [
+        "onboarding wizard",
+        "internal onboarding"
+      ],
+      "questionForms": [
+        "Where is enterprise customer onboarding?"
+      ],
+      "audience": "staff",
+      "environment": "production",
+      "requiredCapabilities": [
+        "isPlatformStaff"
+      ],
+      "routes": [
+        "enterprise-customers"
+      ],
+      "category": "getting-started",
+      "summary": "Internal AdvisorTrack onboarding for new enterprise customers. Not a customer portal page. Do not describe this workflow to customer sessions.",
+      "steps": [
+        {
+          "label": "Open Enterprise Customers",
+          "routeId": "enterprise-customers"
+        }
+      ],
+      "blockedGuidance": "BLOCK.STAFF_ONLY",
+      "requiredFacts": [],
+      "businessRules": []
+    },
+    {
+      "id": "STAFF.LICENCE_REQUEST_QUEUE",
+      "kind": "route",
+      "title": "Internal licence request queue",
+      "aliases": [
+        "approve licences",
+        "licence requests admin"
+      ],
+      "questionForms": [
+        "Where do staff confirm additional licences?"
+      ],
+      "audience": "staff",
+      "environment": "production",
+      "requiredCapabilities": [
+        "isPlatformStaff"
+      ],
+      "routes": [
+        "licence-requests"
+      ],
+      "category": "licences-capacity",
+      "summary": "Internal queue where AdvisorTrack staff review customer additional-licence requests. Customers request from Licences; they never use this page. Do not describe the queue to customer sessions.",
+      "steps": [
+        {
+          "label": "Open Licence Requests",
+          "routeId": "licence-requests"
+        }
+      ],
+      "blockedGuidance": "BLOCK.STAFF_ONLY",
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.LICENCE.REQUEST_NEEDS_CONFIRMATION"
+      ]
+    },
+    {
+      "id": "STAFF.ENGINEERING_CHANGE_LOG",
+      "kind": "route",
+      "title": "Engineering Change Log",
+      "aliases": [
+        "ECL",
+        "change log"
+      ],
+      "questionForms": [
+        "Where is the Engineering Change Log?"
+      ],
+      "audience": "staff",
+      "environment": "production",
+      "requiredCapabilities": [
+        "canAccessEngineeringChangelog"
+      ],
+      "routes": [
+        "engineering-changelog"
+      ],
+      "category": "getting-started",
+      "summary": "Internal Engineering Change Log. Never exposed on the public demo. Not a customer feature.",
+      "steps": [
+        {
+          "label": "Open Change Log",
+          "routeId": "engineering-changelog"
+        }
+      ],
+      "blockedGuidance": "BLOCK.STAFF_ONLY",
+      "requiredFacts": [],
+      "businessRules": []
+    },
+    {
+      "id": "STAFF.PLATFORM_COMPANIES",
+      "kind": "route",
+      "title": "Platform company administration",
+      "aliases": [
+        "companies admin",
+        "customer accounts"
+      ],
+      "questionForms": [
+        "Where do staff administer companies?"
+      ],
+      "audience": "staff",
+      "environment": "production",
+      "requiredCapabilities": [
+        "isPlatformStaff"
+      ],
+      "routes": [
+        "companies",
+        "company-account",
+        "subscriptions-platform"
+      ],
+      "category": "commercial",
+      "summary": "Internal Companies, customer account, and Subscriptions administration. Production-only staff surfaces. The public demo Company Details page is a customer showcase and is not this tool.",
+      "steps": [
+        {
+          "label": "Open Companies",
+          "routeId": "companies"
+        }
+      ],
+      "blockedGuidance": "BLOCK.STAFF_ONLY",
+      "requiredFacts": [],
+      "businessRules": []
+    }
+  ]
+}

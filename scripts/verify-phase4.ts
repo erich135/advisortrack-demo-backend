@@ -130,6 +130,14 @@ async function runIntegrationTests(): Promise<void> {
   const passwordHash = await hashPassword('Phase4Test!1');
 
   await pool.query(
+    `DELETE FROM demo_outbox_events
+     WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[]))
+        OR actor_user_id IN (SELECT id FROM users WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[])))`,
+    [[slug, otherSlug]]
+  ).catch((error: { code?: string }) => {
+    if (error.code !== '42P01') throw error;
+  });
+  await pool.query(
     `DELETE FROM users WHERE company_id IN (SELECT id FROM companies WHERE slug = ANY($1::text[]))`,
     [[slug, otherSlug]]
   );
@@ -329,6 +337,14 @@ async function runIntegrationTests(): Promise<void> {
       organisationService.updateMyMember(execId, execId, { firstName: 'Self' })
     );
   } finally {
+    await pool.query(
+      `DELETE FROM demo_outbox_events
+       WHERE company_id = ANY($1::uuid[])
+          OR actor_user_id IN (SELECT id FROM users WHERE company_id = ANY($1::uuid[]))`,
+      [[companyId, otherCompanyId]]
+    ).catch((error: { code?: string }) => {
+      if (error.code !== '42P01') throw error;
+    });
     await pool.query(`DELETE FROM users WHERE company_id = ANY($1::uuid[])`, [[companyId, otherCompanyId]]);
     await pool.query(`DELETE FROM companies WHERE id = ANY($1::uuid[])`, [[companyId, otherCompanyId]]);
   }

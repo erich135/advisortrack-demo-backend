@@ -157,6 +157,16 @@ export const canManageRank = (actor: HierarchyRank, target: HierarchyRank): bool
  */
 export const hasPortalAccess = (rank: HierarchyRank): boolean => rank !== 'financial_advisor';
 
+export type InvitationChannel = 'mobile' | 'portal';
+
+export const invitationChannelForRank = (rank: HierarchyRank): InvitationChannel =>
+  rank === 'financial_advisor' ? 'mobile' : 'portal';
+
+export const invitationChannelForMember = (
+  rank: HierarchyRank,
+  organisationAdmin: boolean
+): InvitationChannel => (organisationAdmin ? 'portal' : invitationChannelForRank(rank));
+
 /**
  * Customer ranks the actor may assign or manage.
  */

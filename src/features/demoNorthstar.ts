@@ -4,14 +4,18 @@
  */
 export const NORTHSTAR_COMPANY_ID = 'd2222222-2222-4222-8222-222222222222';
 export const NORTHSTAR_TEMPLATE_SLUG = 'northstar-advisory-master';
-export const NORTHSTAR_SEED_VERSION = 14;
-export const NORTHSTAR_VERSION_LABEL = 'phase14';
+export const NORTHSTAR_SEED_VERSION = 16;
+export const NORTHSTAR_VERSION_LABEL = 'task15';
 export const NORTHSTAR_INVOICE_COUNT = 3;
 export const NORTHSTAR_COMPANY_NAME = 'Northstar Advisory';
 export const NORTHSTAR_EMAIL_DOMAIN = 'northstar.demo.invalid';
 export const NORTHSTAR_SEAT_LIMIT = 50;
 export const NORTHSTAR_ASSIGNED_LICENCES = 42;
 export const NORTHSTAR_AVAILABLE_LICENCES = 8;
+export const NORTHSTAR_COMMITTED_LICENCES = 50;
+export const NORTHSTAR_CONTRACT_START = '2026-09-01';
+export const NORTHSTAR_CONTRACT_END = '2027-08-31';
+export const NORTHSTAR_UNIT_PRICE_CENTS = 7500;
 export const NORTHSTAR_PASSWORD_HASH =
   '$2b$10$7qk.w275sP5l4htSpOtGcOI9sx8kV5NgiKpgzUhpVeSQ9.7aaBoru';
 export const PHASE11_TEMPLATE_COMPANY_ID = 'd1111111-1111-4111-8111-111111111111';

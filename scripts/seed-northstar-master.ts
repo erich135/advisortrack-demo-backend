@@ -8,8 +8,11 @@ import crypto from 'crypto';
 import pg from 'pg';
 import {
   NORTHSTAR_ASSIGNED_LICENCES,
+  NORTHSTAR_COMMITTED_LICENCES,
   NORTHSTAR_COMPANY_ID,
   NORTHSTAR_COMPANY_NAME,
+  NORTHSTAR_CONTRACT_END,
+  NORTHSTAR_CONTRACT_START,
   NORTHSTAR_EMAIL_DOMAIN,
   NORTHSTAR_INVOICE_COUNT,
   NORTHSTAR_PASSWORD_HASH,
@@ -18,16 +21,17 @@ import {
   NORTHSTAR_SEAT_LIMIT,
   NORTHSTAR_SEED_VERSION,
   NORTHSTAR_TEMPLATE_SLUG,
+  NORTHSTAR_UNIT_PRICE_CENTS,
   NORTHSTAR_VERSION_LABEL,
   PHASE11_TEMPLATE_COMPANY_ID,
   countNorthstarPeople,
   northstarEmail,
 } from '../src/features/demoNorthstar';
 import type { DemoDateBucket } from '../src/features/demoDatePlan';
+import { vatRateForNewInvoiceLine } from '../src/features/advisortrackVat';
 import {
   calculateInvoiceTotals,
   calculateLine,
-  DEFAULT_VAT_RATE_PERCENT,
   formatInvoiceNumber,
 } from '../src/features/invoiceMoney';
 
@@ -107,7 +111,7 @@ async function seedNorthstarCommercial(
        company_id, status, package_id, started_at, next_billing_at,
        vat_registered, vat_rate_percent, billing_contact_user_id,
        billing_contact_name, billing_contact_email
-     ) VALUES ($1, 'active', $2, NOW() - INTERVAL '11 months', $3, TRUE, 15, $4, $5, $6)
+     ) VALUES ($1, 'active', $2, NOW() - INTERVAL '11 months', $3, FALSE, 0, $4, $5, $6)
      ON CONFLICT (company_id) DO UPDATE SET
        status = EXCLUDED.status,
        package_id = EXCLUDED.package_id,
@@ -135,12 +139,16 @@ async function seedNorthstarCommercial(
        billing_email, telephone, address, city, province, postal_code, country
      ) VALUES (
        $1, 'Northstar Advisory (Pty) Ltd', 'Northstar Advisory', '2021/448821/07',
-       TRUE, '4123456789', 15, $2, $3, '000 000 1000',
+       FALSE, NULL, 0, $2, $3, '000 000 1000',
        '12 Harbour View, Foreshore', 'Cape Town', 'Western Cape', '8001', 'South Africa'
      )
      ON CONFLICT (company_id) DO UPDATE SET
        registered_name = EXCLUDED.registered_name,
        trading_name = EXCLUDED.trading_name,
+       registration_number = EXCLUDED.registration_number,
+       vat_registered = EXCLUDED.vat_registered,
+       vat_number = EXCLUDED.vat_number,
+       vat_rate_percent = EXCLUDED.vat_rate_percent,
        billing_contact_name = EXCLUDED.billing_contact_name,
        billing_email = EXCLUDED.billing_email`,
     [
@@ -155,7 +163,7 @@ async function seedNorthstarCommercial(
     quantity: NORTHSTAR_SEAT_LIMIT,
     unitPriceCents: Number(plan.price_cents),
     discountCents: 0,
-    vatRatePercent: DEFAULT_VAT_RATE_PERCENT,
+    vatRatePercent: vatRateForNewInvoiceLine(),
   });
   const totals = calculateInvoiceTotals([line]);
 
@@ -211,7 +219,7 @@ async function seedNorthstarCommercial(
          $1,$2,$3,$4,$5,$6, NULL, 'Fictional Northstar demo invoice. No live billing.',
          'Payment due within 30 days.', 'ZAR',
          'Northstar Advisory (Pty) Ltd', 'Northstar Advisory', '2021/448821/07',
-         TRUE, '4123456789', $7, $8, '000 000 1000',
+         FALSE, NULL, $7, $8, '000 000 1000',
          '12 Harbour View, Foreshore', 'Cape Town', 'Western Cape', '8001', 'South Africa',
          $9, $10, $11, $12, $13, $14, $15, $16, $17
        ) RETURNING id`,
@@ -265,6 +273,54 @@ async function seedNorthstarCommercial(
       );
     }
   }
+
+  await client.query(
+    `INSERT INTO enterprise_contracts (
+       company_id, commercial_status, contract_start_date, contract_end_date, auto_renew,
+       committed_licences, billing_model, billing_frequency, pricing_basis,
+       negotiated_unit_price_cents, currency, vat_applicable, vat_rate_percent,
+       payment_terms_code, po_reference, billing_contact_name, billing_email,
+       billing_notes, internal_notes, additional_seat_policy, seat_reduction_policy,
+       additional_seats_auto_activate, created_by_user_id
+     ) VALUES (
+       $1, 'active', $2, $3, TRUE,
+       $4, 'annual', 'annual', 'per_seat',
+       $5, 'ZAR', FALSE, 0,
+       'days_30', 'NS-ENT-2026', 'Northstar Finance', 'finance@northstar.demo.invalid',
+       'AdvisorTrack Enterprise annual agreement for Northstar Advisory.',
+       'Demo internal commercial notes. Never return on customer APIs.',
+       'next_invoice', 'renewal_only', FALSE, $6
+     )
+     ON CONFLICT (company_id) WHERE company_id IS NOT NULL DO UPDATE SET
+       commercial_status = EXCLUDED.commercial_status,
+       contract_start_date = EXCLUDED.contract_start_date,
+       contract_end_date = EXCLUDED.contract_end_date,
+       auto_renew = EXCLUDED.auto_renew,
+       committed_licences = EXCLUDED.committed_licences,
+       billing_model = EXCLUDED.billing_model,
+       billing_frequency = EXCLUDED.billing_frequency,
+       pricing_basis = EXCLUDED.pricing_basis,
+       negotiated_unit_price_cents = EXCLUDED.negotiated_unit_price_cents,
+       vat_applicable = FALSE,
+       vat_rate_percent = 0,
+       payment_terms_code = EXCLUDED.payment_terms_code,
+       po_reference = EXCLUDED.po_reference,
+       billing_contact_name = EXCLUDED.billing_contact_name,
+       billing_email = EXCLUDED.billing_email,
+       billing_notes = EXCLUDED.billing_notes,
+       additional_seat_policy = EXCLUDED.additional_seat_policy,
+       seat_reduction_policy = EXCLUDED.seat_reduction_policy,
+       additional_seats_auto_activate = FALSE,
+       updated_at = NOW()`,
+    [
+      input.companyId,
+      NORTHSTAR_CONTRACT_START,
+      NORTHSTAR_CONTRACT_END,
+      NORTHSTAR_COMMITTED_LICENCES,
+      NORTHSTAR_UNIT_PRICE_CENTS,
+      input.execId,
+    ]
+  );
 }
 
 async function archiveCompanyEmails(
