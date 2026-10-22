@@ -113,6 +113,25 @@ function neededFieldsForTool(toolId: string, question: string): Set<string> | nu
       'withdrawnCount',
     ]);
   }
+  if (toolId === 'MY_TARGET_PROGRESS') {
+    return new Set([
+      'period',
+      'monthlyGoal',
+      'issuedCommission',
+      'potentialCommission',
+      'progressPercent',
+      'remainingAmount',
+      'weeklyPointTarget',
+      'weeklyPointsEarned',
+      'coldCallsPerWeek',
+      'interviewsPerWeek',
+      'quotesPerWeek',
+      'recommendationsPerWeek',
+      'casesSubmittedPerWeek',
+      'casesIssuedPerWeek',
+      'issuedBasis',
+    ]);
+  }
   if (toolId === 'MY_CASE_SUMMARY') {
     return new Set([
       'currentStage',

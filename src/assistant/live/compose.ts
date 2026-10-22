@@ -30,6 +30,7 @@ import {
 } from './pipelineSelf';
 import { APPLICATION_STATUS_LABELS } from '../../features/applicationStatus';
 import type { MyProductionFocus, MyProductionProjection } from './productionSelf';
+import type { MyTargetProgressFocus, MyTargetProgressProjection } from './targetProgress';
 
 const NOT_FOUND_COPY =
   "I couldn't find that in your AdvisorTrack scope. If you're looking for someone on your team or in your region, try their full name.";
@@ -257,6 +258,57 @@ export function myProductionAnswer(
     caveats: [
       'Issued commission uses the Production issued flag (is_issued). Home may count Accepted / Issued even when that flag is false.',
       'These figures are your own production book. They are not Management Production, team production, or financial advice.',
+    ],
+  };
+}
+
+export function myTargetProgressAnswer(
+  projection: MyTargetProgressProjection,
+  focus: MyTargetProgressFocus,
+): AssistantPublicAnswer {
+  const source = publicFactSource('MY_TARGET_PROGRESS');
+  const remaining = formatLiveRand(projection.remainingAmount);
+  const issued = formatLiveRand(projection.issuedCommission);
+  const goal = formatLiveRand(projection.monthlyGoal);
+  let headline = 'Target progress';
+  let body = `Your monthly nett goal is ${goal}. Home issued toward that goal is ${issued} (${projection.progressPercent}%). ${remaining} remains.`;
+  if (focus === 'remaining') {
+    headline = 'Remaining to target';
+    body = `You have ${remaining} remaining against a ${goal} monthly nett goal. Home issued so far is ${issued}.`;
+  } else if (focus === 'monthly_goal') {
+    headline = 'Monthly nett goal';
+    body = `Your monthly nett goal is ${goal}.`;
+  } else if (focus === 'issued_toward_target') {
+    headline = 'Issued toward target';
+    body = `Home issued toward your ${goal} goal is ${issued} (${projection.progressPercent}%).`;
+  } else if (focus === 'percent') {
+    headline = 'Target percent';
+    body = `You are at ${projection.progressPercent}% of your ${goal} monthly nett goal.`;
+  } else if (focus === 'weekly_targets') {
+    headline = 'Weekly activity targets';
+    body = `This week’s computed targets are ${projection.coldCallsPerWeek} initial contacts, ${projection.interviewsPerWeek} fact-finds, ${projection.quotesPerWeek} analysis/quotes, ${projection.recommendationsPerWeek} recommendations, and ${projection.casesSubmittedPerWeek} implementations. Weekly point target is ${projection.weeklyPointTarget}.`;
+  }
+  return {
+    answerId: 'live:MY_TARGET_PROGRESS',
+    intent: 'live.MY_TARGET_PROGRESS',
+    confidence: 1,
+    mode: 'allowed',
+    headline,
+    body,
+    facts: [
+      { label: 'Period', value: projection.period, source },
+      { label: 'Monthly nett goal', value: goal, source },
+      { label: 'Home issued', value: issued, source },
+      { label: 'Progress', value: `${projection.progressPercent}%`, source },
+      { label: 'Remaining', value: remaining, source },
+      { label: 'Weekly point target', value: String(projection.weeklyPointTarget), source },
+      { label: 'Initial contacts / week', value: String(projection.coldCallsPerWeek), source },
+      { label: 'Fact-finding / week', value: String(projection.interviewsPerWeek), source },
+    ],
+    sources: [{ cardId: 'MY_TARGET_PROGRESS', title: 'My target progress' }],
+    caveats: [
+      'Target progress uses the Home issued definition (is_issued OR Accepted / Issued). Production issued totals use the issued flag only.',
+      'These figures are your own planning workspace. They are not Management reporting or financial advice.',
     ],
   };
 }

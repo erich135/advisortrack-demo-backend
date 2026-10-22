@@ -13,6 +13,7 @@ import type {
 import type { SelfActivityRow } from './followups';
 import { projectMyCaseSummary, type SelfCaseRow } from './pipelineSelf';
 import type { SelfProductionRow } from './productionSelf';
+import type { MyTargetProgressProjection } from './targetProgress';
 
 export type FixturePerson = DirectoryPerson & {
   visibleTo: string[];
@@ -49,6 +50,7 @@ export function createFixtureLiveSource(input: {
     documentsSent?: number;
   }>;
   selfProduction?: Array<SelfProductionRow & { userId: string }>;
+  selfTargetProgress?: Array<MyTargetProgressProjection & { userId: string }>;
   unavailable?: Array<FixtureService>;
   delayMs?: Partial<Record<FixtureService, number>>;
   hang?: FixtureService[];
@@ -211,6 +213,12 @@ export function createFixtureLiveSource(input: {
         submittedToProduction: Boolean(row.linkedProductionId),
         now: ctx.now,
       });
+    },
+    async getSelfTargetProgress(ctx) {
+      const row = (input.selfTargetProgress ?? []).find((item) => item.userId === ctx.identity.userId);
+      if (!row) return null;
+      const { userId: _userId, ...projection } = row;
+      return projection;
     },
   };
 }

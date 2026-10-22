@@ -31,13 +31,14 @@ import {
 import { askedComparisonRank } from './rank';
 import type { HierarchyRank } from '../../features/customerHierarchy';
 
-export type LiveIntent = 'person' | 'advisor' | 'production' | 'pipeline' | 'team' | 'region' | 'licence' | 'access' | 'followups' | 'mypipeline' | 'case_summary' | 'myproduction';
+export type LiveIntent = 'person' | 'advisor' | 'production' | 'pipeline' | 'team' | 'region' | 'licence' | 'access' | 'followups' | 'mypipeline' | 'case_summary' | 'myproduction' | 'mytarget';
 
 export type LiveRoute =
   | { kind: 'none' }
   | { kind: 'followups' }
   | { kind: 'mypipeline' }
   | { kind: 'myproduction' }
+  | { kind: 'mytarget' }
   | { kind: 'case_summary'; caseId: string }
   | { kind: 'licence' }
   | { kind: 'person'; mention: string }
@@ -147,6 +148,9 @@ export function looksMyProductionQuestion(question: string): boolean {
   const liveAsk = /\b(how many|how much|count|do i have|have i got)\b/.test(normalized);
   const productionBook = /\b(my production|production entries|issued this month|not yet issued|not issued)\b/.test(normalized);
   const status = /\b(pending underwriting|awaiting medicals|pma pending|\bpma\b|awaiting advisor information|awaiting advisor info|accepted \/ issued|accepted issued|declined|withdrawn)\b/.test(normalized);
+  if (/\b(how far am i from my target|toward(s)? my (target|goal)|percent of my (target|goal)|remaining (to|on|against) my (target|goal))\b/.test(normalized)) {
+    return false;
+  }
   const issuedAmount = /\bhow much\b/.test(normalized) && /\b(issued|production|commission|business|placed)\b/.test(normalized);
   if (issuedAmount) return true;
   if (liveAsk && (productionBook || status || /\bproduction\b/.test(normalized))) return true;
@@ -185,6 +189,26 @@ export function looksMyCaseSummaryQuestion(question: string): boolean {
     return true;
   }
   if (/\b(is fica complete|does this case have|has this case been submitted)\b/.test(normalized)) return true;
+  return false;
+}
+
+export function looksMyTargetProgressQuestion(question: string): boolean {
+  const normalized = normalizeQuestion(question);
+  if (looksHelpQuestion(normalized)) return false;
+  if (/\b(what does|what happens|why (did|was|does|is)|how do i|how can i)\b/.test(normalized)) {
+    return false;
+  }
+  if (looksNamedOtherPerson(normalized)) return false;
+  if (/\b(management|downline|my team|the team|region|leadership)\b/.test(normalized)) return false;
+  if (looksLikeTeamLookup(question) || looksLikeRegionLookup(question)) return false;
+  if (/\bhow far am i from my target\b/.test(normalized)) return true;
+  if (/\bwhat is my monthly (nett )?(goal|target)\b/.test(normalized)) return true;
+  if (/\b(issued|earned) (toward|towards|against) my (target|goal)\b/.test(normalized)) return true;
+  const progress = /\b(how far|remaining|left to go|progress|percent|percentage|tracking)\b/.test(normalized);
+  const target = /\b(target|goal|monthly nett|nett goal)\b/.test(normalized);
+  if (progress && target) return true;
+  const weekly = /\b(weekly (target|activity|points)|initial contacts?|fact-?finds?|cold calls? per week|quotes per week|recommendations? per week)\b/.test(normalized);
+  if (weekly && /\b(how many|what are|do i need|should i)\b/.test(normalized)) return true;
   return false;
 }
 
@@ -247,6 +271,7 @@ export function routeLiveQuestion(question: string, navigationPath?: string): Li
   }
   if (looksMyFollowupsQuestion(question)) return { kind: 'followups' };
   if (looksMyProductionQuestion(question)) return { kind: 'myproduction' };
+  if (looksMyTargetProgressQuestion(question)) return { kind: 'mytarget' };
   if (looksMyPipelineQuestion(question)) return { kind: 'mypipeline' };
   if (looksHelpQuestion(normalized)) return { kind: 'none' };
   if (looksLicenceSummary(normalized)) return { kind: 'licence' };

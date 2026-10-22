@@ -13,7 +13,10 @@ import { organisationStructureService } from '../../services/organisationStructu
 import { activityRepository } from '../../repositories/activity.repository';
 import { caseService } from '../../services/case.service';
 import { productionRepository } from '../../repositories/production.repository';
+import { dashboardRepository } from '../../repositories/dashboard.repository';
+import { PlanningService } from '../../services/planning.service';
 import { projectMyCaseSummary } from './pipelineSelf';
+import { projectMyTargetProgress } from './targetProgress';
 import { cachedTtlLoad, liveCacheKey, liveScopeFingerprint, remember } from './cache';
 import { LiveScopeMissError } from './errors';
 import { ttlMsFor } from './limits';
@@ -27,6 +30,8 @@ import type {
   PipelineAggregate,
   ToolExecutionContext,
 } from './types';
+
+const planningService = new PlanningService();
 
 type MemberDto = {
   id: string;
@@ -326,6 +331,13 @@ export function createOrganisationLiveSource(): LiveDirectorySource {
         if (isScopeMiss(error)) return null;
         throw error;
       }
+    },
+    async getSelfTargetProgress(ctx) {
+      const [dashboard, targets] = await Promise.all([
+        dashboardRepository.getSummary(ctx.identity.userId),
+        planningService.getTargets(ctx.identity.userId),
+      ]);
+      return projectMyTargetProgress({ dashboard, targets });
     },
   };
 }

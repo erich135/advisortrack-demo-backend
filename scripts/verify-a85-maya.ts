@@ -30,7 +30,7 @@ assert.equal(new Set(cases.map((item) => item.stage)).size, 6, 'Maya extras cove
 assert.ok(cases.some((item) => item.nextAction === false), 'Maya has a no-next-action case');
 assert.ok(cases.some((item) => item.reviewDue), 'Maya has a review-due case');
 assert.ok(cases.some((item) => item.linkProduction), 'Maya has a production-linked case');
-assert.equal(NORTHSTAR_SEED_VERSION, 20, 'A8.6 production extras require a Northstar reseed');
+assert.equal(NORTHSTAR_SEED_VERSION, 21, 'A8.7 planning seed requires a Northstar reseed');
 assert.ok(cases.some((item) => item.analysisQuotes && item.analysisQuotes.length > 0), 'Maya has quote data');
 assert.ok(cases.some((item) => !item.ficaId || !item.ficaResidence || !item.ficaBank), 'Maya has mixed FICA');
 

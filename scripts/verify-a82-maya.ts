@@ -13,9 +13,9 @@ const seed = fs.readFileSync(path.join(root, 'scripts/seed-northstar-master.ts')
 const clone = fs.readFileSync(path.join(root, 'src/repositories/demoWorkspaceClone.ts'), 'utf8');
 const northstar = fs.readFileSync(path.join(root, 'src/features/demoNorthstar.ts'), 'utf8');
 
-assert.equal(NORTHSTAR_SEED_VERSION, 20);
-assert.equal(NORTHSTAR_VERSION_LABEL, 'a86-advisor-production');
-assert.match(northstar, /NORTHSTAR_SEED_VERSION = 20/);
+assert.equal(NORTHSTAR_SEED_VERSION, 21);
+assert.equal(NORTHSTAR_VERSION_LABEL, 'a87-advisor-planning');
+assert.match(northstar, /NORTHSTAR_SEED_VERSION = 21/);
 assert.match(seed, /extraMayaWorkspaceCases/);
 assert.match(seed, /extraMayaWorkspaceActivities/);
 assert.match(seed, /monthly_goal_nett = 60000/);

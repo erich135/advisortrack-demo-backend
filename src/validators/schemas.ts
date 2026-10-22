@@ -49,6 +49,8 @@ export const updateFinancialProfileSchema = z.object({
   monthlyGoalNett: z.number().min(0).optional(),
   monthlyDeductions: z.number().min(0).optional().nullable(),
   commissionSplit: z.string().max(255).optional().nullable(),
+  workingWeeksPerYear: z.number().int().min(40).max(52).optional(),
+  workingDaysPerWeek: z.number().int().min(1).max(7).optional(),
 });
 
 export const updateUserProfileSchema = z.object({
@@ -219,6 +221,8 @@ export const updateGeneralSettingsSchema = z.object({
   analysisToRecommendationRatio: z.number().min(0).max(10).optional(),
   recommendationToImplementationOverride: z.boolean().optional(),
   recommendationToImplementationRatio: z.number().min(0).max(10).optional(),
+  submissionToIssuedOverride: z.boolean().optional(),
+  submissionToIssuedRatio: z.number().min(0).max(10).optional(),
   adaptiveRatiosEnabled: z.boolean().optional(),
   ratiosLastAdjustedAt: z.string().optional(),
   ratiosAdjustmentMonth: z.string().max(7).optional(),

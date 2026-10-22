@@ -13,6 +13,7 @@ import type {
 import type { MyFollowupsProjection } from './followups';
 import type { MyCaseSummaryProjection, MyPipelineProjection } from './pipelineSelf';
 import type { MyProductionProjection } from './productionSelf';
+import type { MyTargetProgressProjection } from './targetProgress';
 
 function projectedFacts(facts: Record<string, string | number | boolean | null>): Record<string, string | number | boolean | null> {
   return Object.fromEntries(
@@ -284,6 +285,30 @@ export function myProductionToolFacts(projection: MyProductionProjection): LiveT
       postponedCount: projection.postponedCount,
       declinedCount: projection.declinedCount,
       withdrawnCount: projection.withdrawnCount,
+    }),
+  };
+}
+
+export function myTargetProgressToolFacts(projection: MyTargetProgressProjection): LiveToolFactGroup {
+  return {
+    tool: 'MY_TARGET_PROGRESS',
+    version: 1,
+    facts: projectedFacts({
+      period: projection.period,
+      monthlyGoal: projection.monthlyGoal,
+      issuedCommission: projection.issuedCommission,
+      potentialCommission: projection.potentialCommission,
+      progressPercent: projection.progressPercent,
+      remainingAmount: projection.remainingAmount,
+      weeklyPointTarget: projection.weeklyPointTarget,
+      weeklyPointsEarned: projection.weeklyPointsEarned,
+      coldCallsPerWeek: projection.coldCallsPerWeek,
+      interviewsPerWeek: projection.interviewsPerWeek,
+      quotesPerWeek: projection.quotesPerWeek,
+      recommendationsPerWeek: projection.recommendationsPerWeek,
+      casesSubmittedPerWeek: projection.casesSubmittedPerWeek,
+      casesIssuedPerWeek: projection.casesIssuedPerWeek,
+      issuedBasis: projection.issuedBasis,
     }),
   };
 }

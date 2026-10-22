@@ -79,6 +79,36 @@ function isAdvisorProductionRoute(context?: AssistantContext): boolean {
   );
 }
 
+function isAdvisorPlanningRoute(context?: AssistantContext): boolean {
+  const routeId = context?.route.routeId;
+  const path = context?.route.path ?? '';
+  return context?.workspace === 'advisor' && (routeId === 'advisor-planning' || path === '/advisor/planning');
+}
+
+function isAdvisorProfileRoute(context?: AssistantContext): boolean {
+  const routeId = context?.route.routeId;
+  const path = context?.route.path ?? '';
+  return context?.workspace === 'advisor' && (routeId === 'advisor-profile' || path === '/advisor/profile');
+}
+
+function isAdvisorSettingsRoute(context?: AssistantContext): boolean {
+  const routeId = context?.route.routeId;
+  const path = context?.route.path ?? '';
+  return context?.workspace === 'advisor' && (routeId === 'advisor-settings' || path === '/advisor/settings');
+}
+
+function isAdvisorSubscriptionRoute(context?: AssistantContext): boolean {
+  const routeId = context?.route.routeId;
+  const path = context?.route.path ?? '';
+  return context?.workspace === 'advisor' && (routeId === 'advisor-subscription' || path === '/advisor/subscription');
+}
+
+function isAdvisorSetupRoute(context?: AssistantContext): boolean {
+  const routeId = context?.route.routeId;
+  const path = context?.route.path ?? '';
+  return context?.workspace === 'advisor' && (routeId === 'advisor-setup' || path === '/advisor/setup');
+}
+
 function isAdvisorContactsRoute(context?: AssistantContext): boolean {
   const routeId = context?.route.routeId;
   const path = context?.route.path ?? '';
@@ -144,6 +174,61 @@ export function unknownHelpAnswer(context?: AssistantContext): AssistantPublicAn
       mode: 'unknown',
       headline: "I couldn't confidently match that yet",
       body: 'Are you asking about capturing production, application status, issued production, pending applications or editing an entry?',
+      sources: [],
+    };
+  }
+  if (isAdvisorPlanningRoute(context)) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: 'Are you asking about your monthly target, weekly activity targets, conversion ratios, or how progress is calculated?',
+      sources: [],
+    };
+  }
+  if (isAdvisorProfileRoute(context)) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: 'Are you asking about updating your profile, Financial Settings, commission split, or advisor type?',
+      sources: [],
+    };
+  }
+  if (isAdvisorSettingsRoute(context)) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: 'Are you asking about conversion ratios, average commission, tax override, or adaptive ratios?',
+      sources: [],
+    };
+  }
+  if (isAdvisorSubscriptionRoute(context)) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: 'Are you asking about your current plan, Live Preview, locked features, or how to upgrade in the mobile app?',
+      sources: [],
+    };
+  }
+  if (isAdvisorSetupRoute(context)) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: 'Are you asking about completing Setup, monthly nett goal, commission split, or conversion ratios?',
       sources: [],
     };
   }

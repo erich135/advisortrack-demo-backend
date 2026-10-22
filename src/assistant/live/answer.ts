@@ -9,6 +9,7 @@ import {
   myFollowupsAnswer,
   myPipelineAnswer,
   myProductionAnswer,
+  myTargetProgressAnswer,
   liveNavigateActions,
   notFoundInScopeAnswer,
   personAmbiguityAnswer,
@@ -31,6 +32,7 @@ import { createToolExecutionContext } from './context';
 import { detectMyFollowupsFocus, projectMyFollowups } from './followups';
 import { detectMyPipelineFocus, projectMyPipeline } from './pipelineSelf';
 import { detectMyProductionFocus, monthKeyForAssistantPeriod, projectMyProduction } from './productionSelf';
+import { detectMyTargetProgressFocus } from './targetProgress';
 import { normalizeQuestion } from '../retrieve';
 import { isLiveScopeMiss } from './errors';
 import { wrapLiveSource } from './runtime';
@@ -45,6 +47,7 @@ import {
   myFollowupsToolFacts,
   myPipelineToolFacts,
   myProductionToolFacts,
+  myTargetProgressToolFacts,
   personToolFacts,
   pipelineToolFacts,
   productionToolFacts,
@@ -66,6 +69,7 @@ import {
   MY_FOLLOWUPS_TOOL,
   MY_PIPELINE_TOOL,
   MY_PRODUCTION_TOOL,
+  MY_TARGET_PROGRESS_TOOL,
   PERSON_SUMMARY_TOOL,
   PIPELINE_SUMMARY_TOOL,
   PRODUCTION_SUMMARY_TOOL,
@@ -78,6 +82,7 @@ import {
   canUseMyFollowups,
   canUseMyPipeline,
   canUseMyProduction,
+  canUseMyTargetProgress,
   canUsePersonSummary,
   canUsePipelineSummary,
   canUseProductionSummary,
@@ -326,6 +331,10 @@ export async function gatherLiveGrounding(input: {
     return answerMyProduction(ctx, source, input.question);
   }
 
+  if (route.kind === 'mytarget') {
+    return answerMyTargetProgress(ctx, source, input.question);
+  }
+
   if (route.kind === 'mypipeline') {
     return answerMyPipeline(ctx, source, input.question);
   }
@@ -465,6 +474,56 @@ async function answerMyProduction(
   } catch {
     state.provenance.toolsUnavailable.push(MY_PRODUCTION_TOOL.id);
     return pack(state, withProvenance(toolUnavailableAnswer('My production'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+}
+
+async function answerMyTargetProgress(
+  ctx: ToolExecutionContext,
+  source: LiveDirectorySource,
+  question: string,
+): Promise<LiveGrounding | null> {
+  const state: BuildState = {
+    ctx,
+    provenance: emptyProvenance(ctx, [MY_TARGET_PROGRESS_TOOL.id]),
+    tools: [],
+    derivations: [],
+    period: { id: 'this_month', label: ASSISTANT_PERIOD_LABELS.this_month },
+  };
+  if (!canUseMyTargetProgress(ctx)) {
+    return null;
+  }
+  if (!source.getSelfTargetProgress) {
+    state.provenance.toolsUnavailable.push(MY_TARGET_PROGRESS_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My target progress'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+  try {
+    const projection = await source.getSelfTargetProgress(ctx);
+    if (!projection) {
+      state.provenance.toolsUnavailable.push(MY_TARGET_PROGRESS_TOOL.id);
+      return pack(state, withProvenance(toolUnavailableAnswer('My target progress'), state.provenance), {
+        compositionWorthy: false,
+        fallbackKind: 'live',
+      });
+    }
+    addTool(state, myTargetProgressToolFacts(projection));
+    const focus = detectMyTargetProgressFocus(normalizeQuestion(question));
+    const answer = {
+      ...myTargetProgressAnswer(projection, focus),
+      actions: liveNavigateActions(ctx.assistant, ['advisor-planning']),
+    };
+    return pack(state, withProvenance(answer, state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  } catch {
+    state.provenance.toolsUnavailable.push(MY_TARGET_PROGRESS_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My target progress'), state.provenance), {
       compositionWorthy: false,
       fallbackKind: 'live',
     });

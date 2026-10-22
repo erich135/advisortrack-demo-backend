@@ -1102,15 +1102,15 @@ async function main(): Promise<void> {
     await client.query(
       `UPDATE advisor_general_settings ags
        SET cold_call_to_interview_override = TRUE,
-           cold_call_to_interview_ratio = 0.35,
+           cold_call_to_interview_ratio = 3.5,
            interview_to_analysis_override = TRUE,
-           interview_to_analysis_ratio = 0.55,
+           interview_to_analysis_ratio = 5.5,
            analysis_to_recommendation_override = TRUE,
-           analysis_to_recommendation_ratio = 0.60,
+           analysis_to_recommendation_ratio = 6.0,
            recommendation_to_implementation_override = TRUE,
-           recommendation_to_implementation_ratio = 0.70,
+           recommendation_to_implementation_ratio = 7.0,
            submission_to_issued_override = TRUE,
-           submission_to_issued_ratio = 0.65,
+           submission_to_issued_ratio = 6.5,
            updated_at = NOW()
        FROM users u
        WHERE ags.user_id = u.id

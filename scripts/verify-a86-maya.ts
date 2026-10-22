@@ -33,8 +33,8 @@ assert.ok(cases.some((item) => item.applicationStatus === 'pma_pending'));
 assert.ok(cases.some((item) => item.applicationStatus === 'awaiting_advisor_info'));
 assert.ok(cases.some((item) => item.applicationStatus === 'declined'));
 assert.ok(cases.some((item) => item.applicationStatus === 'withdrawn'));
-assert.equal(NORTHSTAR_SEED_VERSION, 20, 'A8.6 production extras require a Northstar reseed');
-assert.equal(NORTHSTAR_VERSION_LABEL, 'a86-advisor-production');
+assert.equal(NORTHSTAR_SEED_VERSION, 21, 'A8.7 planning seed requires a Northstar reseed');
+assert.equal(NORTHSTAR_VERSION_LABEL, 'a87-advisor-planning');
 
 const kb = JSON.parse(read('src/assistant/knowledge-bundle.json')) as { cards: Array<{ id: string }> };
 assert.ok(kb.cards.some((card) => card.id === 'PRODUCTION.WHAT'));

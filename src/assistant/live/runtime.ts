@@ -153,5 +153,12 @@ export function wrapLiveSource(source: LiveDirectorySource, ctx: ToolExecutionCo
         load: () => source.getSelfCaseSummary!(ctx, caseId),
       })
       : undefined,
+    getSelfTargetProgress: source.getSelfTargetProgress
+      ? () => runLiveFetch(ctx, {
+        service: 'planning',
+        keyParts: ['self', ctx.identity.userId, 'target'],
+        load: () => source.getSelfTargetProgress!(ctx),
+      })
+      : undefined,
   };
 }

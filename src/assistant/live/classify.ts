@@ -165,6 +165,24 @@ export const MY_PRODUCTION_FIELDS: FieldCatalog = {
   withdrawnCount: 'operational',
 };
 
+export const MY_TARGET_PROGRESS_FIELDS: FieldCatalog = {
+  period: 'operational',
+  monthlyGoal: 'operational',
+  issuedCommission: 'operational',
+  potentialCommission: 'operational',
+  progressPercent: 'operational',
+  remainingAmount: 'operational',
+  weeklyPointTarget: 'operational',
+  weeklyPointsEarned: 'operational',
+  coldCallsPerWeek: 'operational',
+  interviewsPerWeek: 'operational',
+  quotesPerWeek: 'operational',
+  recommendationsPerWeek: 'operational',
+  casesSubmittedPerWeek: 'operational',
+  casesIssuedPerWeek: 'operational',
+  issuedBasis: 'operational',
+};
+
 export const MY_CASE_SUMMARY_FIELDS: FieldCatalog = {
   currentStage: 'operational',
   stageLabel: 'operational',
@@ -215,6 +233,7 @@ export const TOOL_FIELD_CATALOG: Record<string, FieldCatalog> = {
   MY_PIPELINE: MY_PIPELINE_FIELDS,
   MY_CASE_SUMMARY: MY_CASE_SUMMARY_FIELDS,
   MY_PRODUCTION: MY_PRODUCTION_FIELDS,
+  MY_TARGET_PROGRESS: MY_TARGET_PROGRESS_FIELDS,
 };
 
 export const PUBLIC_FACT_SOURCES: Record<string, string> = {
@@ -232,10 +251,12 @@ export const PUBLIC_FACT_SOURCES: Record<string, string> = {
   MY_PIPELINE: 'My pipeline',
   MY_CASE_SUMMARY: 'My case',
   MY_PRODUCTION: 'My production',
+  MY_TARGET_PROGRESS: 'My target progress',
 };
 
 export function publicFactSource(toolId: string, periodLabel?: string | null): string {
   if (toolId === 'MY_PRODUCTION' && periodLabel) return `My production — ${periodLabel}`;
+  if (toolId === 'MY_TARGET_PROGRESS' && periodLabel) return `My target progress — ${periodLabel}`;
   if (toolId === 'PRODUCTION_SUMMARY' && periodLabel) return `Production — ${periodLabel}`;
   if (toolId === 'COMPARISON_SUMMARY' && periodLabel) return `Comparison — ${periodLabel}`;
   if (toolId === 'RANKING_SUMMARY' && periodLabel) return `Ranking — ${periodLabel}`;

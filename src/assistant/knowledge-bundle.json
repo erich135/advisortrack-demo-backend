@@ -127,7 +127,12 @@
         "advisor-activity-detail",
         "advisor-pipeline",
         "advisor-case-detail",
-        "advisor-production"
+        "advisor-production",
+        "advisor-planning",
+        "advisor-profile",
+        "advisor-settings",
+        "advisor-subscription",
+        "advisor-setup"
       ]
     },
     {
@@ -3963,6 +3968,819 @@
       ]
     },
     {
+      "id": "PLANNING.WHAT",
+      "kind": "route",
+      "title": "Planning & Targets",
+      "aliases": [
+        "planning",
+        "targets",
+        "my target",
+        "planning workspace"
+      ],
+      "questionForms": [
+        "What is Planning & Targets?",
+        "Where do I set my targets?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-planning",
+        "advisor-home"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Planning & Targets at /advisor/planning is your personal planning workspace from the same Android APIs: GET /planning/targets (computed weekly deliverables), GET/PATCH /planning/settings (conversion ratios), and your financial profile monthly nett goal. It is not Management reporting and does not invent a second forecasting model.",
+      "steps": [
+        {
+          "label": "Open Planning & Targets",
+          "routeId": "advisor-planning"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PLANNING.MONTHLY_GOAL",
+      "kind": "task",
+      "title": "Monthly nett goal",
+      "aliases": [
+        "monthly target",
+        "nett goal",
+        "set my target",
+        "change monthly target"
+      ],
+      "questionForms": [
+        "How do I set my monthly target?",
+        "What is my monthly nett goal?",
+        "How do I change my monthly target?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-planning",
+        "advisor-home",
+        "advisor-profile"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Your monthly nett goal is stored on advisor_financial_profile.monthly_goal_nett and returned on GET /profile and GET /profile/financial. Change it on Planning & Targets or Financial Settings. There is no PATCH /planning/targets — weekly numbers are recalculated from the goal, deductions, commission split, working weeks/days, and conversion ratios. Home Monthly Progress uses the same nett goal (the dashboard substitutes R50,000 only when the goal has never been set).",
+      "steps": [
+        {
+          "label": "Open Planning & Targets",
+          "routeId": "advisor-planning"
+        },
+        {
+          "label": "Save the monthly nett goal"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PLANNING.PROGRESS",
+      "kind": "concept",
+      "title": "Target progress",
+      "aliases": [
+        "how far from target",
+        "progress percent",
+        "remaining to target"
+      ],
+      "questionForms": [
+        "How is target progress calculated?",
+        "How far am I from my target?",
+        "Why is my target progress different from Production?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-planning",
+        "advisor-home",
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Target progress uses the Advisor Home issued definition from GET /dashboard: this month’s production dated by due date or created date, where is_issued OR application_status is Accepted / Issued, divided by your monthly nett goal. Remaining is goal minus that issued amount. Production issued totals use the issued flag only. Planning does not silently combine those rules. Potential on Home can also include open-case estimated commission without linked production.",
+      "steps": [
+        {
+          "label": "Open Planning & Targets",
+          "routeId": "advisor-planning"
+        },
+        {
+          "label": "Compare with Home",
+          "routeId": "advisor-home"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PLANNING.WEEKLY",
+      "kind": "concept",
+      "title": "Weekly activity targets",
+      "aliases": [
+        "weekly targets",
+        "activity targets",
+        "initial contacts target",
+        "fact-finding target"
+      ],
+      "questionForms": [
+        "How do weekly activity targets work?",
+        "How do I change my weekly targets?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-planning"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Weekly targets are computed by the planning engine (GET /planning/targets), not stored as independent numbers. The engine reverse-funnels from your nett goal using tax, deductions, commission split, average commission, working weeks/days, and conversion ratios. Labels are Initial contact, Fact-finding (API field interviewsPerWeek / Interview), Analysis & quotes, Recommendation, Implementation, and issued cases. Change weekly activity by changing those inputs — there is no PATCH /planning/targets.",
+      "steps": [
+        {
+          "label": "Open Planning & Targets",
+          "routeId": "advisor-planning"
+        },
+        {
+          "label": "Adjust ratios in General Settings",
+          "routeId": "advisor-settings"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PLANNING.WORKING",
+      "kind": "concept",
+      "title": "Working weeks and days",
+      "aliases": [
+        "working weeks",
+        "working days",
+        "working schedule"
+      ],
+      "questionForms": [
+        "What are working weeks?",
+        "What are working days?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-planning",
+        "advisor-settings",
+        "advisor-setup"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Working weeks per year (typically 40–52, default 44) and working days per week (1–7, default 5) live on your financial profile. The engine uses them to spread monthly activity into weekly and daily deliverables. You can set them during Setup and change them later on Planning & Targets.",
+      "steps": [
+        {
+          "label": "Open Planning & Targets",
+          "routeId": "advisor-planning"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PLANNING.RATIOS",
+      "kind": "concept",
+      "title": "Conversion ratios",
+      "aliases": [
+        "conversion ratio",
+        "funnel ratios",
+        "slider ratios",
+        "adaptive ratios"
+      ],
+      "questionForms": [
+        "What are conversion ratios?",
+        "How do conversion ratios affect my planning?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-planning",
+        "advisor-settings",
+        "advisor-setup"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Conversion ratios are 0–10 sliders on GET/PATCH /planning/settings. The engine treats the slider divided by 10 as a conversion rate (4 means 40%). They run cold call → fact-finding → analysis → recommendation → implementation → issued. These are planning inputs, not product or suitability advice. Adaptive ratios may blend with your actual results once a month unless you freeze a slider with its override. Submission-to-issued is included in Setup and General Settings.",
+      "steps": [
+        {
+          "label": "Open General Settings",
+          "routeId": "advisor-settings"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PLANNING.ADVISOR_TYPE",
+      "kind": "concept",
+      "title": "Advisor type",
+      "aliases": [
+        "employee",
+        "independent",
+        "commission advisor type"
+      ],
+      "questionForms": [
+        "What is my advisor type?",
+        "How do I change my advisor type?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-planning",
+        "advisor-profile",
+        "advisor-setup"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Advisor type is employee or independent on your financial profile (commissionAdvisorType). You can set it in Setup, Profile Financial Settings, or Planning. The current planning engine does not change weekly numbers from advisor type; commission split, deductions, and ratios do.",
+      "steps": [
+        {
+          "label": "Open Profile",
+          "routeId": "advisor-profile"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PROFILE.UPDATE",
+      "kind": "task",
+      "title": "Update profile",
+      "aliases": [
+        "edit profile",
+        "my profile",
+        "change name"
+      ],
+      "questionForms": [
+        "How do I update my profile?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-profile"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open Profile and save first name, last name, phone, and FSP number through PATCH /api/v1/profile. Company display comes from your user record when the API returns it. This is your advisor identity, not a client fact-find.",
+      "steps": [
+        {
+          "label": "Open Profile",
+          "routeId": "advisor-profile"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PROFILE.PHONE",
+      "kind": "task",
+      "title": "Change phone number",
+      "aliases": [
+        "update phone",
+        "mobile number"
+      ],
+      "questionForms": [
+        "How do I change my phone number?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-profile"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Change your phone on Profile. PATCH /profile writes the phone field on your user record. There is no separate phone-verification flow on the current backend.",
+      "steps": [
+        {
+          "label": "Open Profile",
+          "routeId": "advisor-profile"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PROFILE.EMAIL",
+      "kind": "task",
+      "title": "Change email address",
+      "aliases": [
+        "update email",
+        "change login email"
+      ],
+      "questionForms": [
+        "Can I change my email address?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-profile"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Profile accepts an email change through PATCH /profile. The current backend writes users.email immediately and does not start a new verification flow or uniqueness check in that path. Login still requires a verified email on the account. Use this only when you intend to change the stored address; there is no separate identity-verification wizard.",
+      "steps": [
+        {
+          "label": "Open Profile",
+          "routeId": "advisor-profile"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PROFILE.FINANCIAL",
+      "kind": "concept",
+      "title": "Financial Settings",
+      "aliases": [
+        "financial profile",
+        "commission split",
+        "deductions",
+        "nett income goal"
+      ],
+      "questionForms": [
+        "What are Financial Settings?",
+        "How do I change my commission split?",
+        "Where do I change my planning assumptions?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-profile",
+        "advisor-planning"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Financial Settings are your own planning inputs: monthly nett goal, deductions, commission split, advisor type, and VAT flags on the financial profile. They feed the planning engine. They are not a client fact-find. Commission split is stored as a string such as 80% or 70/30; the engine parses it when computing weekly targets. Change split on Profile or Planning; change conversion ratios on General Settings.",
+      "steps": [
+        {
+          "label": "Open Profile",
+          "routeId": "advisor-profile"
+        },
+        {
+          "label": "Open Planning & Targets",
+          "routeId": "advisor-planning"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SETTINGS.GENERAL",
+      "kind": "route",
+      "title": "General Settings",
+      "aliases": [
+        "planning settings",
+        "average commission",
+        "tax directive",
+        "adaptive ratios"
+      ],
+      "questionForms": [
+        "What are General Settings?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-settings"
+      ],
+      "category": "advisor-workspace",
+      "summary": "General Settings at /advisor/settings is GET/PATCH /planning/settings: average commission, optional tax-rate override, conversion-ratio sliders, and adaptive ratios. There is no separate notifications, theme, or automation settings API. Working weeks/days and monthly goal live on the financial profile, not this route.",
+      "steps": [
+        {
+          "label": "Open General Settings",
+          "routeId": "advisor-settings"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SETUP.WHY",
+      "kind": "route",
+      "title": "Advisor Setup",
+      "aliases": [
+        "concierge",
+        "onboarding",
+        "why setup",
+        "initial setup"
+      ],
+      "questionForms": [
+        "Why am I seeing Setup?",
+        "Why do I need to complete Setup?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-setup"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Setup appears when your financial profile still needs a monthly nett goal (needsSetup is true when monthly_goal_nett is null). That is the backend source of truth — not a frontend flag and not login. Advisors who already have a monthly goal are not sent through Setup again. After Setup you land on Advisor Home.",
+      "steps": [
+        {
+          "label": "Complete Setup",
+          "routeId": "advisor-setup"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SETUP.COMPLETE",
+      "kind": "task",
+      "title": "Complete Setup",
+      "aliases": [
+        "finish setup",
+        "setup wizard",
+        "terms of service"
+      ],
+      "questionForms": [
+        "How do I complete Setup?",
+        "What information do I need?",
+        "What happens after Setup?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-setup"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Setup posts POST /profile/setup/complete with the Android concierge payload: monthly nett goal (required), optional deductions, commission split, advisor type, working weeks/days, conversion ratios plus average commission, and termsAccepted true. Terms use the existing users.terms_accepted_at / terms_version fields (default version 2026-06). After success, Setup is complete and Advisor Home opens. Previously saved values are not erased when you resume an incomplete profile.",
+      "steps": [
+        {
+          "label": "Accept terms and enter your planning inputs",
+          "routeId": "advisor-setup"
+        },
+        {
+          "label": "Open Advisor Home",
+          "routeId": "advisor-home"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SETUP.CHANGE_LATER",
+      "kind": "concept",
+      "title": "Change setup values later",
+      "aliases": [
+        "edit after setup",
+        "change goal later"
+      ],
+      "questionForms": [
+        "Can I change these values later?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-setup",
+        "advisor-planning",
+        "advisor-profile",
+        "advisor-settings"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Yes. Monthly goal, deductions, split, advisor type, working weeks/days, and conversion ratios can be changed later on Planning, Profile, and General Settings. Setup is the first-time concierge, not the only editor.",
+      "steps": [
+        {
+          "label": "Open Planning & Targets",
+          "routeId": "advisor-planning"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SETUP.GOAL_WHY",
+      "kind": "concept",
+      "title": "Why a monthly goal",
+      "aliases": [
+        "why nett goal",
+        "why monthly target"
+      ],
+      "questionForms": [
+        "Why do I need a monthly goal?",
+        "What does monthly nett goal mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-setup",
+        "advisor-planning"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Monthly nett goal is the take-home target the planning engine starts from. It is required to complete Setup because needsSetup is defined as a missing monthly_goal_nett. Optional Setup fields (deductions, split notes, advisor type, weeks/days) are not mandatory if the API treats them as optional — only the goal, ratio block, average commission, and terms acceptance are required on completeSetup.",
+      "steps": [
+        {
+          "label": "Enter your monthly nett goal",
+          "routeId": "advisor-setup"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SETUP.SPLIT",
+      "kind": "concept",
+      "title": "Commission split in Setup",
+      "aliases": [
+        "what is commission split",
+        "80/20",
+        "split percent"
+      ],
+      "questionForms": [
+        "What does commission split mean?",
+        "What is commission split?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-setup",
+        "advisor-profile"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Commission split is your share of commission used when the engine turns nett goal into gross activity. Store values such as 80% or 70/30. Empty defaults to 80% in the engine. It is a planning assumption, not a product recommendation.",
+      "steps": [
+        {
+          "label": "Set commission split in Setup or Profile",
+          "routeId": "advisor-setup"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SUBSCRIPTION.PLAN",
+      "kind": "route",
+      "title": "Your plan",
+      "aliases": [
+        "my subscription",
+        "what plan",
+        "advisor standard",
+        "starter",
+        "free plan"
+      ],
+      "questionForms": [
+        "What plan am I on?",
+        "Where is my subscription?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-subscription"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Subscription / Plan at /advisor/subscription shows GET /subscription/me — your personal package name, status, features, and contact entitlements. Package names come from the backend catalog (for example Starter / Advisor Standard). This page is not organisation billing.",
+      "steps": [
+        {
+          "label": "Open Subscription / Plan",
+          "routeId": "advisor-subscription"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SUBSCRIPTION.LIVE_PREVIEW",
+      "kind": "concept",
+      "title": "Live Preview",
+      "aliases": [
+        "three contacts",
+        "3 real contacts",
+        "practice contacts",
+        "sandbox"
+      ],
+      "questionForms": [
+        "What is Live Preview?",
+        "Why can I only have three real contacts?",
+        "What are practice contacts?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-subscription",
+        "advisor-contacts"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Live Preview is the personal free-tier opt-in for up to 3 active real contacts. Practice contacts are excluded from that cap. Enabling Live Preview may rotate or archive an existing real contact according to current backend entitlement rules. It is not a company licence seat. Practice contacts are sandbox people used for learning the app.",
+      "steps": [
+        {
+          "label": "Open Subscription / Plan",
+          "routeId": "advisor-subscription"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SUBSCRIPTION.LOCKED",
+      "kind": "concept",
+      "title": "Locked features",
+      "aliases": [
+        "feature locked",
+        "weekly points locked",
+        "why locked"
+      ],
+      "questionForms": [
+        "Why is this feature locked?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-subscription",
+        "advisor-home"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Home tiles such as weekly points, pipeline analytics, and upcoming events lock when your personal plan’s feature list does not include them. The locked state comes from GET /dashboard and GET /subscription/me, not from a web-only rule. Open Subscription / Plan to see features included on your current package.",
+      "steps": [
+        {
+          "label": "Open Subscription / Plan",
+          "routeId": "advisor-subscription"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SUBSCRIPTION.UPGRADE",
+      "kind": "task",
+      "title": "Upgrade your plan",
+      "aliases": [
+        "buy pro",
+        "revenuecat",
+        "web checkout",
+        "manage subscription"
+      ],
+      "questionForms": [
+        "How do I upgrade?",
+        "Can I upgrade on the web?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-subscription"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Personal paid plans are purchased in the AdvisorTrack mobile app through the store (RevenueCat). The web Subscription page is read-only. There is no browser checkout in this product. POST /subscription/select is blocked for paid packages with STORE_BILLING_REQUIRED. Manage or upgrade your subscription in the AdvisorTrack mobile app.",
+      "steps": [
+        {
+          "label": "Review your plan on the web",
+          "routeId": "advisor-subscription"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SUBSCRIPTION.VS_COMPANY",
+      "kind": "concept",
+      "title": "Personal plan vs company licence",
+      "aliases": [
+        "company seats",
+        "organisation licence",
+        "enterprise contract"
+      ],
+      "questionForms": [
+        "What's the difference between my subscription and my company's licence?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-subscription"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Your personal subscription is GET /subscription/me (Free / Live Preview / Advisor Standard). A company licence pool is organisation seating and billing under Organisation Admin. An advisor who happens to belong to an organisation still sees only the personal plan on this page — not seats, enterprise contracts, seat increases, or company invoices.",
+      "steps": [
+        {
+          "label": "Open Subscription / Plan",
+          "routeId": "advisor-subscription"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
       "id": "PEOPLE.ADD_USER",
       "kind": "task",
       "title": "Add User",
@@ -6267,6 +7085,141 @@
         {
           "label": "Refresh Home",
           "routeId": "advisor-home"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PLANNING_TARGET",
+      "kind": "troubleshoot",
+      "title": "I cannot change my weekly targets",
+      "aliases": [
+        "weekly targets not editable",
+        "cannot patch targets"
+      ],
+      "questionForms": [
+        "Why can’t I type weekly targets directly?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-planning"
+      ],
+      "category": "troubleshooting",
+      "summary": "Weekly deliverables are computed. PATCH /planning/targets does not exist. Change monthly nett goal, deductions, commission split, working weeks/days, average commission, or conversion ratios, then reload Planning.",
+      "steps": [
+        {
+          "label": "Change inputs on Planning",
+          "routeId": "advisor-planning"
+        },
+        {
+          "label": "Adjust ratios",
+          "routeId": "advisor-settings"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.SETUP_LOOP",
+      "kind": "troubleshoot",
+      "title": "I keep returning to Setup",
+      "aliases": [
+        "stuck in setup",
+        "needs setup"
+      ],
+      "questionForms": [
+        "Why do I keep seeing Setup?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-setup"
+      ],
+      "category": "troubleshooting",
+      "summary": "Setup repeats while monthly_goal_nett is still null. Completing POST /profile/setup/complete with a positive monthly nett goal, ratio block, average commission, and termsAccepted true is what flips needsSetup. Terms acceptance alone does not complete Setup.",
+      "steps": [
+        {
+          "label": "Finish Setup with a monthly goal",
+          "routeId": "advisor-setup"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.WEB_UPGRADE",
+      "kind": "troubleshoot",
+      "title": "I cannot pay on the web",
+      "aliases": [
+        "no checkout",
+        "upgrade button missing"
+      ],
+      "questionForms": [
+        "Why can’t I upgrade in the browser?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-subscription"
+      ],
+      "category": "troubleshooting",
+      "summary": "Web Subscription is informational. Paid personal plans require the AdvisorTrack mobile store. The API returns STORE_BILLING_REQUIRED if a paid select is attempted from this surface.",
+      "steps": [
+        {
+          "label": "Read your current plan",
+          "routeId": "advisor-subscription"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.EMAIL_CHANGE",
+      "kind": "troubleshoot",
+      "title": "I changed email and cannot sign in",
+      "aliases": [
+        "email verification after change"
+      ],
+      "questionForms": [
+        "Why can’t I sign in after changing email?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-profile"
+      ],
+      "category": "troubleshooting",
+      "summary": "PATCH /profile can write a new email without clearing or restarting verification. Login still requires emailVerifiedAt. If sign-in fails after an email change, the stored address and verification state on the account need to match — the web does not invent a new verification wizard.",
+      "steps": [
+        {
+          "label": "Open Profile",
+          "routeId": "advisor-profile"
         }
       ],
       "blockedGuidance": null,
