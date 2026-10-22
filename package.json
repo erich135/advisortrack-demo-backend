@@ -25,6 +25,7 @@
     "test:a83-live-demo": "tsx scripts/verify-a83-live-demo.ts",
     "test:a84-maya-activities": "tsx scripts/verify-a84-maya-activities.ts",
     "test:a85-maya": "tsx scripts/verify-a85-maya.ts",
+    "test:a86-maya": "tsx scripts/verify-a86-maya.ts",
     "test:bulk-user-import": "tsx scripts/verify-bulk-user-import.ts",
     "test:enterprise-contract": "tsx scripts/verify-enterprise-contract.ts",
     "test:draft-invoices": "tsx scripts/verify-draft-invoices.ts",

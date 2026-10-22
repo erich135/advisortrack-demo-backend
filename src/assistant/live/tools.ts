@@ -206,6 +206,21 @@ export const MY_CASE_SUMMARY_TOOL: AssistantToolDefinition = {
   auditClass: 'read_summary',
 };
 
+export const MY_PRODUCTION_TOOL: AssistantToolDefinition = {
+  id: 'MY_PRODUCTION',
+  version: 1,
+  title: 'My production',
+  domain: 'reporting',
+  audiences: ['mobile_advisor'],
+  environments: ['both'],
+  requiredCapabilities: ['canViewAdvisorWorkspace'],
+  scopeResolver: 'self',
+  acceptsEntityKinds: [],
+  limits: { maxRows: 1, timeoutMs: 4000 },
+  cache: { ttlSeconds: 30, keyBy: ['scope', 'period'] },
+  auditClass: 'read_summary',
+};
+
 export const ASSISTANT_TOOLS: AssistantToolDefinition[] = [
   PERSON_SUMMARY_TOOL,
   LICENCE_SUMMARY_TOOL,
@@ -220,6 +235,7 @@ export const ASSISTANT_TOOLS: AssistantToolDefinition[] = [
   MY_FOLLOWUPS_TOOL,
   MY_PIPELINE_TOOL,
   MY_CASE_SUMMARY_TOOL,
+  MY_PRODUCTION_TOOL,
 ];
 
 export const personSummaryInputSchema = z.object({
@@ -289,6 +305,10 @@ export function canUseMyPipeline(ctx: ToolExecutionContext): boolean {
 }
 
 export function canUseMyCaseSummary(ctx: ToolExecutionContext): boolean {
+  return ctx.assistant.capabilities.canViewAdvisorWorkspace === true;
+}
+
+export function canUseMyProduction(ctx: ToolExecutionContext): boolean {
   return ctx.assistant.capabilities.canViewAdvisorWorkspace === true;
 }
 

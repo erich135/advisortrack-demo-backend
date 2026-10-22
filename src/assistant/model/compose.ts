@@ -70,6 +70,15 @@ function isAdvisorCaseRoute(context?: AssistantContext): boolean {
   );
 }
 
+function isAdvisorProductionRoute(context?: AssistantContext): boolean {
+  const routeId = context?.route.routeId;
+  const path = context?.route.path ?? '';
+  return (
+    context?.workspace === 'advisor' &&
+    (routeId === 'advisor-production' || path === '/advisor/production')
+  );
+}
+
 function isAdvisorContactsRoute(context?: AssistantContext): boolean {
   const routeId = context?.route.routeId;
   const path = context?.route.path ?? '';
@@ -124,6 +133,17 @@ export function unknownHelpAnswer(context?: AssistantContext): AssistantPublicAn
       mode: 'unknown',
       headline: "I couldn't confidently match that yet",
       body: "Are you asking about this case's stage, FICA, documents, quotes, next action, submitting to Production or scheduling a review?",
+      sources: [],
+    };
+  }
+  if (isAdvisorProductionRoute(context)) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: 'Are you asking about capturing production, application status, issued production, pending applications or editing an entry?',
       sources: [],
     };
   }

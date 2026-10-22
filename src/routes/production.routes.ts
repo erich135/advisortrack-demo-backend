@@ -3,7 +3,7 @@ import { asAuthRequest } from '../middleware/auth';
 import { androidResourceAuth } from '../middleware/androidAuth';
 import { ProductionService } from '../services';
 import { ok } from '../utils/response';
-import { createProductionSchema, updateProductionSchema } from '../validators/schemas';
+import { createProductionSchema, listProductionQuerySchema, updateProductionSchema } from '../validators/schemas';
 import { isDatabaseActive } from '../config/database';
 import { productionDashboardRepository } from '../repositories/productionDashboard.repository';
 
@@ -38,10 +38,15 @@ export const createProductionRouter = (productionService: ProductionService) => 
   /**
    * GET /api/v1/production/summary
    */
-  router.get('/summary', (req: Request, res: Response, next: NextFunction) => {
+  router.get('/summary', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = asAuthRequest(req);
-      res.json(ok(productionService.summary(userId)));
+      const query = listProductionQuerySchema.parse(req.query);
+      res.json(ok(await productionService.summary(userId, {
+        month: query.month,
+        applicationStatus: query.applicationStatus,
+        issued: query.issued === undefined ? undefined : query.issued === 'true',
+      })));
     } catch (error) {
       next(error);
     }
@@ -50,10 +55,15 @@ export const createProductionRouter = (productionService: ProductionService) => 
   /**
    * GET /api/v1/production
    */
-  router.get('/', (req: Request, res: Response, next: NextFunction) => {
+  router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = asAuthRequest(req);
-      res.json(ok(productionService.list(userId)));
+      const query = listProductionQuerySchema.parse(req.query);
+      res.json(ok(await productionService.list(userId, {
+        month: query.month,
+        applicationStatus: query.applicationStatus,
+        issued: query.issued === undefined ? undefined : query.issued === 'true',
+      })));
     } catch (error) {
       next(error);
     }

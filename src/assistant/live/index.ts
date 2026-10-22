@@ -20,6 +20,7 @@ export {
   MY_FOLLOWUPS_TOOL,
   MY_PIPELINE_TOOL,
   MY_CASE_SUMMARY_TOOL,
+  MY_PRODUCTION_TOOL,
   ASSISTANT_TOOLS,
   executePersonSummary,
 } from './tools';

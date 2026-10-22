@@ -31,12 +31,13 @@ import {
 import { askedComparisonRank } from './rank';
 import type { HierarchyRank } from '../../features/customerHierarchy';
 
-export type LiveIntent = 'person' | 'advisor' | 'production' | 'pipeline' | 'team' | 'region' | 'licence' | 'access' | 'followups' | 'mypipeline' | 'case_summary';
+export type LiveIntent = 'person' | 'advisor' | 'production' | 'pipeline' | 'team' | 'region' | 'licence' | 'access' | 'followups' | 'mypipeline' | 'case_summary' | 'myproduction';
 
 export type LiveRoute =
   | { kind: 'none' }
   | { kind: 'followups' }
   | { kind: 'mypipeline' }
+  | { kind: 'myproduction' }
   | { kind: 'case_summary'; caseId: string }
   | { kind: 'licence' }
   | { kind: 'person'; mention: string }
@@ -132,8 +133,31 @@ function looksNamedOtherPerson(normalized: string): boolean {
   return /\b(does|has) (?!i\b)[a-z]+(?: [a-z]+)? (have|got|scheduled)\b/.test(normalized);
 }
 
+export function looksMyProductionQuestion(question: string): boolean {
+  const normalized = normalizeQuestion(question);
+  if (looksHelpQuestion(normalized)) return false;
+  if (/\b(what does|what happens|why (did|was|does|is)|how do i|how can i)\b/.test(normalized)) {
+    return false;
+  }
+  if (looksNamedOtherPerson(normalized)) return false;
+  if (/\b(management production|company production|team production|downline|my team|the team|region|leadership)\b/.test(normalized)) {
+    return false;
+  }
+  if (looksLikeTeamLookup(question) || looksLikeRegionLookup(question)) return false;
+  const liveAsk = /\b(how many|how much|count|do i have|have i got)\b/.test(normalized);
+  const productionBook = /\b(my production|production entries|issued this month|not yet issued|not issued)\b/.test(normalized);
+  const status = /\b(pending underwriting|awaiting medicals|pma pending|\bpma\b|awaiting advisor information|awaiting advisor info|accepted \/ issued|accepted issued|declined|withdrawn)\b/.test(normalized);
+  const issuedAmount = /\bhow much\b/.test(normalized) && /\b(issued|production|commission|business|placed)\b/.test(normalized);
+  if (issuedAmount) return true;
+  if (liveAsk && (productionBook || status || /\bproduction\b/.test(normalized))) return true;
+  if (productionBook) return true;
+  if (liveAsk && status && /\b(applications?|entries)\b/.test(normalized)) return true;
+  return false;
+}
+
 export function looksMyPipelineQuestion(question: string): boolean {
   const normalized = normalizeQuestion(question);
+  if (looksMyProductionQuestion(question)) return false;
   if (looksHelpQuestion(normalized)) return false;
   if (/\b(what does|what happens|why (did|was|does|is)|how do i|how can i)\b/.test(normalized)) {
     return false;
@@ -141,6 +165,9 @@ export function looksMyPipelineQuestion(question: string): boolean {
   if (looksNamedOtherPerson(normalized)) return false;
   if (/\b(team pipeline|downline|my team|the team|region|leadership)\b/.test(normalized)) return false;
   if (looksLikeTeamLookup(question) || looksLikeRegionLookup(question)) return false;
+  if (/\b(pending underwriting|awaiting medicals|pma pending|awaiting advisor information|accepted \/ issued|not yet issued)\b/.test(normalized)) {
+    return false;
+  }
   const counts = /\b(how many|count|do i have|have i got|which stage|most cases|estimated commission|pipeline value|reviews? due|need fica|incomplete)\b/.test(normalized);
   const subject = /\b(pipeline|cases?|applications?|deals?|opportunit(?:y|ies)|fica|documents?|quotes?|reviews?|commission)\b/.test(normalized);
   if (counts && subject) return true;
@@ -219,6 +246,7 @@ export function routeLiveQuestion(question: string, navigationPath?: string): Li
     return { kind: 'case_summary', caseId: caseIdMatch[1] };
   }
   if (looksMyFollowupsQuestion(question)) return { kind: 'followups' };
+  if (looksMyProductionQuestion(question)) return { kind: 'myproduction' };
   if (looksMyPipelineQuestion(question)) return { kind: 'mypipeline' };
   if (looksHelpQuestion(normalized)) return { kind: 'none' };
   if (looksLicenceSummary(normalized)) return { kind: 'licence' };

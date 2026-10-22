@@ -15,8 +15,15 @@ export interface ProductionEntry {
   tags: string[];
   isIssued: boolean;
   applicationStatus?: string;
+  caseId?: string;
   createdAt: string;
 }
+
+export type ProductionListQuery = {
+  month?: string;
+  applicationStatus?: string;
+  issued?: boolean;
+};
 
 export type ManagementProductionSummaryRow = {
   userId: string;
@@ -66,7 +73,12 @@ interface ProductionRow {
   tags: string[] | null;
   is_issued: boolean;
   application_status: string | null;
+  case_id: string | null;
   created_at: Date;
+}
+
+function pgCalendarDate(value: Date): string {
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
 }
 
 /**
@@ -80,14 +92,33 @@ const mapProductionRow = (row: ProductionRow): ProductionEntry => ({
   contactId: row.contact_id ?? undefined,
   contactName: row.contact_name?.trim() || undefined,
   productName: row.product_name ?? undefined,
-  date: row.due_date ? row.due_date.toISOString().slice(0, 10) : row.created_at.toISOString().slice(0, 10),
+  date: row.due_date ? pgCalendarDate(row.due_date) : pgCalendarDate(row.created_at),
   notes: row.notes ?? undefined,
   pipelineStage: row.pipeline_stage ?? undefined,
   tags: Array.isArray(row.tags) ? row.tags : [],
   isIssued: row.is_issued,
   applicationStatus: row.application_status ?? undefined,
+  caseId: row.case_id ?? undefined,
   createdAt: row.created_at.toISOString(),
 });
+
+const PRODUCTION_SELECT = `
+         pe.id,
+         pe.title,
+         pe.entry_type,
+         pe.amount::text,
+         pe.contact_id,
+         TRIM(COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')) AS contact_name,
+         pe.product_name,
+         pe.due_date,
+         pe.notes,
+         pe.pipeline_stage::text AS pipeline_stage,
+         pe.tags::text[],
+         pe.is_issued,
+         pe.application_status,
+         pe.case_id,
+         pe.created_at
+`;
 
 /**
  * PostgreSQL persistence for production entries.
@@ -476,6 +507,7 @@ export const productionRepository = {
          tags::text[],
          is_issued,
          application_status,
+         case_id,
          created_at`,
       [
         userId,
@@ -500,25 +532,44 @@ export const productionRepository = {
   },
 
   /**
+   * Lists production entries for the owning advisor from PostgreSQL.
+   * Optional month (`YYYY-MM`) uses the same DATE_TRUNC month rule as GET /production/dashboard.
+   * Omitting filters returns the full self-scope list so Android GET /production stays unchanged.
+   */
+  async listByUserId(userId: string, query: ProductionListQuery = {}): Promise<ProductionEntry[]> {
+    const params: unknown[] = [userId];
+    const filters = ['pe.user_id = $1'];
+    if (query.month && /^\d{4}-\d{2}$/.test(query.month)) {
+      params.push(`${query.month}-01`);
+      filters.push(
+        `DATE_TRUNC('month', COALESCE(pe.due_date, pe.created_at::date)) = DATE_TRUNC('month', $${params.length}::date)`
+      );
+    }
+    if (query.applicationStatus) {
+      params.push(query.applicationStatus);
+      filters.push(`pe.application_status = $${params.length}`);
+    }
+    if (query.issued !== undefined) {
+      params.push(query.issued);
+      filters.push(`pe.is_issued = $${params.length}`);
+    }
+    const result = await getPool().query<ProductionRow>(
+      `SELECT ${PRODUCTION_SELECT}
+       FROM production_entries pe
+       LEFT JOIN contacts c ON c.id = pe.contact_id
+       WHERE ${filters.join(' AND ')}
+       ORDER BY COALESCE(pe.due_date, pe.created_at::date) DESC, pe.created_at DESC`,
+      params
+    );
+    return result.rows.map(mapProductionRow);
+  },
+
+  /**
    * Loads a single production entry for the owning advisor.
    */
   async findByIdForUser(userId: string, entryId: string): Promise<ProductionEntry | null> {
     const result = await getPool().query<ProductionRow>(
-      `SELECT
-         pe.id,
-         pe.title,
-         pe.entry_type,
-         pe.amount::text,
-         pe.contact_id,
-         TRIM(COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')) AS contact_name,
-         pe.product_name,
-         pe.due_date,
-         pe.notes,
-         pe.pipeline_stage::text AS pipeline_stage,
-         pe.tags::text[],
-         pe.is_issued,
-         pe.application_status,
-         pe.created_at
+      `SELECT ${PRODUCTION_SELECT}
        FROM production_entries pe
        LEFT JOIN contacts c ON c.id = pe.contact_id
        WHERE pe.id = $1 AND pe.user_id = $2
@@ -527,6 +578,52 @@ export const productionRepository = {
     );
     const row = result.rows[0];
     return row ? mapProductionRow(row) : null;
+  },
+
+  /**
+   * Finds a draft production entry that can be linked to a case for this contact.
+   * Prefers entries already tagged with the case, then unlinked drafts not used by another case.
+   */
+  async findAdoptibleDraftId(
+    userId: string,
+    contactId: string,
+    caseId: string
+  ): Promise<string | null> {
+    const result = await getPool().query<{ id: string }>(
+      `SELECT pe.id
+       FROM production_entries pe
+       WHERE pe.user_id = $1
+         AND pe.contact_id = $2
+         AND pe.is_issued = FALSE
+         AND (
+           pe.application_status IS NULL
+           OR pe.application_status NOT IN (
+             'application_received',
+             'quality_assessment',
+             'pending_underwriting',
+             'accepted_issued',
+             'declined'
+           )
+         )
+         AND (
+           pe.case_id = $3
+           OR (
+             pe.case_id IS NULL
+             AND NOT EXISTS (
+               SELECT 1
+               FROM client_cases cc
+               WHERE cc.linked_production_id = pe.id
+                 AND cc.id <> $3
+             )
+           )
+         )
+       ORDER BY
+         CASE WHEN pe.case_id = $3 THEN 0 ELSE 1 END,
+         pe.created_at DESC
+       LIMIT 1`,
+      [userId, contactId, caseId]
+    );
+    return result.rows[0]?.id ?? null;
   },
 
   /**
@@ -581,6 +678,8 @@ export const productionRepository = {
       sets.push(`is_issued = $${params.length}`);
       if (input.isIssued) {
         sets.push(`issued_at = NOW()`);
+        // Only set status from isIssued when the caller did not also send applicationStatus
+        // (sending both would assign is_issued twice and PostgreSQL rejects the UPDATE).
         if (input.applicationStatus === undefined) {
           params.push('accepted_issued');
           sets.push(`application_status = $${params.length}`);
@@ -592,7 +691,9 @@ export const productionRepository = {
     if (input.applicationStatus !== undefined) {
       params.push(input.applicationStatus);
       sets.push(`application_status = $${params.length}`);
-      if (input.applicationStatus === 'accepted_issued') {
+      // When marking accepted/issued, set issued flags only if isIssued was not already applied
+      // (PostgreSQL rejects UPDATE with multiple assignments to the same column).
+      if (input.applicationStatus === 'accepted_issued' && input.isIssued === undefined) {
         sets.push(`is_issued = TRUE`);
         sets.push(`issued_at = COALESCE(issued_at, NOW())`);
       }

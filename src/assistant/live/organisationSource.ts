@@ -12,6 +12,7 @@ import { organisationService } from '../../services/organisation.service';
 import { organisationStructureService } from '../../services/organisationStructure.service';
 import { activityRepository } from '../../repositories/activity.repository';
 import { caseService } from '../../services/case.service';
+import { productionRepository } from '../../repositories/production.repository';
 import { projectMyCaseSummary } from './pipelineSelf';
 import { cachedTtlLoad, liveCacheKey, liveScopeFingerprint, remember } from './cache';
 import { LiveScopeMissError } from './errors';
@@ -292,6 +293,15 @@ export function createOrganisationLiveSource(): LiveDirectorySource {
         documentCount: row.documentCount,
         documentsReceived: row.documentsReceived,
         linkedProductionId: row.linkedProductionId,
+      }));
+    },
+    async listSelfProduction(ctx, month) {
+      const items = await productionRepository.listByUserId(ctx.identity.userId, month ? { month } : {});
+      return items.map((row) => ({
+        amount: row.amount,
+        isIssued: row.isIssued,
+        applicationStatus: row.applicationStatus,
+        date: row.date,
       }));
     },
     async getSelfCaseSummary(ctx, caseId) {

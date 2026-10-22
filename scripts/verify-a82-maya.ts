@@ -13,9 +13,9 @@ const seed = fs.readFileSync(path.join(root, 'scripts/seed-northstar-master.ts')
 const clone = fs.readFileSync(path.join(root, 'src/repositories/demoWorkspaceClone.ts'), 'utf8');
 const northstar = fs.readFileSync(path.join(root, 'src/features/demoNorthstar.ts'), 'utf8');
 
-assert.equal(NORTHSTAR_SEED_VERSION, 19);
-assert.equal(NORTHSTAR_VERSION_LABEL, 'a85-advisor-pipeline');
-assert.match(northstar, /NORTHSTAR_SEED_VERSION = 19/);
+assert.equal(NORTHSTAR_SEED_VERSION, 20);
+assert.equal(NORTHSTAR_VERSION_LABEL, 'a86-advisor-production');
+assert.match(northstar, /NORTHSTAR_SEED_VERSION = 20/);
 assert.match(seed, /extraMayaWorkspaceCases/);
 assert.match(seed, /extraMayaWorkspaceActivities/);
 assert.match(seed, /monthly_goal_nett = 60000/);
@@ -33,7 +33,7 @@ assert.ok(cases.some((row) => Boolean(row.chosenInsurer)));
 assert.ok(cases.some((row) => row.nextAction === false));
 assert.ok(cases.some((row) => row.reviewDue));
 assert.ok(cases.some((row) => row.linkProduction === false));
-assert.equal(cases.length, 6);
+assert.equal(cases.length, 12);
 
 const activities = extraMayaWorkspaceActivities();
 assert.ok(activities.some((row) => row.bucket === 'upcoming' && row.status === 'scheduled'));

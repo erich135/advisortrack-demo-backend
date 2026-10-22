@@ -87,6 +87,7 @@ export interface Production {
   date: string;
   notes?: string;
   isIssued?: boolean;
+  applicationStatus?: string;
   createdAt: string;
   userId: string;
 }

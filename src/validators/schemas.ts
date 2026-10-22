@@ -356,6 +356,27 @@ export const updateProductionSchema = z
 
 export type UpdateProductionInput = z.infer<typeof updateProductionSchema>;
 export type CreateProductionInput = z.infer<typeof createProductionSchema>;
+
+/** Additive GET /production filters. Omitting them preserves Android’s full self-scope list. */
+export const listProductionQuerySchema = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  applicationStatus: z
+    .enum([
+      'application_received',
+      'quality_assessment',
+      'pending_underwriting',
+      'awaiting_medicals',
+      'pma_pending',
+      'awaiting_advisor_info',
+      'counter_offer',
+      'accepted_issued',
+      'postponed',
+      'declined',
+      'withdrawn',
+    ])
+    .optional(),
+  issued: z.enum(['true', 'false']).optional(),
+});
 export type UpdateGeneralSettingsInput = z.infer<typeof updateGeneralSettingsSchema>;
 
 export const selectSubscriptionPackageSchema = z.object({

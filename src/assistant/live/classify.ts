@@ -144,6 +144,27 @@ export const MY_PIPELINE_FIELDS: FieldCatalog = {
   submittedToProductionCount: 'operational',
 };
 
+export const MY_PRODUCTION_FIELDS: FieldCatalog = {
+  period: 'operational',
+  entryCount: 'operational',
+  issuedCount: 'operational',
+  issuedCommission: 'operational',
+  notIssuedCount: 'operational',
+  notIssuedCommission: 'operational',
+  totalCommission: 'operational',
+  acceptedIssuedStatusCount: 'operational',
+  applicationReceivedCount: 'operational',
+  qualityAssessmentCount: 'operational',
+  pendingUnderwritingCount: 'operational',
+  awaitingMedicalsCount: 'operational',
+  pmaPendingCount: 'operational',
+  awaitingAdvisorInfoCount: 'operational',
+  counterOfferCount: 'operational',
+  postponedCount: 'operational',
+  declinedCount: 'operational',
+  withdrawnCount: 'operational',
+};
+
 export const MY_CASE_SUMMARY_FIELDS: FieldCatalog = {
   currentStage: 'operational',
   stageLabel: 'operational',
@@ -193,6 +214,7 @@ export const TOOL_FIELD_CATALOG: Record<string, FieldCatalog> = {
   MY_FOLLOWUPS: MY_FOLLOWUPS_FIELDS,
   MY_PIPELINE: MY_PIPELINE_FIELDS,
   MY_CASE_SUMMARY: MY_CASE_SUMMARY_FIELDS,
+  MY_PRODUCTION: MY_PRODUCTION_FIELDS,
 };
 
 export const PUBLIC_FACT_SOURCES: Record<string, string> = {
@@ -209,9 +231,11 @@ export const PUBLIC_FACT_SOURCES: Record<string, string> = {
   MY_FOLLOWUPS: 'My follow-ups',
   MY_PIPELINE: 'My pipeline',
   MY_CASE_SUMMARY: 'My case',
+  MY_PRODUCTION: 'My production',
 };
 
 export function publicFactSource(toolId: string, periodLabel?: string | null): string {
+  if (toolId === 'MY_PRODUCTION' && periodLabel) return `My production — ${periodLabel}`;
   if (toolId === 'PRODUCTION_SUMMARY' && periodLabel) return `Production — ${periodLabel}`;
   if (toolId === 'COMPARISON_SUMMARY' && periodLabel) return `Comparison — ${periodLabel}`;
   if (toolId === 'RANKING_SUMMARY' && periodLabel) return `Ranking — ${periodLabel}`;

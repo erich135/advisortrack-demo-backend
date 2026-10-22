@@ -126,7 +126,8 @@
         "advisor-activities",
         "advisor-activity-detail",
         "advisor-pipeline",
-        "advisor-case-detail"
+        "advisor-case-detail",
+        "advisor-production"
       ]
     },
     {
@@ -3171,6 +3172,797 @@
       ]
     },
     {
+      "id": "PRODUCTION.WHAT",
+      "kind": "route",
+      "title": "My Production",
+      "aliases": [
+        "production",
+        "business",
+        "sales",
+        "commission book",
+        "my production",
+        "placed business"
+      ],
+      "questionForms": [
+        "What is Production?",
+        "Where is my production?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "My Production at /advisor/production is your own production book from GET /api/v1/production. It is not Management Production, company production, team production, or downline production. Rows come from production_entries for the authenticated advisor. Identity is never taken from a browser userId, advisorId, or companyId. Cases you submit to Production appear here from the same backend rows.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.CAPTURE",
+      "kind": "task",
+      "title": "Capture production",
+      "aliases": [
+        "add production",
+        "new production",
+        "capture business",
+        "log commission"
+      ],
+      "questionForms": [
+        "How do I capture production?",
+        "How do I add production?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open My Production and choose Capture Production. Amount and date are required. Type defaults to commission. Contact, product, application status, issued flag, notes, and tags are optional. The same POST /api/v1/production contract Android uses is authoritative. Captured rows are stored in PostgreSQL and remain after a server restart.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        },
+        {
+          "label": "Choose Capture Production"
+        },
+        {
+          "label": "Enter amount and date"
+        },
+        {
+          "label": "Save"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.EDIT",
+      "kind": "task",
+      "title": "Edit production",
+      "aliases": [
+        "change production",
+        "update production",
+        "amend production"
+      ],
+      "questionForms": [
+        "How do I edit production?",
+        "How do I change a production entry?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open an entry on My Production and save changes through PATCH /api/v1/production/:id. You can change amount, date, product, contact, notes, tags, application status, and issued when the API accepts those fields. You cannot invent extra web-only fields. You can only edit your own entries.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        },
+        {
+          "label": "Open the entry"
+        },
+        {
+          "label": "Edit and save"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.ISSUED",
+      "kind": "concept",
+      "title": "Issued production",
+      "aliases": [
+        "issued",
+        "placed",
+        "issued commission",
+        "issued flag"
+      ],
+      "questionForms": [
+        "What is issued production?",
+        "How do I mark production as issued?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production",
+        "advisor-home"
+      ],
+      "category": "advisor-workspace",
+      "summary": "On My Production, issued commission uses the Production issued flag (is_issued) only. Marking issued true without sending a status sets application status to Accepted / Issued. Choosing Accepted / Issued without sending the issued flag currently also sets is_issued true. Create already treats Accepted / Issued as issued. These couplings are existing Android/backend behaviour, not a web-only rule.",
+      "steps": [
+        {
+          "label": "Open the entry and use Issued",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.POTENTIAL",
+      "kind": "concept",
+      "title": "Potential production",
+      "aliases": [
+        "potential",
+        "pending production",
+        "not yet issued",
+        "not issued"
+      ],
+      "questionForms": [
+        "What is potential production?",
+        "What is not yet issued production?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "On My Production, potential / pending commission is the amount on entries whose issued flag is false. Application status can still be Accepted / Issued while the issued flag is false; that row stays in potential until the issued flag is true. Home uses a broader issued rule — see Why Home and Production totals differ.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.APPLICATION_RECEIVED",
+      "kind": "concept",
+      "title": "Application received",
+      "aliases": [
+        "application received"
+      ],
+      "questionForms": [
+        "What is Application received?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Application received means the application has been captured and is at the first canonical application status. It is not issued production by itself. Submitting a case to Production creates a linked entry in this status and not issued.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.QUALITY_ASSESSMENT",
+      "kind": "concept",
+      "title": "Quality assessment",
+      "aliases": [
+        "quality assessment"
+      ],
+      "questionForms": [
+        "What is Quality assessment?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Quality assessment means the application is being checked before underwriting. It is a canonical Android application status, not a desktop-only label.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.PENDING_UNDERWRITING",
+      "kind": "concept",
+      "title": "Pending underwriting",
+      "aliases": [
+        "pending underwriting",
+        "underwriting"
+      ],
+      "questionForms": [
+        "What is Pending underwriting?",
+        "How many applications are pending underwriting?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Pending underwriting means the insurer is assessing the application. Counts of applications pending underwriting come from your production_entries application status, not from pipeline stages.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.AWAITING_MEDICALS",
+      "kind": "concept",
+      "title": "Awaiting medicals",
+      "aliases": [
+        "awaiting medicals",
+        "medicals"
+      ],
+      "questionForms": [
+        "What is Awaiting medicals?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Awaiting medicals means the application is waiting for medical evidence. It is not issued production.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.PMA_PENDING",
+      "kind": "concept",
+      "title": "PMA pending",
+      "aliases": [
+        "pma pending",
+        "pma",
+        "PMA"
+      ],
+      "questionForms": [
+        "What is PMA pending?",
+        "What does PMA pending mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "PMA pending is the canonical AdvisorTrack application status for a pending PMA. The Assistant explains the workflow label only. It does not interpret insurer medical or underwriting outcomes, and it does not recommend a product or insurer.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.AWAITING_ADVISOR_INFO",
+      "kind": "concept",
+      "title": "Awaiting advisor information",
+      "aliases": [
+        "awaiting advisor information",
+        "awaiting advisor info"
+      ],
+      "questionForms": [
+        "What is Awaiting advisor information?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Awaiting advisor information means more information is needed from the advisor before the application can continue. Change the status on the production entry when that information has been supplied.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.COUNTER_OFFER",
+      "kind": "concept",
+      "title": "Counter-offer made",
+      "aliases": [
+        "counter-offer made",
+        "counter offer",
+        "counter-offer"
+      ],
+      "questionForms": [
+        "What is Counter-offer made?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Counter-offer made means the insurer has made a counter-offer. AdvisorTrack records that status. The Assistant does not advise whether to accept, reject, or replace the offer.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.ACCEPTED_ISSUED",
+      "kind": "concept",
+      "title": "Accepted / Issued",
+      "aliases": [
+        "accepted / issued",
+        "accepted issued",
+        "accepted"
+      ],
+      "questionForms": [
+        "What does Accepted / Issued mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Accepted / Issued is the application status label. My Production issued totals still use the separate issued flag. Create currently sets the issued flag when this status is saved. An existing row can show Accepted / Issued while issued is still false if it was stored that way. The Assistant reports both figures separately and does not combine them.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.POSTPONED",
+      "kind": "concept",
+      "title": "Postponed",
+      "aliases": [
+        "postponed"
+      ],
+      "questionForms": [
+        "What does Postponed mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Postponed means the application has been postponed. It remains a production entry until you change status or delete it. It is not issued unless the issued flag is true.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.DECLINED",
+      "kind": "concept",
+      "title": "Declined",
+      "aliases": [
+        "declined"
+      ],
+      "questionForms": [
+        "What does Declined mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Declined means the application was declined. The production entry remains unless you delete it. Declined is not issued production.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.STATUS.WITHDRAWN",
+      "kind": "concept",
+      "title": "Withdrawn",
+      "aliases": [
+        "withdrawn"
+      ],
+      "questionForms": [
+        "What does Withdrawn mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Withdrawn means the application was withdrawn. The production entry remains unless you delete it. Withdrawn is not issued production.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.CHANGE_STATUS",
+      "kind": "task",
+      "title": "Change application status",
+      "aliases": [
+        "change application status",
+        "update application status"
+      ],
+      "questionForms": [
+        "How do I change an application status?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open the production entry and choose a canonical application status. The only statuses are Application received, Quality assessment, Pending underwriting, Awaiting medicals, PMA pending, Awaiting advisor information, Counter-offer made, Accepted / Issued, Postponed, Declined, and Withdrawn. Saving Accepted / Issued without also sending the issued flag currently sets is_issued true on the server.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        },
+        {
+          "label": "Open the entry"
+        },
+        {
+          "label": "Choose application status and save"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.CLIENT_SIDE_EFFECT",
+      "kind": "concept",
+      "title": "Prospect becomes a client",
+      "aliases": [
+        "prospect now a client",
+        "contact became client",
+        "why is this a client"
+      ],
+      "questionForms": [
+        "Why does this prospect now show as a client?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production",
+        "advisor-contacts"
+      ],
+      "category": "advisor-workspace",
+      "summary": "When production income is recognised, the backend may mark the linked contact as a client. Income is recognised when the issued flag is true or application status is Accepted / Issued. The web does not change contact status itself. Refresh Contacts or Home after the production save.",
+      "steps": [
+        {
+          "label": "Open the linked contact",
+          "routeId": "advisor-contacts"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.FROM_CASE",
+      "kind": "task",
+      "title": "Case submitted to Production",
+      "aliases": [
+        "submit to production",
+        "case submitted",
+        "linked production"
+      ],
+      "questionForms": [
+        "How does submitting a case create production?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production",
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Submit to Production on a case creates or links a production_entries row: application status Application received, not issued, with the case id. That row appears on My Production from GET /production. It is not a second copy. Submitting does not close the case; stage becomes Implementation.",
+      "steps": [
+        {
+          "label": "Open the case",
+          "routeId": "advisor-pipeline"
+        },
+        {
+          "label": "Submit to Production"
+        },
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.DELETE",
+      "kind": "task",
+      "title": "Delete production",
+      "aliases": [
+        "delete production",
+        "remove production"
+      ],
+      "questionForms": [
+        "Can I delete production?",
+        "How do I delete production?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Android currently hard-deletes a production entry with DELETE /api/v1/production/:id. My Production mirrors that contract with a confirmation: “This permanently removes the production record.” There is no bulk delete. This hard delete is existing cross-platform retention product debt against AdvisorTrack’s usual archive/deactivate rule. Do not assume a linked case is deleted; refresh Pipeline after delete.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        },
+        {
+          "label": "Open the entry"
+        },
+        {
+          "label": "Confirm delete"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.HOME_DIFFERS",
+      "kind": "concept",
+      "title": "Home and Production totals differ",
+      "aliases": [
+        "home vs production",
+        "different issued amount",
+        "why do totals differ"
+      ],
+      "questionForms": [
+        "Why does Home show a different issued amount?",
+        "Why do my Home and Production totals differ?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production",
+        "advisor-home"
+      ],
+      "category": "advisor-workspace",
+      "summary": "This is an existing product inconsistency, not a web bug. Advisor Home treats issued roughly as is_issued OR application_status = Accepted / Issued. My Production issued totals and Production dashboard gauges use the issued flag (is_issued) more strictly. A row can have status Accepted / Issued and still sit in Production potential if is_issued is false. Do not add the two together. Unifying the rule needs a deliberate Android and web change.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        },
+        {
+          "label": "Compare with Home after refresh",
+          "routeId": "advisor-home"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PRODUCTION.NOT_ADVICE",
+      "kind": "concept",
+      "title": "Production is not financial advice",
+      "aliases": [
+        "recommend a product",
+        "which insurer",
+        "suitability"
+      ],
+      "questionForms": [
+        "Can you recommend a product from my production?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "advisor-workspace",
+      "summary": "The Assistant can explain production status, workflow, recorded amounts, and how to use AdvisorTrack. It must not recommend an insurer, product, policy, investment, or suitability decision. Production data does not turn the Assistant into a financial adviser.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
       "id": "PEOPLE.ADD_USER",
       "kind": "task",
       "title": "Add User",
@@ -5178,6 +5970,303 @@
         },
         {
           "label": "Schedule review again if you need a fresh 11-month date"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PRODUCTION_CAPTURE",
+      "kind": "troubleshoot",
+      "title": "I can't capture production",
+      "aliases": [
+        "cannot capture production",
+        "capture production failed"
+      ],
+      "questionForms": [
+        "I can't capture production"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "troubleshooting",
+      "summary": "Capture needs a signed-in advisor session and a valid amount and date (YYYY-MM-DD). The server rejects unknown application statuses and extra fields. You cannot capture for another advisor. If the API is unavailable, the page shows an error rather than a fake saved row. Check the form validation message; do not retry with a guessed userId.",
+      "steps": [
+        {
+          "label": "Open Capture Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PRODUCTION_EDIT",
+      "kind": "troubleshoot",
+      "title": "I can't edit this production",
+      "aliases": [
+        "cannot edit production"
+      ],
+      "questionForms": [
+        "I can't edit this production"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "troubleshooting",
+      "summary": "You can only PATCH your own production ids. Another advisor’s entry returns not found. Empty patches are rejected. Unknown statuses fail validation. If the entry was deleted, refresh the list. Web does not keep a second copy to edit locally.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PRODUCTION_ISSUED",
+      "kind": "troubleshoot",
+      "title": "I can't mark it issued",
+      "aliases": [
+        "cannot mark issued"
+      ],
+      "questionForms": [
+        "I can't mark it issued"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "troubleshooting",
+      "summary": "Issued is saved with PATCH isIssued. You must own the entry. If the save fails, the issued flag is unchanged. Choosing Accepted / Issued without the issued flag currently also sets is_issued true on the server. If you expected Home’s broader issued rule, that is a different total — see Home vs Production.",
+      "steps": [
+        {
+          "label": "Open the entry",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PRODUCTION_DISAPPEARED",
+      "kind": "troubleshoot",
+      "title": "My production disappeared",
+      "aliases": [
+        "production disappeared",
+        "missing production"
+      ],
+      "questionForms": [
+        "My production disappeared"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "troubleshooting",
+      "summary": "My Production lists PostgreSQL production_entries for you. A server restart does not drop captured rows. If a row is missing, check the selected month (DATE_TRUNC of due date or created date in Africa/Johannesburg), whether it was deleted, or whether you are looking at another month. Android GET /production without a month still returns the full list.",
+      "steps": [
+        {
+          "label": "Change month or capture again",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PRODUCTION_NOT_ISSUED",
+      "kind": "troubleshoot",
+      "title": "Why isn't this showing as issued?",
+      "aliases": [
+        "not showing as issued"
+      ],
+      "questionForms": [
+        "Why isn't this showing as issued?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "troubleshooting",
+      "summary": "My Production issued totals use the issued flag. Application status Accepted / Issued is displayed separately. If is_issued is false, the amount stays in potential even when status is Accepted / Issued. Home may still count that row as issued because Home uses the broader OR rule.",
+      "steps": [
+        {
+          "label": "Check Issued on the entry",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PRODUCTION_ACCEPTED_NOT_IN_ISSUED",
+      "kind": "troubleshoot",
+      "title": "Why is Accepted / Issued not in my issued total?",
+      "aliases": [
+        "accepted issued not in issued total"
+      ],
+      "questionForms": [
+        "Why is Accepted / Issued not in my issued total?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production"
+      ],
+      "category": "troubleshooting",
+      "summary": "Because My Production issued totals follow is_issued, not application status. The Assistant will say how many rows have status Accepted / Issued and how many are counted as issued under the Production issued flag. Those numbers can differ. This is documented product debt, not a display rounding error.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PRODUCTION_CONTACT_CLIENT",
+      "kind": "troubleshoot",
+      "title": "Why did my contact become a client?",
+      "aliases": [
+        "contact became a client"
+      ],
+      "questionForms": [
+        "Why did my contact become a client?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production",
+        "advisor-contacts"
+      ],
+      "category": "troubleshooting",
+      "summary": "The production service marks a linked contact as a client when income is recognised: issued flag true or status Accepted / Issued. The web does not flip contact status on its own. Refresh Contacts after the production mutation.",
+      "steps": [
+        {
+          "label": "Open the contact",
+          "routeId": "advisor-contacts"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PRODUCTION_CASE_SUBMITTED",
+      "kind": "troubleshoot",
+      "title": "Why is my case showing submitted?",
+      "aliases": [
+        "case showing submitted"
+      ],
+      "questionForms": [
+        "Why is my case showing submitted?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production",
+        "advisor-case-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Submit to Production links a production entry and moves the case to Implementation without closing it. My Production then lists that linked row. If you expected the case to vanish, it stays in Pipeline until you change case status.",
+      "steps": [
+        {
+          "label": "Open the case",
+          "routeId": "advisor-pipeline"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.PRODUCTION_HOME_TOTALS",
+      "kind": "troubleshoot",
+      "title": "My Home and Production totals differ",
+      "aliases": [
+        "home production totals differ"
+      ],
+      "questionForms": [
+        "My Home and Production totals differ"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-production",
+        "advisor-home"
+      ],
+      "category": "troubleshooting",
+      "summary": "Home issued uses is_issued OR Accepted / Issued. Production issued uses is_issued. Home potential also includes open-case estimated commission without linked production. After a capture or edit, refresh Home — do not calculate Home figures on the Production page.",
+      "steps": [
+        {
+          "label": "Open My Production",
+          "routeId": "advisor-production"
+        },
+        {
+          "label": "Refresh Home",
+          "routeId": "advisor-home"
         }
       ],
       "blockedGuidance": null,

@@ -4,6 +4,7 @@ import type { DataClass } from './classify';
 import type { AssistantPeriod } from './period';
 import type { SelfActivityRow } from './followups';
 import type { MyCaseSummaryProjection, SelfCaseRow } from './pipelineSelf';
+import type { SelfProductionRow } from './productionSelf';
 
 export type EntityKind = 'person' | 'team' | 'region' | 'company' | 'invoice';
 export type EntityRef = string;
@@ -203,6 +204,7 @@ export type LiveDirectorySource = {
   listSelfActivities?(ctx: ToolExecutionContext): Promise<SelfActivityRow[]>;
   listSelfCases?(ctx: ToolExecutionContext): Promise<SelfCaseRow[]>;
   getSelfCaseSummary?(ctx: ToolExecutionContext, caseId: string): Promise<MyCaseSummaryProjection | null>;
+  listSelfProduction?(ctx: ToolExecutionContext, month?: string): Promise<SelfProductionRow[]>;
 };
 
 export type ProvenanceItem =

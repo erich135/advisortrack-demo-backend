@@ -6,7 +6,7 @@ import { env } from '../config/env';
 import { organisationRepository } from '../repositories/organisation.repository';
 import { userRepository } from '../repositories/user.repository';
 import { contactRepository, ContactImportResult } from '../repositories/contact.repository';
-import { productionRepository } from '../repositories/production.repository';
+import { productionRepository, type ProductionEntry, type ProductionListQuery } from '../repositories/production.repository';
 import { activityRepository } from '../repositories/activity.repository';
 import { hashPassword, signToken, toUserDto, verifyPassword } from '../utils/auth';
 import { generateVerificationPin, hashToken } from '../utils/emailTokens';
@@ -840,18 +840,50 @@ export class ProductionService {
   constructor(private store: DataStore) {}
 
   /**
-   * Lists all production entries for the user.
+   * Lists production entries for the authenticated advisor from PostgreSQL when the
+   * database is active. Optional month/status/issued filters are additive; omitting
+   * them preserves the Android GET /production full-list contract.
    */
-  list(userId: string) {
+  async list(userId: string, query: ProductionListQuery = {}): Promise<ProductionEntry[]> {
+    if (isDatabaseActive()) {
+      return productionRepository.listByUserId(userId, query);
+    }
     return this.store.productions
-      .filter((entry) => entry.userId === userId)
-      .map(({ userId: _uid, ...production }) => production);
+      .filter((entry) => {
+        if (entry.userId !== userId) return false;
+        if (query.applicationStatus && entry.applicationStatus !== query.applicationStatus) return false;
+        if (query.issued !== undefined && entry.isIssued !== query.issued) return false;
+        if (query.month) {
+          const period = (entry.date || entry.createdAt).slice(0, 7);
+          if (period !== query.month) return false;
+        }
+        return true;
+      })
+      .map(({ userId: _uid, ...production }) => ({
+        ...production,
+        tags: [] as string[],
+        isIssued: production.isIssued ?? false,
+      }))
+      .sort((a, b) => (b.date || b.createdAt).localeCompare(a.date || a.createdAt));
   }
 
   /**
-   * Returns aggregated monthly production summary for dashboard charts.
+   * Returns aggregated production summary. Android GET /summary still omits filters.
    */
-  summary(userId: string) {
+  async summary(userId: string, query: ProductionListQuery = {}) {
+    if (isDatabaseActive()) {
+      const items = await productionRepository.listByUserId(userId, query);
+      const month = query.month ?? new Date().toISOString().slice(0, 7);
+      return {
+        month,
+        total: items.reduce((sum, entry) => sum + entry.amount, 0),
+        goal: PRODUCTION_GOAL,
+        byType: items.reduce<Record<string, number>>((acc, entry) => {
+          acc[entry.type] = (acc[entry.type] ?? 0) + entry.amount;
+          return acc;
+        }, {}),
+      };
+    }
     const items = this.store.productions.filter((entry) => entry.userId === userId);
     return buildProductionSummary(items);
   }
@@ -1024,7 +1056,7 @@ export class ProductionService {
       ...(input.productName !== undefined ? { productName: input.productName } : {}),
       ...(input.isIssued !== undefined ? { isIssued: input.isIssued } : {}),
       ...(input.applicationStatus !== undefined
-        ? { applicationStatus: input.applicationStatus }
+        ? { applicationStatus: input.applicationStatus ?? undefined }
         : input.isIssued
           ? { applicationStatus: 'accepted_issued' as const }
           : {}),

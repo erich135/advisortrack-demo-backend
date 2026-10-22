@@ -95,6 +95,24 @@ function neededFieldsForTool(toolId: string, question: string): Set<string> | nu
       'submittedToProductionCount',
     ]);
   }
+  if (toolId === 'MY_PRODUCTION') {
+    return new Set([
+      'period',
+      'entryCount',
+      'issuedCount',
+      'issuedCommission',
+      'notIssuedCount',
+      'notIssuedCommission',
+      'totalCommission',
+      'acceptedIssuedStatusCount',
+      'pendingUnderwritingCount',
+      'awaitingMedicalsCount',
+      'pmaPendingCount',
+      'awaitingAdvisorInfoCount',
+      'declinedCount',
+      'withdrawnCount',
+    ]);
+  }
   if (toolId === 'MY_CASE_SUMMARY') {
     return new Set([
       'currentStage',

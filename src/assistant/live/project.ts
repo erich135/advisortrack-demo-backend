@@ -12,6 +12,7 @@ import type {
 } from './types';
 import type { MyFollowupsProjection } from './followups';
 import type { MyCaseSummaryProjection, MyPipelineProjection } from './pipelineSelf';
+import type { MyProductionProjection } from './productionSelf';
 
 function projectedFacts(facts: Record<string, string | number | boolean | null>): Record<string, string | number | boolean | null> {
   return Object.fromEntries(
@@ -256,6 +257,33 @@ export function myPipelineToolFacts(projection: MyPipelineProjection): LiveToolF
       casesWithIncompleteDocumentsCount: projection.casesWithIncompleteDocumentsCount,
       reviewDueCount: projection.reviewDueCount,
       submittedToProductionCount: projection.submittedToProductionCount,
+    }),
+  };
+}
+
+export function myProductionToolFacts(projection: MyProductionProjection): LiveToolFactGroup {
+  return {
+    tool: 'MY_PRODUCTION',
+    version: 1,
+    facts: projectedFacts({
+      period: projection.period,
+      entryCount: projection.entryCount,
+      issuedCount: projection.issuedCount,
+      issuedCommission: projection.issuedCommission,
+      notIssuedCount: projection.notIssuedCount,
+      notIssuedCommission: projection.notIssuedCommission,
+      totalCommission: projection.totalCommission,
+      acceptedIssuedStatusCount: projection.acceptedIssuedStatusCount,
+      applicationReceivedCount: projection.applicationReceivedCount,
+      qualityAssessmentCount: projection.qualityAssessmentCount,
+      pendingUnderwritingCount: projection.pendingUnderwritingCount,
+      awaitingMedicalsCount: projection.awaitingMedicalsCount,
+      pmaPendingCount: projection.pmaPendingCount,
+      awaitingAdvisorInfoCount: projection.awaitingAdvisorInfoCount,
+      counterOfferCount: projection.counterOfferCount,
+      postponedCount: projection.postponedCount,
+      declinedCount: projection.declinedCount,
+      withdrawnCount: projection.withdrawnCount,
     }),
   };
 }

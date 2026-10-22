@@ -28,6 +28,8 @@ import {
   type MyPipelineFocus,
   type MyPipelineProjection,
 } from './pipelineSelf';
+import { APPLICATION_STATUS_LABELS } from '../../features/applicationStatus';
+import type { MyProductionFocus, MyProductionProjection } from './productionSelf';
 
 const NOT_FOUND_COPY =
   "I couldn't find that in your AdvisorTrack scope. If you're looking for someone on your team or in your region, try their full name.";
@@ -188,6 +190,74 @@ export function myPipelineAnswer(
     ],
     sources: [{ cardId: 'MY_PIPELINE', title: 'My pipeline' }],
     caveats: ['These counts are your own book. They do not include another advisor’s pipeline or Team Pipeline.'],
+  };
+}
+
+export function myProductionAnswer(
+  projection: MyProductionProjection,
+  focus: MyProductionFocus,
+): AssistantPublicAnswer {
+  const source = publicFactSource('MY_PRODUCTION');
+  const noun = (count: number, singular: string, plural: string) =>
+    `${count} ${count === 1 ? singular : plural}`;
+  const mismatch = projection.acceptedIssuedStatusCount !== projection.issuedCount;
+  const mismatchLine = mismatch
+    ? ` ${noun(projection.acceptedIssuedStatusCount, 'application has', 'applications have')} status ${APPLICATION_STATUS_LABELS.accepted_issued}. ${noun(projection.issuedCount, 'is', 'are')} currently counted as issued production under the Production issued flag.`
+    : '';
+  let headline = 'Your production';
+  let body = `You have ${noun(projection.entryCount, 'production entry', 'production entries')} this period. Issued commission is ${formatLiveRand(projection.issuedCommission)}.`;
+  if (focus === 'issued_amount') {
+    headline = 'Issued this month';
+    body = `You have issued ${formatLiveRand(projection.issuedCommission)} under the Production issued flag (${noun(projection.issuedCount, 'entry', 'entries')}).${mismatchLine}`;
+  } else if (focus === 'entry_count') {
+    headline = 'Production entries';
+    body = `You have ${noun(projection.entryCount, 'production entry', 'production entries')} this period.`;
+  } else if (focus === 'not_issued') {
+    headline = 'Not yet issued';
+    body = `${formatLiveRand(projection.notIssuedCommission)} is not yet issued (${noun(projection.notIssuedCount, 'entry', 'entries')}).`;
+  } else if (focus === 'accepted_issued') {
+    headline = APPLICATION_STATUS_LABELS.accepted_issued;
+    body = `${noun(projection.acceptedIssuedStatusCount, 'application has', 'applications have')} status ${APPLICATION_STATUS_LABELS.accepted_issued}.${mismatchLine || ` ${noun(projection.issuedCount, 'is', 'are')} counted as issued production under the Production issued flag.`}`;
+  } else if (focus === 'pending_underwriting') {
+    headline = APPLICATION_STATUS_LABELS.pending_underwriting;
+    body = `You have ${noun(projection.pendingUnderwritingCount, 'application', 'applications')} pending underwriting.`;
+  } else if (focus === 'awaiting_medicals') {
+    headline = APPLICATION_STATUS_LABELS.awaiting_medicals;
+    body = `You have ${noun(projection.awaitingMedicalsCount, 'application', 'applications')} awaiting medicals.`;
+  } else if (focus === 'pma_pending') {
+    headline = APPLICATION_STATUS_LABELS.pma_pending;
+    body = `You have ${noun(projection.pmaPendingCount, 'application', 'applications')} with PMA pending.`;
+  } else if (focus === 'awaiting_advisor_info') {
+    headline = APPLICATION_STATUS_LABELS.awaiting_advisor_info;
+    body = `You have ${noun(projection.awaitingAdvisorInfoCount, 'application', 'applications')} awaiting advisor information.`;
+  } else if (focus === 'declined') {
+    headline = APPLICATION_STATUS_LABELS.declined;
+    body = `You have ${noun(projection.declinedCount, 'application', 'applications')} declined.`;
+  } else if (focus === 'withdrawn') {
+    headline = APPLICATION_STATUS_LABELS.withdrawn;
+    body = `You have ${noun(projection.withdrawnCount, 'application', 'applications')} withdrawn.`;
+  }
+  return {
+    answerId: 'live:MY_PRODUCTION',
+    intent: 'live.MY_PRODUCTION',
+    confidence: 1,
+    mode: 'allowed',
+    headline,
+    body,
+    facts: [
+      { label: 'Period', value: projection.period, source },
+      { label: 'Entries', value: String(projection.entryCount), source },
+      { label: 'Issued commission', value: formatLiveRand(projection.issuedCommission), source },
+      { label: 'Issued entries', value: String(projection.issuedCount), source },
+      { label: 'Not yet issued', value: formatLiveRand(projection.notIssuedCommission), source },
+      { label: APPLICATION_STATUS_LABELS.accepted_issued, value: String(projection.acceptedIssuedStatusCount), source },
+      { label: APPLICATION_STATUS_LABELS.pending_underwriting, value: String(projection.pendingUnderwritingCount), source },
+    ],
+    sources: [{ cardId: 'MY_PRODUCTION', title: 'My production' }],
+    caveats: [
+      'Issued commission uses the Production issued flag (is_issued). Home may count Accepted / Issued even when that flag is false.',
+      'These figures are your own production book. They are not Management Production, team production, or financial advice.',
+    ],
   };
 }
 

@@ -95,7 +95,7 @@ export const ASSISTANT_HOME_TOPICS: AssistantHomeTopic[] = [
     label: 'Advisor Workspace',
     categoryId: 'advisor-workspace',
     environment: 'both',
-    routeIds: ['advisor-home', 'advisor-contacts', 'advisor-contact-detail', 'advisor-activities', 'advisor-activity-detail', 'advisor-pipeline', 'advisor-case-detail'],
+    routeIds: ['advisor-home', 'advisor-contacts', 'advisor-contact-detail', 'advisor-activities', 'advisor-activity-detail', 'advisor-pipeline', 'advisor-case-detail', 'advisor-production'],
   },
   { id: 'demo-tips', label: 'Demo Tips', categoryId: 'demo-tips', environment: 'demo' },
 ];

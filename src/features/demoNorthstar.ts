@@ -4,8 +4,8 @@
  */
 export const NORTHSTAR_COMPANY_ID = 'd2222222-2222-4222-8222-222222222222';
 export const NORTHSTAR_TEMPLATE_SLUG = 'northstar-advisory-master';
-export const NORTHSTAR_SEED_VERSION = 19;
-export const NORTHSTAR_VERSION_LABEL = 'a85-advisor-pipeline';
+export const NORTHSTAR_SEED_VERSION = 20;
+export const NORTHSTAR_VERSION_LABEL = 'a86-advisor-production';
 export const NORTHSTAR_INVOICE_COUNT = 3;
 export const NORTHSTAR_COMPANY_NAME = 'Northstar Advisory';
 export const NORTHSTAR_EMAIL_DOMAIN = 'northstar.demo.invalid';

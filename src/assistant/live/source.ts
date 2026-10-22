@@ -12,6 +12,7 @@ import type {
 } from './types';
 import type { SelfActivityRow } from './followups';
 import { projectMyCaseSummary, type SelfCaseRow } from './pipelineSelf';
+import type { SelfProductionRow } from './productionSelf';
 
 export type FixturePerson = DirectoryPerson & {
   visibleTo: string[];
@@ -47,6 +48,7 @@ export function createFixtureLiveSource(input: {
     insurerSelected?: boolean;
     documentsSent?: number;
   }>;
+  selfProduction?: Array<SelfProductionRow & { userId: string }>;
   unavailable?: Array<FixtureService>;
   delayMs?: Partial<Record<FixtureService, number>>;
   hang?: FixtureService[];
@@ -185,6 +187,11 @@ export function createFixtureLiveSource(input: {
       return (input.cases ?? [])
         .filter((row) => row.userId === ctx.identity.userId)
         .map(({ userId: _userId, id: _id, quoteCount: _quoteCount, insurerSelected: _insurerSelected, documentsSent: _documentsSent, ...row }) => row);
+    },
+    async listSelfProduction(ctx) {
+      return (input.selfProduction ?? [])
+        .filter((row) => row.userId === ctx.identity.userId)
+        .map(({ userId: _userId, ...row }) => row);
     },
     async getSelfCaseSummary(ctx, caseId) {
       const row = (input.cases ?? []).find((item) => item.userId === ctx.identity.userId && item.id === caseId);

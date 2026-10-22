@@ -8,6 +8,7 @@ import {
   myCaseSummaryAnswer,
   myFollowupsAnswer,
   myPipelineAnswer,
+  myProductionAnswer,
   liveNavigateActions,
   notFoundInScopeAnswer,
   personAmbiguityAnswer,
@@ -29,6 +30,7 @@ import {
 import { createToolExecutionContext } from './context';
 import { detectMyFollowupsFocus, projectMyFollowups } from './followups';
 import { detectMyPipelineFocus, projectMyPipeline } from './pipelineSelf';
+import { detectMyProductionFocus, monthKeyForAssistantPeriod, projectMyProduction } from './productionSelf';
 import { normalizeQuestion } from '../retrieve';
 import { isLiveScopeMiss } from './errors';
 import { wrapLiveSource } from './runtime';
@@ -36,12 +38,13 @@ import {
   deriveLicenceShortfall,
   deriveSubjectLeadershipAccess,
 } from './derive';
-import { ASSISTANT_PERIOD_LABELS, type AssistantPeriod } from './period';
+import { ASSISTANT_PERIOD_LABELS, detectAssistantPeriod, type AssistantPeriod } from './period';
 import {
   licenceToolFacts,
   myCaseSummaryToolFacts,
   myFollowupsToolFacts,
   myPipelineToolFacts,
+  myProductionToolFacts,
   personToolFacts,
   pipelineToolFacts,
   productionToolFacts,
@@ -62,6 +65,7 @@ import {
   MY_CASE_SUMMARY_TOOL,
   MY_FOLLOWUPS_TOOL,
   MY_PIPELINE_TOOL,
+  MY_PRODUCTION_TOOL,
   PERSON_SUMMARY_TOOL,
   PIPELINE_SUMMARY_TOOL,
   PRODUCTION_SUMMARY_TOOL,
@@ -73,6 +77,7 @@ import {
   canUseMyCaseSummary,
   canUseMyFollowups,
   canUseMyPipeline,
+  canUseMyProduction,
   canUsePersonSummary,
   canUsePipelineSummary,
   canUseProductionSummary,
@@ -317,6 +322,10 @@ export async function gatherLiveGrounding(input: {
     return answerFollowups(ctx, source, input.question);
   }
 
+  if (route.kind === 'myproduction') {
+    return answerMyProduction(ctx, source, input.question);
+  }
+
   if (route.kind === 'mypipeline') {
     return answerMyPipeline(ctx, source, input.question);
   }
@@ -410,6 +419,52 @@ async function answerFollowups(
   } catch {
     state.provenance.toolsUnavailable.push(MY_FOLLOWUPS_TOOL.id);
     return pack(state, withProvenance(toolUnavailableAnswer('My follow-ups'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+}
+
+async function answerMyProduction(
+  ctx: ToolExecutionContext,
+  source: LiveDirectorySource,
+  question: string,
+): Promise<LiveGrounding | null> {
+  const period = detectAssistantPeriod(normalizeQuestion(question)) ?? 'this_month';
+  const month = monthKeyForAssistantPeriod(period, ctx.now);
+  const state: BuildState = {
+    ctx,
+    provenance: emptyProvenance(ctx, [MY_PRODUCTION_TOOL.id]),
+    tools: [],
+    derivations: [],
+    period: { id: period, label: ASSISTANT_PERIOD_LABELS[period] },
+  };
+  if (!canUseMyProduction(ctx)) {
+    return null;
+  }
+  if (!source.listSelfProduction) {
+    state.provenance.toolsUnavailable.push(MY_PRODUCTION_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My production'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+  try {
+    const rows = await source.listSelfProduction(ctx, month);
+    const projection = projectMyProduction(rows, { period, now: ctx.now });
+    addTool(state, myProductionToolFacts(projection));
+    const focus = detectMyProductionFocus(normalizeQuestion(question));
+    const answer = {
+      ...myProductionAnswer(projection, focus),
+      actions: liveNavigateActions(ctx.assistant, ['advisor-production']),
+    };
+    return pack(state, withProvenance(answer, state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  } catch {
+    state.provenance.toolsUnavailable.push(MY_PRODUCTION_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My production'), state.provenance), {
       compositionWorthy: false,
       fallbackKind: 'live',
     });

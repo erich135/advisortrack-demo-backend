@@ -139,6 +139,13 @@ export function wrapLiveSource(source: LiveDirectorySource, ctx: ToolExecutionCo
         load: () => source.listSelfCases!(ctx),
       })
       : undefined,
+    listSelfProduction: source.listSelfProduction
+      ? (_ignored, month) => runLiveFetch(ctx, {
+        service: 'production',
+        keyParts: ['self', ctx.identity.userId, month ?? 'all'],
+        load: () => source.listSelfProduction!(ctx, month),
+      })
+      : undefined,
     getSelfCaseSummary: source.getSelfCaseSummary
       ? (_ignored, caseId) => runLiveFetch(ctx, {
         service: 'cases',
