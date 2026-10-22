@@ -981,11 +981,13 @@
         "new contact",
         "add a person",
         "add a customer",
-        "add a lead"
+        "add a lead",
+        "i added this guy"
       ],
       "questionForms": [
         "How do I add a contact?",
-        "What information do I need to add a contact?"
+        "What information do I need to add a contact?",
+        "I added this guy, what now?"
       ],
       "audience": "customer",
       "environment": "both",
@@ -1353,11 +1355,14 @@
       "aliases": [
         "create activity",
         "schedule follow up",
-        "add a call"
+        "add a call",
+        "what do i do with this guy next",
+        "i added this guy what now"
       ],
       "questionForms": [
         "How do I create an activity?",
-        "How do I create an activity for a contact?"
+        "How do I create an activity for a contact?",
+        "What do I do with this guy next?"
       ],
       "audience": "customer",
       "environment": "both",
@@ -1813,14 +1818,17 @@
         "proceed outcome",
         "next activity",
         "advance pipeline",
-        "why was another activity created"
+        "why was another activity created",
+        "i finished the meeting now what",
+        "i finished this meeting what now"
       ],
       "questionForms": [
         "What does Proceed do?",
         "What happens when I choose Proceed?",
         "When is the next activity created?",
         "Why was another activity created automatically?",
-        "How do Activities affect my pipeline?"
+        "How do Activities affect my pipeline?",
+        "I finished this meeting, what now?"
       ],
       "audience": "customer",
       "environment": "both",
@@ -2893,10 +2901,14 @@
       "kind": "concept",
       "title": "Why I cannot submit to Production",
       "aliases": [
-        "submit disabled"
+        "submit disabled",
+        "why wont mine submit",
+        "why can't I submit this"
       ],
       "questionForms": [
-        "Why can't I submit to Production?"
+        "Why can't I submit to Production?",
+        "Why won't mine submit?",
+        "Why can't I submit this?"
       ],
       "audience": "customer",
       "environment": "both",
@@ -6495,10 +6507,12 @@
       "title": "I can't submit to Production",
       "aliases": [
         "submit blocked",
-        "cannot submit case"
+        "cannot submit case",
+        "why wont mine submit"
       ],
       "questionForms": [
-        "I can't submit to Production"
+        "I can't submit to Production",
+        "Why won't mine submit?"
       ],
       "audience": "customer",
       "environment": "both",

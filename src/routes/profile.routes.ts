@@ -8,6 +8,7 @@ import {
   updateFinancialProfileSchema,
   updateProfileSchema,
 } from '../validators/schemas';
+import { invalidateAssistantLiveForUser } from '../assistant/live/invalidate';
 
 /**
  * Factory for profile / financial setup routes.
@@ -36,7 +37,9 @@ export const createProfileRouter = (profileService: ProfileService) => {
     try {
       const { userId } = asAuthRequest(req);
       const body = updateProfileSchema.parse(req.body);
-      res.json(ok(await profileService.updateAdvisorProfile(userId, body)));
+      const updated = await profileService.updateAdvisorProfile(userId, body);
+      invalidateAssistantLiveForUser(userId, 'planning');
+      res.json(ok(updated));
     } catch (error) {
       next(error);
     }
@@ -61,7 +64,9 @@ export const createProfileRouter = (profileService: ProfileService) => {
     try {
       const { userId } = asAuthRequest(req);
       const body = updateFinancialProfileSchema.parse(req.body);
-      res.json(ok(await profileService.updateFinancialProfile(userId, body)));
+      const updated = await profileService.updateFinancialProfile(userId, body);
+      invalidateAssistantLiveForUser(userId, 'planning');
+      res.json(ok(updated));
     } catch (error) {
       next(error);
     }
@@ -74,7 +79,9 @@ export const createProfileRouter = (profileService: ProfileService) => {
     try {
       const { userId } = asAuthRequest(req);
       const body = completeSetupSchema.parse(req.body);
-      res.json(ok(await profileService.completeSetup(userId, body)));
+      const completed = await profileService.completeSetup(userId, body);
+      invalidateAssistantLiveForUser(userId, 'planning');
+      res.json(ok(completed));
     } catch (error) {
       next(error);
     }

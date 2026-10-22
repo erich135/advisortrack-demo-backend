@@ -14,6 +14,8 @@ import type { MyFollowupsProjection } from './followups';
 import type { MyCaseSummaryProjection, MyPipelineProjection } from './pipelineSelf';
 import type { MyProductionProjection } from './productionSelf';
 import type { MyTargetProgressProjection } from './targetProgress';
+import type { MyContactsSummaryProjection } from './contactsSummary';
+import type { MyDashboardProjection } from './dashboardSelf';
 
 function projectedFacts(facts: Record<string, string | number | boolean | null>): Record<string, string | number | boolean | null> {
   return Object.fromEntries(
@@ -229,6 +231,8 @@ export function myFollowupsToolFacts(projection: MyFollowupsProjection): LiveToo
       followUpOverdueCount: projection.followUpOverdueCount,
       callCount: projection.callCount,
       meetingCount: projection.meetingCount,
+      todayCallCount: projection.todayCallCount,
+      todayMeetingCount: projection.todayMeetingCount,
       emailCount: projection.emailCount,
       followUpTypeCount: projection.followUpTypeCount,
       presentationCount: projection.presentationCount,
@@ -331,6 +335,45 @@ export function myCaseSummaryToolFacts(projection: MyCaseSummaryProjection): Liv
       hasNextAction: projection.hasNextAction,
       reviewDue: projection.reviewDue,
       submittedToProduction: projection.submittedToProduction,
+    }),
+  };
+}
+
+export function myContactsSummaryToolFacts(projection: MyContactsSummaryProjection): LiveToolFactGroup {
+  return {
+    tool: 'MY_CONTACTS_SUMMARY',
+    version: 1,
+    facts: projectedFacts({
+      totalContacts: projection.totalContacts,
+      activeContacts: projection.activeContacts,
+      prospectCount: projection.prospectCount,
+      clientCount: projection.clientCount,
+      inactiveCount: projection.inactiveCount,
+      practiceContactCount: projection.practiceContactCount,
+      realContactCount: projection.realContactCount,
+      livePreviewActiveRealCount: projection.livePreviewActiveRealCount,
+      livePreviewLimit: projection.livePreviewLimit,
+    }),
+  };
+}
+
+export function myDashboardToolFacts(projection: MyDashboardProjection): LiveToolFactGroup {
+  return {
+    tool: 'MY_DASHBOARD',
+    version: 1,
+    facts: projectedFacts({
+      monthlyGoal: projection.monthlyGoal,
+      issuedCommission: projection.issuedCommission,
+      progressPercent: projection.progressPercent,
+      remainingAmount: projection.remainingAmount,
+      openCases: projection.openCases,
+      casesWithoutNextAction: projection.casesWithoutNextAction,
+      ficaIncomplete: projection.ficaIncomplete,
+      documentsIncomplete: projection.documentsIncomplete,
+      reviewDue: projection.reviewDue,
+      overdueActivities: projection.overdueActivities,
+      todayActivities: projection.todayActivities,
+      followUpsToday: projection.followUpsToday,
     }),
   };
 }

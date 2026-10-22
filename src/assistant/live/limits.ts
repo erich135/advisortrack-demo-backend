@@ -27,7 +27,8 @@ export type LiveService =
   | 'attention'
   | 'activities'
   | 'cases'
-  | 'planning';
+  | 'planning'
+  | 'contacts';
 
 /**
  * Conservative TTLs. Live/incomplete figures stay short so a licence assign

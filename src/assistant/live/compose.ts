@@ -31,6 +31,8 @@ import {
 import { APPLICATION_STATUS_LABELS } from '../../features/applicationStatus';
 import type { MyProductionFocus, MyProductionProjection } from './productionSelf';
 import type { MyTargetProgressFocus, MyTargetProgressProjection } from './targetProgress';
+import type { MyContactsSummaryFocus, MyContactsSummaryProjection } from './contactsSummary';
+import { attentionItems, type MyDashboardFocus, type MyDashboardProjection } from './dashboardSelf';
 
 const NOT_FOUND_COPY =
   "I couldn't find that in your AdvisorTrack scope. If you're looking for someone on your team or in your region, try their full name.";
@@ -106,10 +108,10 @@ export function myFollowupsAnswer(
     body = `You have ${noun(projection.thisWeekCount, 'scheduled activity', 'scheduled activities')} this week (Monday to Sunday), including ${noun(projection.followUpTodayCount, 'follow-up today', 'follow-ups today')}.`;
   } else if (focus === 'today_calls') {
     headline = 'Calls today';
-    body = `You have ${noun(projection.callCount, 'scheduled call', 'scheduled calls')} in your open work. ${noun(projection.todayCount, 'activity is', 'activities are')} due today.`;
+    body = `You have ${noun(projection.todayCallCount, 'call', 'calls')} scheduled today (${noun(projection.callCount, 'open call', 'open calls')} in total).`;
   } else if (focus === 'today_meetings') {
     headline = 'Meetings today';
-    body = `You have ${noun(projection.meetingCount, 'scheduled meeting', 'scheduled meetings')} in your open work. ${noun(projection.todayCount, 'activity is', 'activities are')} due today.`;
+    body = `You have ${noun(projection.todayMeetingCount, 'meeting', 'meetings')} scheduled today (${noun(projection.meetingCount, 'open meeting', 'open meetings')} in total).`;
   } else if (focus === 'today_activities') {
     headline = 'Today';
     body = `You have ${noun(projection.todayCount, 'activity', 'activities')} scheduled today and ${noun(projection.overdueCount, 'overdue activity', 'overdue activities')}.`;
@@ -310,6 +312,123 @@ export function myTargetProgressAnswer(
       'Target progress uses the Home issued definition (is_issued OR Accepted / Issued). Production issued totals use the issued flag only.',
       'These figures are your own planning workspace. They are not Management reporting or financial advice.',
     ],
+  };
+}
+
+export function myContactsSummaryAnswer(
+  projection: MyContactsSummaryProjection,
+  focus: MyContactsSummaryFocus,
+): AssistantPublicAnswer {
+  const source = publicFactSource('MY_CONTACTS_SUMMARY');
+  const noun = (count: number, singular: string, plural: string) =>
+    `${count} ${count === 1 ? singular : plural}`;
+  let headline = 'Your contacts';
+  let body = `You have ${noun(projection.totalContacts, 'contact', 'contacts')} (${noun(projection.prospectCount, 'prospect', 'prospects')}, ${noun(projection.clientCount, 'client', 'clients')}).`;
+  if (focus === 'total') {
+    headline = 'Contact count';
+    body = `You have ${noun(projection.totalContacts, 'contact', 'contacts')}.`;
+  } else if (focus === 'prospects') {
+    headline = 'Prospects';
+    body = `You have ${noun(projection.prospectCount, 'prospect', 'prospects')}.`;
+  } else if (focus === 'clients') {
+    headline = 'Clients';
+    body = `You have ${noun(projection.clientCount, 'client', 'clients')} marked as Client.`;
+  } else if (focus === 'inactive') {
+    headline = 'Inactive contacts';
+    body = `You have ${noun(projection.inactiveCount, 'inactive contact', 'inactive contacts')}.`;
+  } else if (focus === 'practice') {
+    headline = 'Practice contacts';
+    body = `You have ${noun(projection.practiceContactCount, 'practice contact', 'practice contacts')}. Practice contacts are excluded from the Live Preview cap.`;
+  } else if (focus === 'real') {
+    headline = 'Real contacts';
+    body = `You have ${noun(projection.realContactCount, 'real contact', 'real contacts')}.`;
+  } else if (focus === 'live_preview') {
+    headline = 'Live Preview slots';
+    body = `You are using ${projection.livePreviewActiveRealCount} of ${projection.livePreviewLimit} active real-contact slots. Practice contacts are excluded.`;
+  }
+  return {
+    answerId: 'live:MY_CONTACTS_SUMMARY',
+    intent: 'live.MY_CONTACTS_SUMMARY',
+    confidence: 1,
+    mode: 'allowed',
+    headline,
+    body,
+    facts: [
+      { label: 'Total', value: String(projection.totalContacts), source },
+      { label: 'Prospects', value: String(projection.prospectCount), source },
+      { label: 'Clients', value: String(projection.clientCount), source },
+      { label: 'Inactive', value: String(projection.inactiveCount), source },
+      { label: 'Practice', value: String(projection.practiceContactCount), source },
+      { label: 'Live Preview used', value: `${projection.livePreviewActiveRealCount}/${projection.livePreviewLimit}`, source },
+    ],
+    sources: [{ cardId: 'MY_CONTACTS_SUMMARY', title: 'My contacts' }],
+    caveats: ['These are counts from your own book. Names, emails, and phone numbers are not included.'],
+  };
+}
+
+export function myDashboardAnswer(
+  projection: MyDashboardProjection,
+  focus: MyDashboardFocus,
+): AssistantPublicAnswer {
+  const source = publicFactSource('MY_DASHBOARD');
+  const noun = (count: number, singular: string, plural: string) =>
+    `${count} ${count === 1 ? singular : plural}`;
+  const items = attentionItems(projection);
+  if (focus === 'attention') {
+    const body = items.length
+      ? `Items worth checking: ${items.map((item) => `${item.count} ${item.label}`).join(', ')}.`
+      : 'Nothing in the workflow lists needs checking right now — no overdue activities, reviews due, missing next actions, or incomplete FICA/documents.';
+    return {
+      answerId: 'live:MY_DASHBOARD',
+      intent: 'live.MY_DASHBOARD',
+      confidence: 1,
+      mode: 'allowed',
+      headline: items.length ? 'Items worth checking' : 'Nothing outstanding',
+      body,
+      facts: [
+        { label: 'Overdue activities', value: String(projection.overdueActivities), source },
+        { label: 'Reviews due', value: String(projection.reviewDue), source },
+        { label: 'No next action', value: String(projection.casesWithoutNextAction), source },
+        { label: 'FICA incomplete', value: String(projection.ficaIncomplete), source },
+      ],
+      sources: [{ cardId: 'MY_DASHBOARD', title: 'My dashboard' }],
+      caveats: ['This is workflow state from your own book, not a performance judgement or financial advice.'],
+    };
+  }
+  const body = `You are at ${projection.progressPercent}% of your monthly target. You have ${noun(projection.openCases, 'open case', 'open cases')}, ${noun(projection.casesWithoutNextAction, 'case', 'cases')} without a next action, ${noun(projection.overdueActivities, 'overdue activity', 'overdue activities')} and ${noun(projection.followUpsToday, 'follow-up', 'follow-ups')} today.`;
+  return {
+    answerId: 'live:MY_DASHBOARD',
+    intent: 'live.MY_DASHBOARD',
+    confidence: 1,
+    mode: 'allowed',
+    headline: 'How you are tracking',
+    body,
+    facts: [
+      { label: 'Target progress', value: `${projection.progressPercent}%`, source },
+      { label: 'Open cases', value: String(projection.openCases), source },
+      { label: 'Overdue', value: String(projection.overdueActivities), source },
+      { label: 'Follow-ups today', value: String(projection.followUpsToday), source },
+    ],
+    sources: [{ cardId: 'MY_DASHBOARD', title: 'My dashboard' }],
+    caveats: ['Target progress uses the Home issued definition. This is not a performance rating or financial advice.'],
+  };
+}
+
+export function mergeLiveAnswers(answers: AssistantPublicAnswer[]): AssistantPublicAnswer {
+  const usable = answers.filter(Boolean);
+  if (usable.length === 1) return usable[0];
+  return {
+    answerId: `live:multi:${usable.map((item) => item.answerId).join('+')}`,
+    intent: usable.map((item) => item.intent).join('+'),
+    confidence: 1,
+    mode: 'allowed',
+    headline: usable[0]?.headline ?? 'Your AdvisorTrack summary',
+    body: usable.map((item) => item.body).filter(Boolean).join(' '),
+    facts: usable.flatMap((item) => item.facts ?? []).slice(0, 12),
+    sources: usable
+      .flatMap((item) => item.sources)
+      .filter((source, index, list) => list.findIndex((item) => item.cardId === source.cardId) === index),
+    caveats: usable.flatMap((item) => item.caveats ?? []).filter((caveat, index, list) => list.indexOf(caveat) === index).slice(0, 3),
   };
 }
 

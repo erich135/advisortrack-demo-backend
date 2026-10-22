@@ -119,10 +119,39 @@ export const MY_FOLLOWUPS_FIELDS: FieldCatalog = {
   followUpOverdueCount: 'operational',
   callCount: 'operational',
   meetingCount: 'operational',
+  todayCallCount: 'operational',
+  todayMeetingCount: 'operational',
   emailCount: 'operational',
   followUpTypeCount: 'operational',
   presentationCount: 'operational',
   otherCount: 'operational',
+};
+
+export const MY_CONTACTS_SUMMARY_FIELDS: FieldCatalog = {
+  totalContacts: 'operational',
+  activeContacts: 'operational',
+  prospectCount: 'operational',
+  clientCount: 'operational',
+  inactiveCount: 'operational',
+  practiceContactCount: 'operational',
+  realContactCount: 'operational',
+  livePreviewActiveRealCount: 'operational',
+  livePreviewLimit: 'operational',
+};
+
+export const MY_DASHBOARD_FIELDS: FieldCatalog = {
+  monthlyGoal: 'operational',
+  issuedCommission: 'operational',
+  progressPercent: 'operational',
+  remainingAmount: 'operational',
+  openCases: 'operational',
+  casesWithoutNextAction: 'operational',
+  ficaIncomplete: 'operational',
+  documentsIncomplete: 'operational',
+  reviewDue: 'operational',
+  overdueActivities: 'operational',
+  todayActivities: 'operational',
+  followUpsToday: 'operational',
 };
 
 export const MY_PIPELINE_FIELDS: FieldCatalog = {
@@ -234,6 +263,8 @@ export const TOOL_FIELD_CATALOG: Record<string, FieldCatalog> = {
   MY_CASE_SUMMARY: MY_CASE_SUMMARY_FIELDS,
   MY_PRODUCTION: MY_PRODUCTION_FIELDS,
   MY_TARGET_PROGRESS: MY_TARGET_PROGRESS_FIELDS,
+  MY_CONTACTS_SUMMARY: MY_CONTACTS_SUMMARY_FIELDS,
+  MY_DASHBOARD: MY_DASHBOARD_FIELDS,
 };
 
 export const PUBLIC_FACT_SOURCES: Record<string, string> = {
@@ -252,6 +283,8 @@ export const PUBLIC_FACT_SOURCES: Record<string, string> = {
   MY_CASE_SUMMARY: 'My case',
   MY_PRODUCTION: 'My production',
   MY_TARGET_PROGRESS: 'My target progress',
+  MY_CONTACTS_SUMMARY: 'My contacts',
+  MY_DASHBOARD: 'My dashboard',
 };
 
 export function publicFactSource(toolId: string, periodLabel?: string | null): string {

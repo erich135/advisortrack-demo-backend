@@ -15,6 +15,8 @@ export type MyFollowupsProjection = {
   followUpOverdueCount: number;
   callCount: number;
   meetingCount: number;
+  todayCallCount: number;
+  todayMeetingCount: number;
   emailCount: number;
   followUpTypeCount: number;
   presentationCount: number;
@@ -72,6 +74,8 @@ export function projectMyFollowups(rows: SelfActivityRow[], now = new Date()): M
     followUpOverdueCount: 0,
     callCount: 0,
     meetingCount: 0,
+    todayCallCount: 0,
+    todayMeetingCount: 0,
     emailCount: 0,
     followUpTypeCount: 0,
     presentationCount: 0,
@@ -90,6 +94,8 @@ export function projectMyFollowups(rows: SelfActivityRow[], now = new Date()): M
     if (isOpenActivity(row.status) && day === today) {
       summary.todayCount += 1;
       if (followUp) summary.followUpTodayCount += 1;
+      if (row.type === 'call') summary.todayCallCount += 1;
+      if (row.type === 'meeting') summary.todayMeetingCount += 1;
     }
     if (isCompletedActivity(row.status) && day === today) {
       summary.completedTodayCount += 1;

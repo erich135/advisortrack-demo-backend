@@ -15,6 +15,7 @@ export type AssistantAskBody = {
   question: string;
   pathname?: string;
   search?: string;
+  previousQuestion?: string;
 };
 
 async function organisationForAssistant(userId: string) {
@@ -58,6 +59,7 @@ export async function handleAssistantAsk(
 
   return askAssistant({
     question: body.question,
+    previousQuestion: typeof body.previousQuestion === 'string' ? body.previousQuestion : null,
     identity,
     navigation,
     environment: 'demo',

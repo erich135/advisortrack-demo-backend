@@ -6,6 +6,7 @@ import { ok } from '../utils/response';
 import { createActivitySchema, updateActivitySchema, activityOutcomeSchema } from '../validators/schemas';
 import { recordActivityOutcome } from '../services/activityOutcome.service';
 import { createLogger } from '../utils/logger';
+import { invalidateAssistantLiveForUser } from '../assistant/live/invalidate';
 
 const log = createLogger('activities');
 
@@ -56,6 +57,7 @@ export const createActivitiesRouter = (activityService: ActivityService) => {
       });
 
       const created = await activityService.create(userId, body);
+      invalidateAssistantLiveForUser(userId, 'activities');
       log.info('Create activity success', {
         userId,
         activityId: created.id,
@@ -80,7 +82,9 @@ export const createActivitiesRouter = (activityService: ActivityService) => {
     try {
       const { userId } = asAuthRequest(req);
       const body = updateActivitySchema.parse(req.body);
-      res.json(ok(await activityService.update(userId, String(req.params.id), body)));
+      const updated = await activityService.update(userId, String(req.params.id), body);
+      invalidateAssistantLiveForUser(userId, 'activities');
+      res.json(ok(updated));
     } catch (error) {
       next(error);
     }
@@ -93,7 +97,9 @@ export const createActivitiesRouter = (activityService: ActivityService) => {
     try {
       const { userId } = asAuthRequest(req);
       const body = activityOutcomeSchema.parse(req.body);
-      res.json(ok(await recordActivityOutcome(userId, String(req.params.id), body)));
+      const outcome = await recordActivityOutcome(userId, String(req.params.id), body);
+      invalidateAssistantLiveForUser(userId, 'activities');
+      res.json(ok(outcome));
     } catch (error) {
       next(error);
     }

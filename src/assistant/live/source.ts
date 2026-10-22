@@ -14,6 +14,7 @@ import type { SelfActivityRow } from './followups';
 import { projectMyCaseSummary, type SelfCaseRow } from './pipelineSelf';
 import type { SelfProductionRow } from './productionSelf';
 import type { MyTargetProgressProjection } from './targetProgress';
+import type { SelfContactRow } from './contactsSummary';
 
 export type FixturePerson = DirectoryPerson & {
   visibleTo: string[];
@@ -51,6 +52,7 @@ export function createFixtureLiveSource(input: {
   }>;
   selfProduction?: Array<SelfProductionRow & { userId: string }>;
   selfTargetProgress?: Array<MyTargetProgressProjection & { userId: string }>;
+  contacts?: Array<SelfContactRow & { userId: string }>;
   unavailable?: Array<FixtureService>;
   delayMs?: Partial<Record<FixtureService, number>>;
   hang?: FixtureService[];
@@ -219,6 +221,11 @@ export function createFixtureLiveSource(input: {
       if (!row) return null;
       const { userId: _userId, ...projection } = row;
       return projection;
+    },
+    async listSelfContacts(ctx) {
+      return (input.contacts ?? [])
+        .filter((row) => row.userId === ctx.identity.userId)
+        .map(({ userId: _userId, ...row }) => row);
     },
   };
 }

@@ -26,6 +26,9 @@ import {
   clarifyAnswer,
   disambiguationAnswer,
   unknownHelpAnswer,
+  privacyRefuseAnswer,
+  financialAdviceRefuseAnswer,
+  leadershipScopeRefuseAnswer,
 } from './model/compose';
 import { createDisabledProvider, AssistantProviderError, remainingTurnMs, shouldRetryProviderError, staticRetryReason, MIN_MODEL_ATTEMPT_MS } from './model/provider';
 import { assistantModelDecisionSchema } from './model/types';
@@ -34,6 +37,8 @@ import { redactQuestion } from './model/redact';
 import { validateModelDecision } from './model/validate';
 import type { AssistantAskResult, AssistantModelDecision, AssistantModelProvider, AssistantModelUsage } from './model/types';
 import { rankCards, retrieveCards } from './retrieve';
+import { expandConversationFollowUp } from './phrases';
+import { looksClientPiiAsk, looksFinancialAdviceQuestion, looksLeadershipScopeAsk } from './privacyAsk';
 import { routeById } from './routes';
 import type { ServerKnowledgeBundle, ServerKnowledgeCard } from './serverBundle';
 import type { AssistantRoute } from './types';
@@ -256,6 +261,7 @@ export async function askAssistant(input: {
   provider?: AssistantModelProvider | null;
   timeoutMs?: number;
   liveSource?: LiveDirectorySource | null;
+  previousQuestion?: string | null;
 }): Promise<AssistantAskResult> {
   const started = Date.now();
   const result = await askAssistantInner(input);
@@ -302,10 +308,16 @@ async function askAssistantInner(input: {
   provider?: AssistantModelProvider | null;
   timeoutMs?: number;
   liveSource?: LiveDirectorySource | null;
+  previousQuestion?: string | null;
 }): Promise<AssistantAskResult> {
-  const rawQuestion = redactQuestion(input.question).slice(0, ASSISTANT_MODEL_LIMITS.maxQuestionChars);
+  const rawQuestion = redactQuestion(
+    expandConversationFollowUp(input.question, input.previousQuestion),
+  ).slice(0, ASSISTANT_MODEL_LIMITS.maxQuestionChars);
   if (!rawQuestion.trim()) {
     return { answer: unknownHelpAnswer(), origin: 'deterministic', modelAttempted: false };
+  }
+  if (looksClientPiiAsk(rawQuestion)) {
+    return { answer: privacyRefuseAnswer(), origin: 'deterministic', modelAttempted: false };
   }
 
   const conversation = detectConversationIntent(rawQuestion, input.bundle.categories);
@@ -337,6 +349,19 @@ async function askAssistantInner(input: {
     capabilities: context.capabilities,
   }, (routeId) => routeById(routeId) ?? routes.find((route) => route.routeId === routeId));
 
+  if (looksFinancialAdviceQuestion(question)) {
+    const card = allowed.find((item) => item.id === 'PIPELINE.NO_ADVICE')
+      ?? allowed.find((item) => item.id === 'PRODUCTION.NOT_ADVICE');
+    return {
+      answer: card ? answerFromCards([card], context, routes) : financialAdviceRefuseAnswer(),
+      origin: 'deterministic',
+      modelAttempted: false,
+    };
+  }
+  if (looksLeadershipScopeAsk(question) && context.workspace === 'advisor') {
+    return { answer: leadershipScopeRefuseAnswer(), origin: 'deterministic', modelAttempted: false };
+  }
+
   const turnTimeoutMs = input.timeoutMs ?? ASSISTANT_MODEL_LIMITS.timeoutMs;
   const deadlineAt = Date.now() + turnTimeoutMs;
   const remaining = () => remainingTurnMs(deadlineAt);
@@ -352,6 +377,24 @@ async function askAssistantInner(input: {
     : null;
 
   if (grounding && !grounding.compositionWorthy) {
+    if (looksCompositeQuestion(question)) {
+      const retrieved = retrieveCards(allowed, question, context.route.routeId);
+      if (retrieved.kind === 'match') {
+        const kb = answerFromCards([retrieved.card], context, routes);
+        return {
+          answer: {
+            ...grounding.result.answer,
+            body: [grounding.result.answer.body, kb.body].filter(Boolean).join(' '),
+            sources: [...grounding.result.answer.sources, ...kb.sources].filter(
+              (source, index, list) => list.findIndex((item) => item.cardId === source.cardId) === index,
+            ),
+          },
+          origin: 'deterministic',
+          modelAttempted: false,
+          provenance: grounding.result.provenance,
+        };
+      }
+    }
     return grounding.result;
   }
 

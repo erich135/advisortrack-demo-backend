@@ -163,6 +163,7 @@ const CORE_DOMAIN = [
   'scheduled',
   'reschedule',
   'overdue',
+  'attention',
   'due today',
   'complete',
   'completed',
@@ -181,6 +182,17 @@ const CORE_DOMAIN = [
   'documents',
   'fna',
   'simple goal',
+  'profile',
+  'settings',
+  'points',
+  'factfind',
+  'livepreview',
+  'conversionratio',
+  'nextaction',
+  'split',
+  'deductions',
+  'working weeks',
+  'working days',
 ];
 
 function isFillerOnly(text: string): boolean {
@@ -202,6 +214,7 @@ export function hasProductSubstance(
   const normalized = normalizeQuestion(text);
   if (!normalized || isFillerOnly(normalized)) return false;
   if (hasDomainToken(normalized, categories)) return true;
+  if (/\b(how am i doing|what needs my attention|on track|livepreview|factfind)\b/.test(normalized)) return true;
   return /\b(how do i|how can i|how do we|where (can|do|are|is)|why (cant|cannot|is|are)|add a |assign )\b/.test(
     normalized,
   );

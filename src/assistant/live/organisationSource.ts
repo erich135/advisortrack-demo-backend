@@ -14,6 +14,7 @@ import { activityRepository } from '../../repositories/activity.repository';
 import { caseService } from '../../services/case.service';
 import { productionRepository } from '../../repositories/production.repository';
 import { dashboardRepository } from '../../repositories/dashboard.repository';
+import { contactRepository } from '../../repositories/contact.repository';
 import { PlanningService } from '../../services/planning.service';
 import { projectMyCaseSummary } from './pipelineSelf';
 import { projectMyTargetProgress } from './targetProgress';
@@ -338,6 +339,14 @@ export function createOrganisationLiveSource(): LiveDirectorySource {
         planningService.getTargets(ctx.identity.userId),
       ]);
       return projectMyTargetProgress({ dashboard, targets });
+    },
+    async listSelfContacts(ctx) {
+      const items = await contactRepository.listByUserId(ctx.identity.userId);
+      return items.map((row) => ({
+        status: row.status,
+        isPractice: row.isPractice,
+        activationStatus: row.activationStatus,
+      }));
     },
   };
 }

@@ -3,6 +3,7 @@ import { asAuthRequest } from '../middleware/auth';
 import { androidResourceAuth } from '../middleware/androidAuth';
 import { ok } from '../utils/response';
 import { caseService } from '../services/case.service';
+import { invalidateAssistantLiveForUser } from '../assistant/live/invalidate';
 import {
   createCaseDocumentSchema,
   createCaseSchema,
@@ -78,7 +79,9 @@ export const createCasesRouter = () => {
     try {
       const { userId } = asAuthRequest(req);
       const body = createCaseSchema.parse(req.body);
-      res.status(201).json(ok(await caseService.create(userId, body)));
+      const created = await caseService.create(userId, body);
+      invalidateAssistantLiveForUser(userId, 'pipeline');
+      res.status(201).json(ok(created));
     } catch (error) {
       next(error);
     }
@@ -91,7 +94,9 @@ export const createCasesRouter = () => {
     try {
       const { userId } = asAuthRequest(req);
       const body = updateCaseSchema.parse(req.body);
-      res.json(ok(await caseService.update(userId, String(req.params.id), body)));
+      const updated = await caseService.update(userId, String(req.params.id), body);
+      invalidateAssistantLiveForUser(userId, 'pipeline');
+      res.json(ok(updated));
     } catch (error) {
       next(error);
     }

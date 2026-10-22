@@ -5,7 +5,10 @@ import {
   advisorSummaryAnswer,
   largeScopeAnswer,
   licenceSummaryAnswer,
+  mergeLiveAnswers,
   myCaseSummaryAnswer,
+  myContactsSummaryAnswer,
+  myDashboardAnswer,
   myFollowupsAnswer,
   myPipelineAnswer,
   myProductionAnswer,
@@ -33,6 +36,8 @@ import { detectMyFollowupsFocus, projectMyFollowups } from './followups';
 import { detectMyPipelineFocus, projectMyPipeline } from './pipelineSelf';
 import { detectMyProductionFocus, monthKeyForAssistantPeriod, projectMyProduction } from './productionSelf';
 import { detectMyTargetProgressFocus } from './targetProgress';
+import { detectMyContactsFocus, projectMyContactsSummary } from './contactsSummary';
+import { detectMyDashboardFocus, projectMyDashboard } from './dashboardSelf';
 import { normalizeQuestion } from '../retrieve';
 import { isLiveScopeMiss } from './errors';
 import { wrapLiveSource } from './runtime';
@@ -48,6 +53,8 @@ import {
   myPipelineToolFacts,
   myProductionToolFacts,
   myTargetProgressToolFacts,
+  myContactsSummaryToolFacts,
+  myDashboardToolFacts,
   personToolFacts,
   pipelineToolFacts,
   productionToolFacts,
@@ -61,6 +68,7 @@ import {
   looksDoingQuestion,
   looksLicencePlanningQuestion,
   routeLiveQuestion,
+  type LiveRoute,
 } from './router';
 import {
   ADVISOR_SUMMARY_TOOL,
@@ -70,6 +78,8 @@ import {
   MY_PIPELINE_TOOL,
   MY_PRODUCTION_TOOL,
   MY_TARGET_PROGRESS_TOOL,
+  MY_CONTACTS_SUMMARY_TOOL,
+  MY_DASHBOARD_TOOL,
   PERSON_SUMMARY_TOOL,
   PIPELINE_SUMMARY_TOOL,
   PRODUCTION_SUMMARY_TOOL,
@@ -83,6 +93,8 @@ import {
   canUseMyPipeline,
   canUseMyProduction,
   canUseMyTargetProgress,
+  canUseMyContactsSummary,
+  canUseMyDashboard,
   canUsePersonSummary,
   canUsePipelineSummary,
   canUseProductionSummary,
@@ -305,7 +317,7 @@ export async function gatherLiveGrounding(input: {
   source: LiveDirectorySource;
   timeoutMs: number;
 }): Promise<LiveGrounding | null> {
-  const route = routeLiveQuestion(input.question, input.context.route.path);
+  const route = routeLiveQuestion(input.question, input.context.route.path, input.context.route.routeId);
   if (route.kind === 'none') return null;
 
   const ctx = createToolExecutionContext({
@@ -323,6 +335,10 @@ export async function gatherLiveGrounding(input: {
     return answerAccess(ctx, source, input.question, route.mention, route.topic);
   }
 
+  if (route.kind === 'multi') {
+    return answerMulti(ctx, source, input.question, route.parts);
+  }
+
   if (route.kind === 'followups') {
     return answerFollowups(ctx, source, input.question);
   }
@@ -333,6 +349,14 @@ export async function gatherLiveGrounding(input: {
 
   if (route.kind === 'mytarget') {
     return answerMyTargetProgress(ctx, source, input.question);
+  }
+
+  if (route.kind === 'mycontacts') {
+    return answerMyContacts(ctx, source, input.question);
+  }
+
+  if (route.kind === 'mydashboard') {
+    return answerMyDashboard(ctx, source, input.question);
   }
 
   if (route.kind === 'mypipeline') {
@@ -572,6 +596,146 @@ async function answerMyPipeline(
       fallbackKind: 'live',
     });
   }
+}
+
+async function answerMyContacts(
+  ctx: ToolExecutionContext,
+  source: LiveDirectorySource,
+  question: string,
+): Promise<LiveGrounding | null> {
+  const state: BuildState = {
+    ctx,
+    provenance: emptyProvenance(ctx, [MY_CONTACTS_SUMMARY_TOOL.id]),
+    tools: [],
+    derivations: [],
+    period: null,
+  };
+  if (!canUseMyContactsSummary(ctx)) return null;
+  if (!source.listSelfContacts) {
+    state.provenance.toolsUnavailable.push(MY_CONTACTS_SUMMARY_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My contacts'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+  try {
+    const rows = await source.listSelfContacts(ctx);
+    const projection = projectMyContactsSummary(rows);
+    addTool(state, myContactsSummaryToolFacts(projection));
+    const answer = {
+      ...myContactsSummaryAnswer(projection, detectMyContactsFocus(normalizeQuestion(question))),
+      actions: liveNavigateActions(ctx.assistant, ['advisor-contacts']),
+    };
+    return pack(state, withProvenance(answer, state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  } catch {
+    state.provenance.toolsUnavailable.push(MY_CONTACTS_SUMMARY_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My contacts'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+}
+
+async function answerMyDashboard(
+  ctx: ToolExecutionContext,
+  source: LiveDirectorySource,
+  question: string,
+): Promise<LiveGrounding | null> {
+  const state: BuildState = {
+    ctx,
+    provenance: emptyProvenance(ctx, [MY_DASHBOARD_TOOL.id]),
+    tools: [],
+    derivations: [],
+    period: { id: 'this_month', label: ASSISTANT_PERIOD_LABELS.this_month },
+  };
+  if (!canUseMyDashboard(ctx)) return null;
+  if (!source.listSelfActivities || !source.listSelfCases) {
+    state.provenance.toolsUnavailable.push(MY_DASHBOARD_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My dashboard'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+  try {
+    const [activities, cases, target] = await Promise.all([
+      source.listSelfActivities(ctx),
+      source.listSelfCases(ctx),
+      source.getSelfTargetProgress ? source.getSelfTargetProgress(ctx) : Promise.resolve(null),
+    ]);
+    const projection = projectMyDashboard({
+      followups: projectMyFollowups(activities, ctx.now),
+      pipeline: projectMyPipeline(cases, ctx.now),
+      target,
+    });
+    addTool(state, myDashboardToolFacts(projection));
+    const answer = {
+      ...myDashboardAnswer(projection, detectMyDashboardFocus(normalizeQuestion(question))),
+      actions: liveNavigateActions(ctx.assistant, ['advisor-home', 'advisor-pipeline', 'advisor-activities']),
+    };
+    return pack(state, withProvenance(answer, state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  } catch {
+    state.provenance.toolsUnavailable.push(MY_DASHBOARD_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My dashboard'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+}
+
+async function answerMulti(
+  ctx: ToolExecutionContext,
+  source: LiveDirectorySource,
+  question: string,
+  parts: Array<Exclude<LiveRoute, { kind: 'none' | 'multi' }>>,
+): Promise<LiveGrounding | null> {
+  const groundings: LiveGrounding[] = [];
+  for (const part of parts.slice(0, 3)) {
+    const next = await dispatchSelfRoute(ctx, source, question, part);
+    if (next) groundings.push(next);
+  }
+  if (!groundings.length) return null;
+  const mergedAnswer = mergeLiveAnswers(groundings.map((item) => item.result.answer));
+  const first = groundings[0];
+  const provenance = first.result.provenance
+    ? {
+      ...first.result.provenance,
+      toolsAttempted: [...new Set(groundings.flatMap((item) => item.result.provenance?.toolsAttempted ?? []))],
+      toolsUsed: [...new Set(groundings.flatMap((item) => item.result.provenance?.toolsUsed ?? []))],
+      toolsUnavailable: [...new Set(groundings.flatMap((item) => item.result.provenance?.toolsUnavailable ?? []))],
+      items: groundings.flatMap((item) => item.result.provenance?.items ?? []),
+    }
+    : first.result.provenance;
+  return {
+    compositionWorthy: false,
+    fallbackKind: 'live',
+    result: { answer: mergedAnswer, origin: 'deterministic', modelAttempted: false, provenance },
+    tools: groundings.flatMap((item) => item.tools),
+    derivations: groundings.flatMap((item) => item.derivations),
+    period: first.period,
+    seedCardIds: [...new Set(groundings.flatMap((item) => item.seedCardIds))],
+  };
+}
+
+async function dispatchSelfRoute(
+  ctx: ToolExecutionContext,
+  source: LiveDirectorySource,
+  question: string,
+  route: Exclude<LiveRoute, { kind: 'none' | 'multi' }>,
+): Promise<LiveGrounding | null> {
+  if (route.kind === 'followups') return answerFollowups(ctx, source, question);
+  if (route.kind === 'myproduction') return answerMyProduction(ctx, source, question);
+  if (route.kind === 'mytarget') return answerMyTargetProgress(ctx, source, question);
+  if (route.kind === 'mycontacts') return answerMyContacts(ctx, source, question);
+  if (route.kind === 'mydashboard') return answerMyDashboard(ctx, source, question);
+  if (route.kind === 'mypipeline') return answerMyPipeline(ctx, source, question);
+  if (route.kind === 'case_summary') return answerMyCaseSummary(ctx, source, route.caseId);
+  return null;
 }
 
 async function answerMyCaseSummary(

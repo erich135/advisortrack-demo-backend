@@ -254,6 +254,42 @@ export function unknownHelpAnswer(context?: AssistantContext): AssistantPublicAn
   };
 }
 
+export function privacyRefuseAnswer(): AssistantPublicAnswer {
+  return {
+    answerId: 'privacy:client-pii',
+    intent: 'privacy',
+    confidence: 1,
+    mode: 'blocked',
+    headline: 'I cannot share client personal details',
+    body: 'I can talk about counts and workflow in your own book, but I will not list client names, phone numbers, emails, or ID numbers.',
+    sources: [],
+  };
+}
+
+export function financialAdviceRefuseAnswer(): AssistantPublicAnswer {
+  return {
+    answerId: 'blocked:financial-advice',
+    intent: 'blocked',
+    confidence: 1,
+    mode: 'blocked',
+    headline: 'I cannot recommend a product',
+    body: 'I can explain how to record quotes, choose an insurer in the case, and move the case through Implementation. I cannot tell you which product, insurer, or policy to recommend to a client.',
+    sources: [{ cardId: 'PIPELINE.NO_ADVICE', title: 'Not financial advice' }],
+  };
+}
+
+export function leadershipScopeRefuseAnswer(): AssistantPublicAnswer {
+  return {
+    answerId: 'blocked:leadership-scope',
+    intent: 'blocked',
+    confidence: 1,
+    mode: 'blocked',
+    headline: 'That is outside your own book',
+    body: 'In Advisor Workspace I can only talk about your own contacts, activities, pipeline, production, and targets. Team, region, and other-advisor reporting stays in leadership views.',
+    sources: [],
+  };
+}
+
 export function disambiguationAnswer(cards: ServerKnowledgeCard[]): AssistantPublicAnswer {
   return {
     answerId: `disambiguate:${cards.map((card) => card.id).join(',')}`,

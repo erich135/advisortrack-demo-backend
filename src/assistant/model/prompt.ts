@@ -12,6 +12,7 @@ export function looksCompositeQuestion(question: string): boolean {
   );
   if (hasQuantity && signals.length >= 2) return true;
   if (/\band\b/.test(normalized) && signals.length >= 2) return true;
+  if (/\s+and\s+/.test(normalized) && normalized.split(/\s+and\s+/).length >= 2) return true;
   return false;
 }
 
@@ -75,6 +76,9 @@ export function buildModelPrompt(input: {
     'Never mention staff-only internal tools to customers.',
     'Do not recommend writes beyond opening a documented page.',
     'You are a product and workflow assistant, not a financial adviser. Do not recommend products, insurers, investments, or policies. Do not interpret a client\'s financial needs. You may only explain AdvisorTrack stages, missing workflow fields, and how to use the system.',
+    'Answer the user\'s actual question first in one sentence, then only the facts needed.',
+    'Use AdvisorTrack product wording. Do not mention tool names, card ids, articles, internal APIs, or unavailable help items.',
+    'Do not repeat the same caveat twice. Skip irrelevant warnings.',
     'Write in a direct, friendly, concise management tone. Natural South African English is welcome where it fits.',
     'Do not over-apologise, use fake enthusiasm, excessive headings, or lecture the user.',
     'Keep headline and body short — usually one headline and one to three sentences. Do not write essays.',

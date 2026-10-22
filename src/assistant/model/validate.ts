@@ -24,6 +24,8 @@ const PATH_LIKE = /\/[a-z0-9-]{2,}/gi;
 const HTML_MARKUP = /<\s*[a-z][\s\S]*>/i;
 const FORBIDDEN_PERFORMANCE =
   /\b(weak|bad performer|lazy|underperforming|under-performer|excellent|struggling|poor performer|poor performance|poor engagement|low effort)\b/i;
+const FORBIDDEN_FINANCIAL_ADVICE =
+  /\b(you should (sell|recommend|choose)|i recommend (the )?(policy|product|insurer)|pick this insurer|best product for (the |this )?client|asset allocation)\b/i;
 const TELEMETRY_FRAMING =
   /(last mobile activity|low activity|telemetry)[\s\S]{0,90}(means|shows|indicates|implies|because)[\s\S]{0,50}(lazy|poor|weak|underperform|inactive|not working|low effort|engagement|performance)|\b(lazy|poor performance|low effort|inactive advisor|not working|poor engagement)\b[\s\S]{0,90}(last mobile activity|telemetry|low activity)/i;
 const ENTITY_REF = /\bent_[a-f0-9]{8}\b/gi;
@@ -159,6 +161,9 @@ export function validateModelDecision(input: {
   }
   if (FORBIDDEN_PERFORMANCE.test(text)) {
     return { code: 'performance_language', message: 'Model used unsupported performance judgement' };
+  }
+  if (FORBIDDEN_FINANCIAL_ADVICE.test(text)) {
+    return { code: 'financial_advice', message: 'Model recommended a financial product or insurer' };
   }
   if (TELEMETRY_FRAMING.test(text)) {
     return { code: 'telemetry_framing', message: 'Model used Last Mobile Activity as a performance judgement' };

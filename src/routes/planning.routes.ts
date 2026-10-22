@@ -4,6 +4,7 @@ import { androidResourceAuth } from '../middleware/androidAuth';
 import { PlanningService } from '../services/planning.service';
 import { ok } from '../utils/response';
 import { updateGeneralSettingsSchema } from '../validators/schemas';
+import { invalidateAssistantLiveForUser } from '../assistant/live/invalidate';
 
 /**
  * Factory for planning and general settings routes.
@@ -44,7 +45,9 @@ export const createPlanningRouter = (planningService: PlanningService) => {
     try {
       const { userId } = asAuthRequest(req);
       const body = updateGeneralSettingsSchema.parse(req.body);
-      res.json(ok(await planningService.updateGeneralSettings(userId, body)));
+      const updated = await planningService.updateGeneralSettings(userId, body);
+      invalidateAssistantLiveForUser(userId, 'planning');
+      res.json(ok(updated));
     } catch (error) {
       next(error);
     }

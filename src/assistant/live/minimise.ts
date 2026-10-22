@@ -149,6 +149,34 @@ function neededFieldsForTool(toolId: string, question: string): Set<string> | nu
       'submittedToProduction',
     ]);
   }
+  if (toolId === 'MY_CONTACTS_SUMMARY') {
+    return new Set([
+      'totalContacts',
+      'activeContacts',
+      'prospectCount',
+      'clientCount',
+      'inactiveCount',
+      'practiceContactCount',
+      'realContactCount',
+      'livePreviewActiveRealCount',
+      'livePreviewLimit',
+    ]);
+  }
+  if (toolId === 'MY_DASHBOARD') {
+    return new Set([
+      'monthlyGoal',
+      'issuedCommission',
+      'progressPercent',
+      'remainingAmount',
+      'openCases',
+      'casesWithoutNextAction',
+      'ficaIncomplete',
+      'reviewDue',
+      'overdueActivities',
+      'todayActivities',
+      'followUpsToday',
+    ]);
+  }
   return null;
 }
 

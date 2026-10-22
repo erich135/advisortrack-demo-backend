@@ -3,6 +3,7 @@ import { asAuthRequest, requireAuth } from '../middleware/auth';
 import { env } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
 import { demoSessionService } from '../services/demoSession.service';
+import { resetAssistantLiveRuntime } from '../assistant/live/reset';
 import { ok } from '../utils/response';
 
 /**
@@ -52,6 +53,7 @@ export const createDemoRouter = () => {
     try {
       const { demoSessionId } = asAuthRequest(req);
       const result = await demoSessionService.reset(demoSessionId!);
+      resetAssistantLiveRuntime();
       res.json(ok(result));
     } catch (error) {
       next(error);

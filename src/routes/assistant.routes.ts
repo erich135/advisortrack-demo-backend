@@ -8,6 +8,7 @@ const askSchema = z.object({
   question: z.string().trim().min(1).max(500),
   pathname: z.string().max(200).optional(),
   search: z.string().max(200).optional(),
+  previousQuestion: z.string().trim().max(500).optional(),
 });
 
 function clientIp(req: Request): string | null {

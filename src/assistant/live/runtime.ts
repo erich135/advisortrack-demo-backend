@@ -160,5 +160,12 @@ export function wrapLiveSource(source: LiveDirectorySource, ctx: ToolExecutionCo
         load: () => source.getSelfTargetProgress!(ctx),
       })
       : undefined,
+    listSelfContacts: source.listSelfContacts
+      ? () => runLiveFetch(ctx, {
+        service: 'contacts',
+        keyParts: ['self', ctx.identity.userId],
+        load: () => source.listSelfContacts!(ctx),
+      })
+      : undefined,
   };
 }

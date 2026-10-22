@@ -221,6 +221,36 @@ export const MY_PRODUCTION_TOOL: AssistantToolDefinition = {
   auditClass: 'read_summary',
 };
 
+export const MY_CONTACTS_SUMMARY_TOOL: AssistantToolDefinition = {
+  id: 'MY_CONTACTS_SUMMARY',
+  version: 1,
+  title: 'My contacts',
+  domain: 'reporting',
+  audiences: ['mobile_advisor'],
+  environments: ['both'],
+  requiredCapabilities: ['canViewAdvisorWorkspace'],
+  scopeResolver: 'self',
+  acceptsEntityKinds: [],
+  limits: { maxRows: 1, timeoutMs: 4000 },
+  cache: { ttlSeconds: 30, keyBy: ['scope'] },
+  auditClass: 'read_summary',
+};
+
+export const MY_DASHBOARD_TOOL: AssistantToolDefinition = {
+  id: 'MY_DASHBOARD',
+  version: 1,
+  title: 'My dashboard',
+  domain: 'reporting',
+  audiences: ['mobile_advisor'],
+  environments: ['both'],
+  requiredCapabilities: ['canViewAdvisorWorkspace'],
+  scopeResolver: 'self',
+  acceptsEntityKinds: [],
+  limits: { maxRows: 1, timeoutMs: 4000 },
+  cache: { ttlSeconds: 30, keyBy: ['scope', 'period'] },
+  auditClass: 'read_summary',
+};
+
 export const MY_TARGET_PROGRESS_TOOL: AssistantToolDefinition = {
   id: 'MY_TARGET_PROGRESS',
   version: 1,
@@ -252,6 +282,8 @@ export const ASSISTANT_TOOLS: AssistantToolDefinition[] = [
   MY_CASE_SUMMARY_TOOL,
   MY_PRODUCTION_TOOL,
   MY_TARGET_PROGRESS_TOOL,
+  MY_CONTACTS_SUMMARY_TOOL,
+  MY_DASHBOARD_TOOL,
 ];
 
 export const personSummaryInputSchema = z.object({
@@ -329,6 +361,14 @@ export function canUseMyProduction(ctx: ToolExecutionContext): boolean {
 }
 
 export function canUseMyTargetProgress(ctx: ToolExecutionContext): boolean {
+  return ctx.assistant.capabilities.canViewAdvisorWorkspace === true;
+}
+
+export function canUseMyContactsSummary(ctx: ToolExecutionContext): boolean {
+  return ctx.assistant.capabilities.canViewAdvisorWorkspace === true;
+}
+
+export function canUseMyDashboard(ctx: ToolExecutionContext): boolean {
   return ctx.assistant.capabilities.canViewAdvisorWorkspace === true;
 }
 

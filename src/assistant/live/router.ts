@@ -1,4 +1,5 @@
 import { normalizeQuestion } from '../retrieve';
+import { phraseHintFor } from '../phrases';
 import {
   detectAssistantPeriod,
   type AssistantPeriod,
@@ -31,7 +32,9 @@ import {
 import { askedComparisonRank } from './rank';
 import type { HierarchyRank } from '../../features/customerHierarchy';
 
-export type LiveIntent = 'person' | 'advisor' | 'production' | 'pipeline' | 'team' | 'region' | 'licence' | 'access' | 'followups' | 'mypipeline' | 'case_summary' | 'myproduction' | 'mytarget';
+export type LiveIntent = 'person' | 'advisor' | 'production' | 'pipeline' | 'team' | 'region' | 'licence' | 'access' | 'followups' | 'mypipeline' | 'case_summary' | 'myproduction' | 'mytarget' | 'mycontacts' | 'mydashboard';
+
+export type SelfLiveKind = 'followups' | 'mypipeline' | 'myproduction' | 'mytarget' | 'mycontacts' | 'mydashboard' | 'case_summary';
 
 export type LiveRoute =
   | { kind: 'none' }
@@ -39,6 +42,9 @@ export type LiveRoute =
   | { kind: 'mypipeline' }
   | { kind: 'myproduction' }
   | { kind: 'mytarget' }
+  | { kind: 'mycontacts' }
+  | { kind: 'mydashboard' }
+  | { kind: 'multi'; parts: Array<Exclude<LiveRoute, { kind: 'none' | 'multi' }>> }
   | { kind: 'case_summary'; caseId: string }
   | { kind: 'licence' }
   | { kind: 'person'; mention: string }
@@ -79,6 +85,7 @@ export type LiveRoute =
   | { kind: 'dump'; subject: 'advisors' | 'cases' };
 
 function looksDumpQuestion(normalized: string): { subject: 'advisors' | 'cases' } | null {
+  if (/\bmy (clients?|contacts?)\b/.test(normalized)) return null;
   if (/\b(every|all|entire|whole|each)\b/.test(normalized) && /\b(cases?|clients?|policies)\b/.test(normalized)) {
     return { subject: 'cases' };
   }
@@ -212,6 +219,47 @@ export function looksMyTargetProgressQuestion(question: string): boolean {
   return false;
 }
 
+export function looksMyContactsQuestion(question: string): boolean {
+  const normalized = normalizeQuestion(question);
+  if (looksHelpQuestion(normalized)) return false;
+  if (looksNamedOtherPerson(normalized)) return false;
+  if (/\b(management|downline|my team|the team|region|leadership|company contacts)\b/.test(normalized)) return false;
+  if (looksLikeTeamLookup(question) || looksLikeRegionLookup(question)) return false;
+  if (/\bhow many (contacts?|prospects?|clients?|inactive|practice contacts?|real contacts?)\b/.test(normalized)) return true;
+  if (/\b(livepreview|live preview) slots?\b/.test(normalized)) return true;
+  if (/\bhow many live preview\b/.test(normalized)) return true;
+  return false;
+}
+
+export function looksMyDashboardQuestion(question: string): boolean {
+  const normalized = normalizeQuestion(question);
+  if (looksHelpQuestion(normalized)) return false;
+  if (looksNamedOtherPerson(normalized)) return false;
+  if (/\b(management|downline|my team|the team|region|leadership)\b/.test(normalized)) return false;
+  return (
+    /\bhow am i doing\b/.test(normalized)
+    || /\bgive me a quick overview\b/.test(normalized)
+    || /\bwhere do i stand\b/.test(normalized)
+    || /\bwhats my position\b/.test(normalized)
+    || /\bam i on track\b/.test(normalized)
+  );
+}
+
+export function looksMyAttentionQuestion(question: string): boolean {
+  const normalized = normalizeQuestion(question);
+  if (looksHelpQuestion(normalized)) return false;
+  if (looksNamedOtherPerson(normalized)) return false;
+  if (/\b(who needs attention|which advisors? need)\b/.test(normalized)) return false;
+  return (
+    /\bwhat needs my attention\b/.test(normalized)
+    || /\bwhat should i look at today\b/.test(normalized)
+    || /\banything i need to sort out\b/.test(normalized)
+    || /\bwhat is outstanding\b/.test(normalized)
+    || /\bwhats waiting on me\b/.test(normalized)
+    || /\bwhat still needs attention\b/.test(normalized)
+  );
+}
+
 export function looksMyFollowupsQuestion(question: string): boolean {
   const normalized = normalizeQuestion(question);
   if (looksHelpQuestion(normalized)) return false;
@@ -223,7 +271,7 @@ export function looksMyFollowupsQuestion(question: string): boolean {
   const today = /\b(today|due today|need to do|scheduled today)\b/.test(normalized);
   const week = /\bthis week\b/.test(normalized);
   const howMany = /\b(how many|count|do i have|have i got)\b/.test(normalized);
-  const subject = /\b(follow[- ]?ups?|activit(?:y|ies)|calls?|meetings?|appointments?|reminders?|tasks?)\b/.test(normalized);
+  const subject = /\b(followups?|activit(?:y|ies)|calls?|meetings?|appointments?|reminders?|tasks?)\b/.test(normalized);
   if (overdue && (subject || /\banything\b/.test(normalized) || howMany || /^(is there|do i have)\b/.test(normalized))) {
     return true;
   }
@@ -258,21 +306,42 @@ function unitFromQuestion(question: string): ComparisonUnitKind {
   return kind === 'mixed' ? 'person' : kind;
 }
 
-export function routeLiveQuestion(question: string, navigationPath?: string): LiveRoute {
-  const normalized = normalizeQuestion(question);
-  const namedAccess = matchNamedAccess(normalized);
-  if (namedAccess) return { kind: 'access', mention: namedAccess.mention, topic: namedAccess.topic };
-  if (looksHelpQuestion(normalized) && !looksMyCaseSummaryQuestion(question)) return { kind: 'none' };
+function selfRouteForPart(question: string, navigationPath?: string): LiveRoute {
   const caseIdMatch = (navigationPath ?? '').match(
     /^\/advisor\/cases\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i,
   );
   if (looksMyCaseSummaryQuestion(question) && caseIdMatch) {
     return { kind: 'case_summary', caseId: caseIdMatch[1] };
   }
+  if (looksMyDashboardQuestion(question) || looksMyAttentionQuestion(question)) return { kind: 'mydashboard' };
+  if (looksMyContactsQuestion(question)) return { kind: 'mycontacts' };
   if (looksMyFollowupsQuestion(question)) return { kind: 'followups' };
   if (looksMyProductionQuestion(question)) return { kind: 'myproduction' };
   if (looksMyTargetProgressQuestion(question)) return { kind: 'mytarget' };
   if (looksMyPipelineQuestion(question)) return { kind: 'mypipeline' };
+  return { kind: 'none' };
+}
+
+export function routeLiveQuestion(question: string, navigationPath?: string, routeId?: string | null): LiveRoute {
+  const normalized = normalizeQuestion(question);
+  const namedAccess = matchNamedAccess(normalized);
+  if (namedAccess) return { kind: 'access', mention: namedAccess.mention, topic: namedAccess.topic };
+  const hint = phraseHintFor(question, routeId);
+  if (hint?.kind === 'live') return { kind: hint.live };
+  if (looksHelpQuestion(normalized) && !looksMyCaseSummaryQuestion(question) && !looksMyDashboardQuestion(question)) {
+    return { kind: 'none' };
+  }
+  const parts = question.split(/\s+\band\b\s+/i).map((part) => part.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    const routes = parts
+      .map((part) => selfRouteForPart(part, navigationPath))
+      .filter((route): route is Exclude<LiveRoute, { kind: 'none' | 'multi' }> => route.kind !== 'none' && route.kind !== 'multi');
+    const unique = [...new Map(routes.map((route) => [route.kind, route])).values()];
+    if (unique.length >= 2) return { kind: 'multi', parts: unique.slice(0, 3) };
+    if (unique.length === 1) return unique[0];
+  }
+  const self = selfRouteForPart(question, navigationPath);
+  if (self.kind !== 'none') return self;
   if (looksHelpQuestion(normalized)) return { kind: 'none' };
   if (looksLicenceSummary(normalized)) return { kind: 'licence' };
   const dump = looksDumpQuestion(normalized);

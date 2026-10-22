@@ -6,6 +6,7 @@ import type { SelfActivityRow } from './followups';
 import type { MyCaseSummaryProjection, SelfCaseRow } from './pipelineSelf';
 import type { SelfProductionRow } from './productionSelf';
 import type { MyTargetProgressProjection } from './targetProgress';
+import type { SelfContactRow } from './contactsSummary';
 
 export type EntityKind = 'person' | 'team' | 'region' | 'company' | 'invoice';
 export type EntityRef = string;
@@ -207,6 +208,7 @@ export type LiveDirectorySource = {
   getSelfCaseSummary?(ctx: ToolExecutionContext, caseId: string): Promise<MyCaseSummaryProjection | null>;
   listSelfProduction?(ctx: ToolExecutionContext, month?: string): Promise<SelfProductionRow[]>;
   getSelfTargetProgress?(ctx: ToolExecutionContext): Promise<MyTargetProgressProjection | null>;
+  listSelfContacts?(ctx: ToolExecutionContext): Promise<SelfContactRow[]>;
 };
 
 export type ProvenanceItem =

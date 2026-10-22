@@ -22,6 +22,8 @@ export {
   MY_CASE_SUMMARY_TOOL,
   MY_PRODUCTION_TOOL,
   MY_TARGET_PROGRESS_TOOL,
+  MY_CONTACTS_SUMMARY_TOOL,
+  MY_DASHBOARD_TOOL,
   ASSISTANT_TOOLS,
   executePersonSummary,
 } from './tools';
@@ -64,4 +66,4 @@ export { runLiveFetch, wrapLiveSource, LiveUnavailableError, LiveScopeMissError,
 export { resetAssistantLiveRuntime } from './reset';
 export { resetLiveSummaryCache, liveScopeFingerprint, liveCacheKey } from './cache';
 export { configureLiveBreakerForTests, resetLiveBreaker, liveBreakerOpen, liveBreakerFailure, liveBreakerSuccess } from './breaker';
-export { invalidateAssistantLiveCache, ASSISTANT_CACHE_INVALIDATION_POINTS } from './invalidate';
+export { invalidateAssistantLiveCache, invalidateAssistantLiveForUser, ASSISTANT_CACHE_INVALIDATION_POINTS } from './invalidate';

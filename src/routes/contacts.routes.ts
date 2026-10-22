@@ -8,6 +8,7 @@ import { ContactService } from '../services';
 import { ok } from '../utils/response';
 
 import { createContactSchema, batchCreateContactsSchema, updateContactSchema } from '../validators/schemas';
+import { invalidateAssistantLiveForUser } from '../assistant/live/invalidate';
 
 
 
@@ -146,8 +147,9 @@ export const createContactsRouter = (contactService: ContactService) => {
       const { userId } = asAuthRequest(req);
 
       const body = createContactSchema.parse(req.body);
-
-      res.status(201).json(ok(await contactService.create(userId, body)));
+      const created = await contactService.create(userId, body);
+      invalidateAssistantLiveForUser(userId, 'contacts');
+      res.status(201).json(ok(created));
 
     } catch (error) {
 
@@ -163,7 +165,9 @@ export const createContactsRouter = (contactService: ContactService) => {
   router.post('/:id/activate', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = asAuthRequest(req);
-      res.json(ok(await contactService.activateContact(userId, String(req.params.id))));
+      const activated = await contactService.activateContact(userId, String(req.params.id));
+      invalidateAssistantLiveForUser(userId, 'contacts');
+      res.json(ok(activated));
     } catch (error) {
       next(error);
     }
@@ -176,7 +180,9 @@ export const createContactsRouter = (contactService: ContactService) => {
     try {
       const { userId } = asAuthRequest(req);
       const body = updateContactSchema.parse(req.body);
-      res.json(ok(await contactService.update(userId, String(req.params.id), body)));
+      const updated = await contactService.update(userId, String(req.params.id), body);
+      invalidateAssistantLiveForUser(userId, 'contacts');
+      res.json(ok(updated));
     } catch (error) {
       next(error);
     }

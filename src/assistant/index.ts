@@ -35,6 +35,8 @@ export {
   MY_CASE_SUMMARY_TOOL,
   MY_PRODUCTION_TOOL,
   MY_TARGET_PROGRESS_TOOL,
+  MY_CONTACTS_SUMMARY_TOOL,
+  MY_DASHBOARD_TOOL,
   executePersonSummary,
   ForgedEntityRefError,
   resolveAssistantPeriod,
@@ -63,6 +65,7 @@ export {
   liveBreakerOpen,
   liveBreakerSuccess,
   invalidateAssistantLiveCache,
+  invalidateAssistantLiveForUser,
 } from './live';
 export type { DirectoryPerson, LiveDirectorySource, ToolExecutionContext, DataClass, AnswerProvenance } from './live';
 export { loadServerBundle } from './loadSnapshot';
