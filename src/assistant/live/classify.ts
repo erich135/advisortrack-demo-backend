@@ -110,6 +110,56 @@ export const ATTENTION_SUMMARY_FIELDS: FieldCatalog = {
   reason4: 'operational',
 };
 
+export const MY_FOLLOWUPS_FIELDS: FieldCatalog = {
+  todayCount: 'operational',
+  overdueCount: 'operational',
+  thisWeekCount: 'operational',
+  completedTodayCount: 'operational',
+  followUpTodayCount: 'operational',
+  followUpOverdueCount: 'operational',
+  callCount: 'operational',
+  meetingCount: 'operational',
+  emailCount: 'operational',
+  followUpTypeCount: 'operational',
+  presentationCount: 'operational',
+  otherCount: 'operational',
+};
+
+export const MY_PIPELINE_FIELDS: FieldCatalog = {
+  openCaseCount: 'operational',
+  wonCaseCount: 'operational',
+  lostCaseCount: 'operational',
+  closedCaseCount: 'operational',
+  initialContactCount: 'operational',
+  factFindingCount: 'operational',
+  analysisCount: 'operational',
+  recommendationCount: 'operational',
+  implementationCount: 'operational',
+  reviewCount: 'operational',
+  totalEstimatedCommission: 'operational',
+  casesWithoutNextActionCount: 'operational',
+  ficaIncompleteCount: 'operational',
+  casesWithIncompleteDocumentsCount: 'operational',
+  reviewDueCount: 'operational',
+  submittedToProductionCount: 'operational',
+};
+
+export const MY_CASE_SUMMARY_FIELDS: FieldCatalog = {
+  currentStage: 'operational',
+  stageLabel: 'operational',
+  status: 'operational',
+  ficaComplete: 'operational',
+  documentCount: 'operational',
+  documentsSent: 'operational',
+  documentsReceived: 'operational',
+  quoteCount: 'operational',
+  insurerSelected: 'operational',
+  estimatedCommission: 'operational',
+  hasNextAction: 'operational',
+  reviewDue: 'operational',
+  submittedToProduction: 'operational',
+};
+
 /** Invoice/commercial metadata if a live commercial tool is added later. Not registered today. */
 export const COMMERCIAL_METADATA_FIELDS: FieldCatalog = {
   invoiceNumber: 'operational',
@@ -140,6 +190,9 @@ export const TOOL_FIELD_CATALOG: Record<string, FieldCatalog> = {
   COMPARISON_SUMMARY: COMPARISON_SUMMARY_FIELDS,
   RANKING_SUMMARY: RANKING_SUMMARY_FIELDS,
   ATTENTION_SUMMARY: ATTENTION_SUMMARY_FIELDS,
+  MY_FOLLOWUPS: MY_FOLLOWUPS_FIELDS,
+  MY_PIPELINE: MY_PIPELINE_FIELDS,
+  MY_CASE_SUMMARY: MY_CASE_SUMMARY_FIELDS,
 };
 
 export const PUBLIC_FACT_SOURCES: Record<string, string> = {
@@ -153,6 +206,9 @@ export const PUBLIC_FACT_SOURCES: Record<string, string> = {
   COMPARISON_SUMMARY: 'Comparison',
   RANKING_SUMMARY: 'Ranking',
   ATTENTION_SUMMARY: 'Needs Attention',
+  MY_FOLLOWUPS: 'My follow-ups',
+  MY_PIPELINE: 'My pipeline',
+  MY_CASE_SUMMARY: 'My case',
 };
 
 export function publicFactSource(toolId: string, periodLabel?: string | null): string {

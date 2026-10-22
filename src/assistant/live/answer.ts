@@ -5,6 +5,9 @@ import {
   advisorSummaryAnswer,
   largeScopeAnswer,
   licenceSummaryAnswer,
+  myCaseSummaryAnswer,
+  myFollowupsAnswer,
+  myPipelineAnswer,
   liveNavigateActions,
   notFoundInScopeAnswer,
   personAmbiguityAnswer,
@@ -24,6 +27,9 @@ import {
   type FlowHelpers,
 } from './compareFlow';
 import { createToolExecutionContext } from './context';
+import { detectMyFollowupsFocus, projectMyFollowups } from './followups';
+import { detectMyPipelineFocus, projectMyPipeline } from './pipelineSelf';
+import { normalizeQuestion } from '../retrieve';
 import { isLiveScopeMiss } from './errors';
 import { wrapLiveSource } from './runtime';
 import {
@@ -33,6 +39,9 @@ import {
 import { ASSISTANT_PERIOD_LABELS, type AssistantPeriod } from './period';
 import {
   licenceToolFacts,
+  myCaseSummaryToolFacts,
+  myFollowupsToolFacts,
+  myPipelineToolFacts,
   personToolFacts,
   pipelineToolFacts,
   productionToolFacts,
@@ -50,6 +59,9 @@ import {
 import {
   ADVISOR_SUMMARY_TOOL,
   LICENCE_SUMMARY_TOOL,
+  MY_CASE_SUMMARY_TOOL,
+  MY_FOLLOWUPS_TOOL,
+  MY_PIPELINE_TOOL,
   PERSON_SUMMARY_TOOL,
   PIPELINE_SUMMARY_TOOL,
   PRODUCTION_SUMMARY_TOOL,
@@ -58,6 +70,9 @@ import {
   canUseAdvisorSummary,
   canUseLeadershipReporting,
   canUseLicenceSummary,
+  canUseMyCaseSummary,
+  canUseMyFollowups,
+  canUseMyPipeline,
   canUsePersonSummary,
   canUsePipelineSummary,
   canUseProductionSummary,
@@ -280,7 +295,7 @@ export async function gatherLiveGrounding(input: {
   source: LiveDirectorySource;
   timeoutMs: number;
 }): Promise<LiveGrounding | null> {
-  const route = routeLiveQuestion(input.question);
+  const route = routeLiveQuestion(input.question, input.context.route.path);
   if (route.kind === 'none') return null;
 
   const ctx = createToolExecutionContext({
@@ -296,6 +311,18 @@ export async function gatherLiveGrounding(input: {
 
   if (route.kind === 'access') {
     return answerAccess(ctx, source, input.question, route.mention, route.topic);
+  }
+
+  if (route.kind === 'followups') {
+    return answerFollowups(ctx, source, input.question);
+  }
+
+  if (route.kind === 'mypipeline') {
+    return answerMyPipeline(ctx, source, input.question);
+  }
+
+  if (route.kind === 'case_summary') {
+    return answerMyCaseSummary(ctx, source, route.caseId);
   }
 
   if (route.kind === 'licence') {
@@ -343,6 +370,148 @@ export async function tryLiveAssistantAnswer(input: {
 }): Promise<AssistantAskResult | null> {
   const grounding = await gatherLiveGrounding(input);
   return grounding?.result ?? null;
+}
+
+async function answerFollowups(
+  ctx: ToolExecutionContext,
+  source: LiveDirectorySource,
+  question: string,
+): Promise<LiveGrounding | null> {
+  const state: BuildState = {
+    ctx,
+    provenance: emptyProvenance(ctx, [MY_FOLLOWUPS_TOOL.id]),
+    tools: [],
+    derivations: [],
+    period: null,
+  };
+  if (!canUseMyFollowups(ctx)) {
+    return null;
+  }
+  if (!source.listSelfActivities) {
+    state.provenance.toolsUnavailable.push(MY_FOLLOWUPS_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My follow-ups'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+  try {
+    const rows = await source.listSelfActivities(ctx);
+    const projection = projectMyFollowups(rows, ctx.now);
+    addTool(state, myFollowupsToolFacts(projection));
+    const focus = detectMyFollowupsFocus(normalizeQuestion(question));
+    const answer = {
+      ...myFollowupsAnswer(projection, focus),
+      actions: liveNavigateActions(ctx.assistant, ['advisor-activities']),
+    };
+    return pack(state, withProvenance(answer, state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  } catch {
+    state.provenance.toolsUnavailable.push(MY_FOLLOWUPS_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My follow-ups'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+}
+
+async function answerMyPipeline(
+  ctx: ToolExecutionContext,
+  source: LiveDirectorySource,
+  question: string,
+): Promise<LiveGrounding | null> {
+  const state: BuildState = {
+    ctx,
+    provenance: emptyProvenance(ctx, [MY_PIPELINE_TOOL.id]),
+    tools: [],
+    derivations: [],
+    period: null,
+  };
+  if (!canUseMyPipeline(ctx)) {
+    return null;
+  }
+  if (!source.listSelfCases) {
+    state.provenance.toolsUnavailable.push(MY_PIPELINE_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My pipeline'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+  try {
+    const rows = await source.listSelfCases(ctx);
+    const projection = projectMyPipeline(rows, ctx.now);
+    addTool(state, myPipelineToolFacts(projection));
+    const focus = detectMyPipelineFocus(normalizeQuestion(question));
+    const answer = {
+      ...myPipelineAnswer(projection, focus),
+      actions: liveNavigateActions(ctx.assistant, ['advisor-pipeline']),
+    };
+    return pack(state, withProvenance(answer, state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  } catch {
+    state.provenance.toolsUnavailable.push(MY_PIPELINE_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My pipeline'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+}
+
+async function answerMyCaseSummary(
+  ctx: ToolExecutionContext,
+  source: LiveDirectorySource,
+  caseId: string,
+): Promise<LiveGrounding | null> {
+  const state: BuildState = {
+    ctx,
+    provenance: emptyProvenance(ctx, [MY_CASE_SUMMARY_TOOL.id]),
+    tools: [],
+    derivations: [],
+    period: null,
+  };
+  if (!canUseMyCaseSummary(ctx)) {
+    return null;
+  }
+  if (!source.getSelfCaseSummary) {
+    state.provenance.toolsUnavailable.push(MY_CASE_SUMMARY_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My case'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
+  try {
+    const projection = await source.getSelfCaseSummary(ctx, caseId);
+    if (!projection) {
+      return pack(state, withProvenance(notFoundInScopeAnswer(), state.provenance), {
+        compositionWorthy: false,
+        fallbackKind: 'live',
+      });
+    }
+    addTool(state, myCaseSummaryToolFacts(projection));
+    const answer = {
+      ...myCaseSummaryAnswer(projection),
+      actions: liveNavigateActions(ctx.assistant, ['advisor-pipeline']),
+    };
+    return pack(state, withProvenance(answer, state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  } catch (error) {
+    if (isLiveScopeMiss(error)) {
+      return pack(state, withProvenance(notFoundInScopeAnswer(), state.provenance), {
+        compositionWorthy: false,
+        fallbackKind: 'live',
+      });
+    }
+    state.provenance.toolsUnavailable.push(MY_CASE_SUMMARY_TOOL.id);
+    return pack(state, withProvenance(toolUnavailableAnswer('My case'), state.provenance), {
+      compositionWorthy: false,
+      fallbackKind: 'live',
+    });
+  }
 }
 
 async function answerDump(

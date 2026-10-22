@@ -10,6 +10,8 @@ import type {
   PipelineSummaryProjection,
   ProductionTotals,
 } from './types';
+import type { MyFollowupsProjection } from './followups';
+import type { MyCaseSummaryProjection, MyPipelineProjection } from './pipelineSelf';
 
 function projectedFacts(facts: Record<string, string | number | boolean | null>): Record<string, string | number | boolean | null> {
   return Object.fromEntries(
@@ -208,6 +210,74 @@ export function regionToolFacts(input: {
       managerName: input.region.managerName,
       teamCount: input.region.teamCount,
       advisorCount: input.region.advisorCount,
+    }),
+  };
+}
+
+export function myFollowupsToolFacts(projection: MyFollowupsProjection): LiveToolFactGroup {
+  return {
+    tool: 'MY_FOLLOWUPS',
+    version: 1,
+    facts: projectedFacts({
+      todayCount: projection.todayCount,
+      overdueCount: projection.overdueCount,
+      thisWeekCount: projection.thisWeekCount,
+      completedTodayCount: projection.completedTodayCount,
+      followUpTodayCount: projection.followUpTodayCount,
+      followUpOverdueCount: projection.followUpOverdueCount,
+      callCount: projection.callCount,
+      meetingCount: projection.meetingCount,
+      emailCount: projection.emailCount,
+      followUpTypeCount: projection.followUpTypeCount,
+      presentationCount: projection.presentationCount,
+      otherCount: projection.otherCount,
+    }),
+  };
+}
+
+export function myPipelineToolFacts(projection: MyPipelineProjection): LiveToolFactGroup {
+  return {
+    tool: 'MY_PIPELINE',
+    version: 1,
+    facts: projectedFacts({
+      openCaseCount: projection.openCaseCount,
+      wonCaseCount: projection.wonCaseCount,
+      lostCaseCount: projection.lostCaseCount,
+      closedCaseCount: projection.closedCaseCount,
+      initialContactCount: projection.initialContactCount,
+      factFindingCount: projection.factFindingCount,
+      analysisCount: projection.analysisCount,
+      recommendationCount: projection.recommendationCount,
+      implementationCount: projection.implementationCount,
+      reviewCount: projection.reviewCount,
+      totalEstimatedCommission: projection.totalEstimatedCommission,
+      casesWithoutNextActionCount: projection.casesWithoutNextActionCount,
+      ficaIncompleteCount: projection.ficaIncompleteCount,
+      casesWithIncompleteDocumentsCount: projection.casesWithIncompleteDocumentsCount,
+      reviewDueCount: projection.reviewDueCount,
+      submittedToProductionCount: projection.submittedToProductionCount,
+    }),
+  };
+}
+
+export function myCaseSummaryToolFacts(projection: MyCaseSummaryProjection): LiveToolFactGroup {
+  return {
+    tool: 'MY_CASE_SUMMARY',
+    version: 1,
+    facts: projectedFacts({
+      currentStage: projection.currentStage,
+      stageLabel: projection.stageLabel,
+      status: projection.status,
+      ficaComplete: projection.ficaComplete,
+      documentCount: projection.documentCount,
+      documentsSent: projection.documentsSent,
+      documentsReceived: projection.documentsReceived,
+      quoteCount: projection.quoteCount,
+      insurerSelected: projection.insurerSelected,
+      estimatedCommission: projection.estimatedCommission,
+      hasNextAction: projection.hasNextAction,
+      reviewDue: projection.reviewDue,
+      submittedToProduction: projection.submittedToProduction,
     }),
   };
 }

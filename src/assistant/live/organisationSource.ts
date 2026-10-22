@@ -1,4 +1,3 @@
-/** Demo adapter: organisation live source against advisortrack_demo only. Never calls production. */
 import { AppError } from '../../middleware/errorHandler';
 import { RANK_LABELS, type HierarchyRank } from '../../features/customerHierarchy';
 import {
@@ -11,6 +10,9 @@ import { managementPipelineService } from '../../services/managementPipeline.ser
 import { managementProductionService } from '../../services/managementProduction.service';
 import { organisationService } from '../../services/organisation.service';
 import { organisationStructureService } from '../../services/organisationStructure.service';
+import { activityRepository } from '../../repositories/activity.repository';
+import { caseService } from '../../services/case.service';
+import { projectMyCaseSummary } from './pipelineSelf';
 import { cachedTtlLoad, liveCacheKey, liveScopeFingerprint, remember } from './cache';
 import { LiveScopeMissError } from './errors';
 import { ttlMsFor } from './limits';
@@ -266,6 +268,52 @@ export function createOrganisationLiveSource(): LiveDirectorySource {
         return [...counts.entries()].map(([memberId, row]) => ({ memberId, ...row }));
       } catch (error) {
         if (isScopeMiss(error)) return [];
+        throw error;
+      }
+    },
+    async listSelfActivities(ctx) {
+      const items = await activityRepository.listByUserId(ctx.identity.userId);
+      return items.map((row) => ({
+        type: row.type,
+        status: row.status,
+        scheduledAt: row.scheduledAt,
+      }));
+    },
+    async listSelfCases(ctx) {
+      const items = await caseService.list(ctx.identity.userId);
+      return items.map((row) => ({
+        status: row.status,
+        currentStage: row.currentStage,
+        estimatedCommission: row.estimatedCommission,
+        nextStepDate: row.nextStepDate,
+        reviewDueAt: row.reviewDueAt,
+        ficaComplete: row.ficaComplete,
+        ficaSkipAcknowledged: row.ficaSkipAcknowledged,
+        documentCount: row.documentCount,
+        documentsReceived: row.documentsReceived,
+        linkedProductionId: row.linkedProductionId,
+      }));
+    },
+    async getSelfCaseSummary(ctx, caseId) {
+      try {
+        const item = await caseService.getById(ctx.identity.userId, caseId);
+        return projectMyCaseSummary({
+          currentStage: item.currentStage,
+          status: item.status,
+          ficaComplete: item.ficaComplete,
+          documentCount: item.documents.length,
+          documentsSent: item.documents.filter((doc) => doc.sentAt).length,
+          documentsReceived: item.documents.filter((doc) => doc.receivedAt).length,
+          quoteCount: item.analysisQuotes.length,
+          insurerSelected: Boolean(item.chosenInsurer),
+          estimatedCommission: item.estimatedCommission,
+          hasNextAction: Boolean(item.nextStepDate),
+          reviewDueAt: item.reviewDueAt,
+          submittedToProduction: Boolean(item.linkedProductionId),
+          now: ctx.now,
+        });
+      } catch (error) {
+        if (isScopeMiss(error)) return null;
         throw error;
       }
     },

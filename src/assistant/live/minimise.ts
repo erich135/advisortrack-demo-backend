@@ -59,6 +59,59 @@ function neededFieldsForTool(toolId: string, question: string): Set<string> | nu
   if (toolId === 'ATTENTION_SUMMARY') {
     return new Set(['subjectName', 'flagged', 'reasonCount', 'reason1', 'reason2', 'reason3', 'reason4']);
   }
+  if (toolId === 'MY_FOLLOWUPS') {
+    return new Set([
+      'todayCount',
+      'overdueCount',
+      'thisWeekCount',
+      'completedTodayCount',
+      'followUpTodayCount',
+      'followUpOverdueCount',
+      'callCount',
+      'meetingCount',
+      'emailCount',
+      'followUpTypeCount',
+      'presentationCount',
+      'otherCount',
+    ]);
+  }
+  if (toolId === 'MY_PIPELINE') {
+    return new Set([
+      'openCaseCount',
+      'wonCaseCount',
+      'lostCaseCount',
+      'closedCaseCount',
+      'initialContactCount',
+      'factFindingCount',
+      'analysisCount',
+      'recommendationCount',
+      'implementationCount',
+      'reviewCount',
+      'totalEstimatedCommission',
+      'casesWithoutNextActionCount',
+      'ficaIncompleteCount',
+      'casesWithIncompleteDocumentsCount',
+      'reviewDueCount',
+      'submittedToProductionCount',
+    ]);
+  }
+  if (toolId === 'MY_CASE_SUMMARY') {
+    return new Set([
+      'currentStage',
+      'stageLabel',
+      'status',
+      'ficaComplete',
+      'documentCount',
+      'documentsSent',
+      'documentsReceived',
+      'quoteCount',
+      'insurerSelected',
+      'estimatedCommission',
+      'hasNextAction',
+      'reviewDue',
+      'submittedToProduction',
+    ]);
+  }
   return null;
 }
 

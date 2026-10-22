@@ -20,6 +20,14 @@ import type {
   RegionSummaryProjection,
   TeamSummaryProjection,
 } from './types';
+import type { MyFollowupsFocus, MyFollowupsProjection } from './followups';
+import {
+  myCaseNextStepBody,
+  topPipelineStage,
+  type MyCaseSummaryProjection,
+  type MyPipelineFocus,
+  type MyPipelineProjection,
+} from './pipelineSelf';
 
 const NOT_FOUND_COPY =
   "I couldn't find that in your AdvisorTrack scope. If you're looking for someone on your team or in your region, try their full name.";
@@ -74,6 +82,138 @@ export function personSummaryAnswer(projection: PersonSummaryProjection): Assist
 
 function formatPoolCount(value: number | null): string {
   return value == null ? 'Unlimited' : String(value);
+}
+
+export function myFollowupsAnswer(
+  projection: MyFollowupsProjection,
+  focus: MyFollowupsFocus,
+): AssistantPublicAnswer {
+  const source = publicFactSource('MY_FOLLOWUPS');
+  const noun = (count: number, singular: string, plural: string) =>
+    `${count} ${count === 1 ? singular : plural}`;
+  let headline = 'Your follow-ups';
+  let body = `You have ${noun(projection.followUpTodayCount, 'follow-up', 'follow-ups')} scheduled today and ${noun(projection.followUpOverdueCount, 'overdue follow-up', 'overdue follow-ups')}.`;
+  if (focus === 'overdue') {
+    headline = projection.overdueCount === 0 ? 'Nothing overdue' : 'Overdue activities';
+    body = projection.overdueCount === 0
+      ? 'You have no overdue scheduled activities.'
+      : `You have ${noun(projection.overdueCount, 'overdue activity', 'overdue activities')}, including ${noun(projection.followUpOverdueCount, 'follow-up', 'follow-ups')}.`;
+  } else if (focus === 'this_week') {
+    headline = 'This week';
+    body = `You have ${noun(projection.thisWeekCount, 'scheduled activity', 'scheduled activities')} this week (Monday to Sunday), including ${noun(projection.followUpTodayCount, 'follow-up today', 'follow-ups today')}.`;
+  } else if (focus === 'today_calls') {
+    headline = 'Calls today';
+    body = `You have ${noun(projection.callCount, 'scheduled call', 'scheduled calls')} in your open work. ${noun(projection.todayCount, 'activity is', 'activities are')} due today.`;
+  } else if (focus === 'today_meetings') {
+    headline = 'Meetings today';
+    body = `You have ${noun(projection.meetingCount, 'scheduled meeting', 'scheduled meetings')} in your open work. ${noun(projection.todayCount, 'activity is', 'activities are')} due today.`;
+  } else if (focus === 'today_activities') {
+    headline = 'Today';
+    body = `You have ${noun(projection.todayCount, 'activity', 'activities')} scheduled today and ${noun(projection.overdueCount, 'overdue activity', 'overdue activities')}.`;
+  }
+  return {
+    answerId: 'live:MY_FOLLOWUPS',
+    intent: 'live.MY_FOLLOWUPS',
+    confidence: 1,
+    mode: 'allowed',
+    headline,
+    body,
+    facts: [
+      { label: 'Today', value: String(projection.todayCount), source },
+      { label: 'Overdue', value: String(projection.overdueCount), source },
+      { label: 'This week', value: String(projection.thisWeekCount), source },
+      { label: 'Follow-ups today', value: String(projection.followUpTodayCount), source },
+      { label: 'Follow-ups overdue', value: String(projection.followUpOverdueCount), source },
+      { label: 'Completed today', value: String(projection.completedTodayCount), source },
+    ],
+    sources: [{ cardId: 'MY_FOLLOWUPS', title: 'My follow-ups' }],
+    caveats: ['These counts are your own scheduled work. They do not include another advisor’s book.'],
+  };
+}
+
+export function myPipelineAnswer(
+  projection: MyPipelineProjection,
+  focus: MyPipelineFocus,
+): AssistantPublicAnswer {
+  const source = publicFactSource('MY_PIPELINE');
+  const noun = (count: number, singular: string, plural: string) =>
+    `${count} ${count === 1 ? singular : plural}`;
+  const top = topPipelineStage(projection);
+  let headline = 'Your pipeline';
+  let body = `You have ${noun(projection.openCaseCount, 'open case', 'open cases')}.`;
+  if (focus === 'open_count') {
+    headline = 'Open cases';
+    body = `You have ${noun(projection.openCaseCount, 'open case', 'open cases')} in your pipeline.`;
+  } else if (focus === 'stage_count') {
+    headline = 'Fact-finding';
+    body = `You have ${noun(projection.factFindingCount, 'open case', 'open cases')} in Fact-finding.`;
+  } else if (focus === 'top_stage') {
+    headline = 'Busiest stage';
+    body = top && top.count > 0
+      ? `${top.label} currently has the most of your open cases (${top.count}).`
+      : 'You have no open cases in your pipeline.';
+  } else if (focus === 'commission') {
+    headline = 'Estimated commission';
+    body = `Estimated commission on your open cases is ${formatLiveRand(projection.totalEstimatedCommission)}.`;
+  } else if (focus === 'no_next_action') {
+    headline = 'Next actions';
+    body = `You have ${noun(projection.casesWithoutNextActionCount, 'open case', 'open cases')} without a next action. A next action is optional.`;
+  } else if (focus === 'fica') {
+    headline = 'FICA';
+    body = `You have ${noun(projection.ficaIncompleteCount, 'open case', 'open cases')} still needing FICA. Incomplete FICA is a warning, not a hard block.`;
+  } else if (focus === 'documents') {
+    headline = 'Documents';
+    body = `You have ${noun(projection.casesWithIncompleteDocumentsCount, 'open case', 'open cases')} with an incomplete document checklist.`;
+  } else if (focus === 'reviews') {
+    headline = 'Reviews due';
+    body = projection.reviewDueCount === 0
+      ? 'You have no reviews due on your open cases.'
+      : `You have ${noun(projection.reviewDueCount, 'open case', 'open cases')} with a review date due.`;
+  }
+  return {
+    answerId: 'live:MY_PIPELINE',
+    intent: 'live.MY_PIPELINE',
+    confidence: 1,
+    mode: 'allowed',
+    headline,
+    body,
+    facts: [
+      { label: 'Open cases', value: String(projection.openCaseCount), source },
+      { label: 'Fact-finding', value: String(projection.factFindingCount), source },
+      { label: 'Estimated commission', value: formatLiveRand(projection.totalEstimatedCommission), source },
+      { label: 'Without next action', value: String(projection.casesWithoutNextActionCount), source },
+      { label: 'FICA incomplete', value: String(projection.ficaIncompleteCount), source },
+      { label: 'Incomplete documents', value: String(projection.casesWithIncompleteDocumentsCount), source },
+      { label: 'Reviews due', value: String(projection.reviewDueCount), source },
+    ],
+    sources: [{ cardId: 'MY_PIPELINE', title: 'My pipeline' }],
+    caveats: ['These counts are your own book. They do not include another advisor’s pipeline or Team Pipeline.'],
+  };
+}
+
+export function myCaseSummaryAnswer(projection: MyCaseSummaryProjection): AssistantPublicAnswer {
+  const source = publicFactSource('MY_CASE_SUMMARY');
+  return {
+    answerId: 'live:MY_CASE_SUMMARY',
+    intent: 'live.MY_CASE_SUMMARY',
+    confidence: 1,
+    mode: 'allowed',
+    headline: projection.stageLabel,
+    body: myCaseNextStepBody(projection),
+    facts: [
+      { label: 'Stage', value: projection.stageLabel, source },
+      { label: 'Status', value: projection.status, source },
+      { label: 'FICA complete', value: projection.ficaComplete ? 'Yes' : 'No', source },
+      { label: 'Quotes', value: String(projection.quoteCount), source },
+      { label: 'Insurer selected', value: projection.insurerSelected ? 'Yes' : 'No', source },
+      { label: 'Next action', value: projection.hasNextAction ? 'Set' : 'Not set', source },
+      { label: 'Submitted to Production', value: projection.submittedToProduction ? 'Yes' : 'No', source },
+    ],
+    sources: [{ cardId: 'MY_CASE_SUMMARY', title: 'My case' }],
+    caveats: [
+      'This describes AdvisorTrack workflow state only. It is not financial advice and does not recommend a product or insurer.',
+    ],
+  };
 }
 
 export function licenceSummaryAnswer(projection: LicenceSummaryProjection): AssistantPublicAnswer {

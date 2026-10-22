@@ -24,7 +24,9 @@ export type LiveService =
   | 'regions'
   | 'production'
   | 'pipeline'
-  | 'attention';
+  | 'attention'
+  | 'activities'
+  | 'cases';
 
 /**
  * Conservative TTLs. Live/incomplete figures stay short so a licence assign

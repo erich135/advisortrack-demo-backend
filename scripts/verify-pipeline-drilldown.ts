@@ -66,6 +66,15 @@ async function runStaticChecks(): Promise<void> {
     assert(source.includes('androidResourceAuth'), `${file} uses androidResourceAuth`);
   }
 
+  const androidAuth = fs.readFileSync(path.join(root, 'src/middleware/androidAuth.ts'), 'utf8');
+  const advisorAuth = fs.readFileSync(path.join(root, 'src/middleware/advisorAuth.ts'), 'utf8');
+  const mobileActivity = fs.readFileSync(path.join(root, 'src/middleware/mobileActivity.ts'), 'utf8');
+  assert(advisorAuth.includes('advisorResourceAuth'), 'advisorResourceAuth is defined');
+  assert(!advisorAuth.includes('recordMobileActivity'), 'advisorResourceAuth does not record mobile activity');
+  assert(androidAuth.includes('advisorResourceAuth'), 'androidResourceAuth builds on advisorResourceAuth');
+  assert(androidAuth.includes('recordMobileActivity'), 'androidResourceAuth still records mobile activity');
+  assert(mobileActivity.includes('isWebAdvisorClient'), 'web Advisor Workspace skips last_mobile_activity_at');
+
   const portalRoutes = [
     'src/routes/management.routes.ts',
     'src/routes/company.routes.ts',

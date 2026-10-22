@@ -33,6 +33,26 @@ export interface CaseDocumentDto {
   notes?: string;
 }
 
+export interface CaseListItemDto {
+  id: string;
+  contactId: string;
+  contactName: string;
+  currentStage: PipelineStage;
+  status: string;
+  title?: string;
+  estimatedCommission?: number;
+  chosenInsurer?: string;
+  nextStepDate?: string;
+  reviewDueAt?: string;
+  ficaComplete: boolean;
+  ficaSkipAcknowledged: boolean;
+  documentCount: number;
+  documentsSent: number;
+  documentsReceived: number;
+  linkedProductionId?: string;
+  updatedAt: string;
+}
+
 export interface ClientCaseDto {
   id: string;
   contactId: string;
@@ -180,6 +200,53 @@ const memoryCases = new Map<string, ClientCaseDto>();
  * Client case business logic — 6-step pipeline, FICA, fact-find, production sync.
  */
 export class CaseService {
+  /**
+   * Self-scope case list for Advisor Workspace Pipeline. Never accepts another userId.
+   */
+  async list(
+    userId: string,
+    filters: { status?: string; stage?: PipelineStage } = {},
+  ): Promise<CaseListItemDto[]> {
+    if (!isDatabaseActive()) {
+      return [...memoryCases.entries()]
+        .filter(([key]) => key.startsWith(`${userId}:`))
+        .map(([, item]) => this.toListItem(item))
+        .filter((item) => (!filters.status || item.status === filters.status)
+          && (!filters.stage || item.currentStage === filters.stage));
+    }
+
+    const rows = await caseRepository.listByUserId(userId, filters);
+    const summaries = await caseRepository.listDocumentSummaries(rows.map((row) => row.id));
+    return rows.map((row) => {
+      const docs = summaries.get(row.id) ?? { total: 0, sent: 0, received: 0 };
+      const fica = {
+        ficaIdReceived: row.fica_id_received,
+        ficaResidenceReceived: row.fica_residence_received,
+        ficaBankReceived: row.fica_bank_received,
+      };
+      return {
+        id: row.id,
+        contactId: row.contact_id,
+        contactName: [row.contact_first_name, row.contact_last_name].filter(Boolean).join(' ').trim(),
+        currentStage: row.current_stage as PipelineStage,
+        status: row.status,
+        title: row.title ?? undefined,
+        estimatedCommission:
+          row.estimated_commission != null ? Number(row.estimated_commission) : undefined,
+        chosenInsurer: row.chosen_insurer ?? undefined,
+        nextStepDate: row.next_step_date?.toISOString().slice(0, 10),
+        reviewDueAt: row.review_due_at?.toISOString().slice(0, 10),
+        ficaComplete: isFicaComplete(fica),
+        ficaSkipAcknowledged: row.fica_skip_acknowledged,
+        documentCount: docs.total,
+        documentsSent: docs.sent,
+        documentsReceived: docs.received,
+        linkedProductionId: row.linked_production_id ?? undefined,
+        updatedAt: row.updated_at.toISOString(),
+      };
+    });
+  }
+
   /**
    * Returns how many open pipeline cases exist for a contact.
    */
@@ -600,6 +667,28 @@ export class CaseService {
     if (!existing) {
       await caseRepository.create(userId, contactId, { title: contactName });
     }
+  }
+
+  private toListItem(item: ClientCaseDto): CaseListItemDto {
+    return {
+      id: item.id,
+      contactId: item.contactId,
+      contactName: item.contactName,
+      currentStage: item.currentStage,
+      status: item.status,
+      title: item.title,
+      estimatedCommission: item.estimatedCommission,
+      chosenInsurer: item.chosenInsurer,
+      nextStepDate: item.nextStepDate,
+      reviewDueAt: item.reviewDueAt,
+      ficaComplete: item.ficaComplete,
+      ficaSkipAcknowledged: item.ficaSkipAcknowledged,
+      documentCount: item.documents.length,
+      documentsSent: item.documents.filter((doc) => doc.sentAt).length,
+      documentsReceived: item.documents.filter((doc) => doc.receivedAt).length,
+      linkedProductionId: item.linkedProductionId,
+      updatedAt: item.updatedAt,
+    };
   }
 
   private buildMemoryCase(_userId: string, contactId: string): ClientCaseDto {

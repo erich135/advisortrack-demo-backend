@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { getPool } from '../config/database';
 
 export type DemoSessionStatus = 'active' | 'expired' | 'archived';
-export type DemoSelectedRole = 'executive' | 'regional_manager' | 'team_leader';
+export type DemoSelectedRole = 'executive' | 'regional_manager' | 'team_leader' | 'financial_advisor';
 
 export type DemoSessionRow = {
   id: string;

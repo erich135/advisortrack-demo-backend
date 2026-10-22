@@ -10,6 +10,7 @@ import type { AssistantRoute, CardEnvironment } from './types';
 export type AssistantEnvironment = 'production' | 'demo';
 export type ReportingRole = 'executive' | 'regional_manager' | 'team_leader' | 'financial_advisor';
 export type AssistantScopeKind = 'company' | 'region' | 'team' | 'self' | 'platform';
+export type AssistantWorkspace = 'advisor' | 'management' | 'organisation' | 'platform';
 
 /** Client-provided navigation. Security-sensitive fields here are ignored. */
 export type AssistantNavigation = {
@@ -50,6 +51,7 @@ export type AssistantLicencePool = {
 
 export type AssistantContext = {
   environment: AssistantEnvironment;
+  workspace: AssistantWorkspace;
   identity: {
     userId: string;
     companyId: string | null;
@@ -82,6 +84,46 @@ function normalizePathname(pathname: string): string {
   if (!pathname) return '/';
   if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1);
   return pathname;
+}
+
+export function isAdvisorWorkspacePath(pathname: string): boolean {
+  const path = normalizePathname(pathname);
+  return path === '/advisor' || path.startsWith('/advisor/');
+}
+
+/** Workspace is path-based identity, not reporting rank. */
+export function workspaceFromPath(
+  pathname: string,
+  environment: AssistantEnvironment,
+): AssistantWorkspace {
+  const path = normalizePathname(pathname);
+  if (isAdvisorWorkspacePath(path)) return 'advisor';
+  if (
+    path.startsWith('/engineering') ||
+    path.startsWith('/enterprise-customers') ||
+    path === '/licence-requests' ||
+    path === '/companies' ||
+    path.startsWith('/companies/') ||
+    path === '/subscriptions' ||
+    path === '/support'
+  ) {
+    return 'platform';
+  }
+  if (environment === 'production' && (path === '/performance' || path === '/audit')) {
+    return 'platform';
+  }
+  if (
+    path === '/users' ||
+    path.startsWith('/users/') ||
+    path === '/licences' ||
+    path === '/bulk-import' ||
+    path === '/subscription' ||
+    path === '/invoices' ||
+    path === '/settings'
+  ) {
+    return 'organisation';
+  }
+  return 'management';
 }
 
 function parseQuery(search?: string): Record<string, string> {
@@ -166,6 +208,8 @@ export function capabilitiesFromIdentity(
   const regionsTeams =
     identity.canViewRegions || (identity.canViewTeams && rank !== 'team_leader');
 
+  capabilities.canViewAdvisorWorkspace =
+    reportingRoleOf(rank) === 'financial_advisor' && !isStaff;
   capabilities.canViewDashboard = isStaff || identity.portalAccess || identity.isOrganisationAdmin;
   capabilities.canViewUsers = orgAdminAccess;
   capabilities.canManageMembers = manageMembers;
@@ -200,9 +244,17 @@ export function reportingRoleOf(
   return null;
 }
 
-/** Advisor operational work happens in Android. Organisation Admin does not change this. */
-export function advisorUsesMobileAppOf(identity: TrustedAssistantIdentity): boolean {
-  return reportingRoleOf(identity.reportingRank) === 'financial_advisor';
+/**
+ * True when this Financial Advisor is outside Advisor Workspace.
+ * Inside /advisor, the obsolete “use Android only” assumption is off.
+ */
+export function advisorUsesMobileAppOf(
+  identity: TrustedAssistantIdentity,
+  pathname?: string,
+): boolean {
+  if (reportingRoleOf(identity.reportingRank) !== 'financial_advisor') return false;
+  if (pathname && isAdvisorWorkspacePath(pathname)) return false;
+  return true;
 }
 
 /** Existing hasLeadershipPortalAccess: customer reporting ranks with hierarchy.portalAccess. Production staff never inherit this. */
@@ -250,8 +302,10 @@ export function buildAssistantContext(input: {
 }): AssistantContext {
   const { environment, identity, navigation } = input;
   const routes = input.routes ?? ASSISTANT_ROUTES;
+  const pathname = navigation.pathname || '/';
   return {
     environment,
+    workspace: workspaceFromPath(pathname, environment),
     identity: {
       userId: identity.userId,
       companyId: identity.companyId,
@@ -261,7 +315,7 @@ export function buildAssistantContext(input: {
       reportingRole: reportingRoleOf(identity.reportingRank),
       isOrganisationAdmin: identity.isOrganisationAdmin,
       isPlatformStaff: environment === 'production' && identity.isPlatformStaff,
-      advisorUsesMobileApp: advisorUsesMobileAppOf(identity),
+      advisorUsesMobileApp: advisorUsesMobileAppOf(identity, pathname),
       hasAnyPortalAccess: hasAnyPortalAccessOf(identity, environment),
       hasLeadershipPortalAccess: hasLeadershipPortalAccessOf(identity, environment),
       scopeKind: scopeKindOf({

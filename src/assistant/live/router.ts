@@ -31,10 +31,13 @@ import {
 import { askedComparisonRank } from './rank';
 import type { HierarchyRank } from '../../features/customerHierarchy';
 
-export type LiveIntent = 'person' | 'advisor' | 'production' | 'pipeline' | 'team' | 'region' | 'licence' | 'access';
+export type LiveIntent = 'person' | 'advisor' | 'production' | 'pipeline' | 'team' | 'region' | 'licence' | 'access' | 'followups' | 'mypipeline' | 'case_summary';
 
 export type LiveRoute =
   | { kind: 'none' }
+  | { kind: 'followups' }
+  | { kind: 'mypipeline' }
+  | { kind: 'case_summary'; caseId: string }
   | { kind: 'licence' }
   | { kind: 'person'; mention: string }
   | { kind: 'access'; mention: string; topic: string }
@@ -125,6 +128,60 @@ function looksDoing(normalized: string): boolean {
   return /\b(how is|hows|doing)\b/.test(normalized);
 }
 
+function looksNamedOtherPerson(normalized: string): boolean {
+  return /\b(does|has) (?!i\b)[a-z]+(?: [a-z]+)? (have|got|scheduled)\b/.test(normalized);
+}
+
+export function looksMyPipelineQuestion(question: string): boolean {
+  const normalized = normalizeQuestion(question);
+  if (looksHelpQuestion(normalized)) return false;
+  if (/\b(what does|what happens|why (did|was|does|is)|how do i|how can i)\b/.test(normalized)) {
+    return false;
+  }
+  if (looksNamedOtherPerson(normalized)) return false;
+  if (/\b(team pipeline|downline|my team|the team|region|leadership)\b/.test(normalized)) return false;
+  if (looksLikeTeamLookup(question) || looksLikeRegionLookup(question)) return false;
+  const counts = /\b(how many|count|do i have|have i got|which stage|most cases|estimated commission|pipeline value|reviews? due|need fica|incomplete)\b/.test(normalized);
+  const subject = /\b(pipeline|cases?|applications?|deals?|opportunit(?:y|ies)|fica|documents?|quotes?|reviews?|commission)\b/.test(normalized);
+  if (counts && subject) return true;
+  if (/\b(my pipeline|my cases|open cases)\b/.test(normalized)) return true;
+  return false;
+}
+
+export function looksMyCaseSummaryQuestion(question: string): boolean {
+  const normalized = normalizeQuestion(question);
+  if (/\b(how do i|how can i|what are the six|what is fica|what happens after)\b/.test(normalized)) {
+    if (!/\bwhat do i do next\b/.test(normalized)) return false;
+  }
+  if (/\bwhat do i do next\b/.test(normalized)) return true;
+  if (/\b(this case|on this case)\b/.test(normalized) && /\b(fica|next action|submit|review|status|stage)\b/.test(normalized)) {
+    return true;
+  }
+  if (/\b(is fica complete|does this case have|has this case been submitted)\b/.test(normalized)) return true;
+  return false;
+}
+
+export function looksMyFollowupsQuestion(question: string): boolean {
+  const normalized = normalizeQuestion(question);
+  if (looksHelpQuestion(normalized)) return false;
+  if (/\b(what does|what happens|why (did|was|does|is)|how do i|how can i|when is the next)\b/.test(normalized)) {
+    return false;
+  }
+  if (looksNamedOtherPerson(normalized)) return false;
+  const overdue = /\b(overdue|anything overdue|past due)\b/.test(normalized);
+  const today = /\b(today|due today|need to do|scheduled today)\b/.test(normalized);
+  const week = /\bthis week\b/.test(normalized);
+  const howMany = /\b(how many|count|do i have|have i got)\b/.test(normalized);
+  const subject = /\b(follow[- ]?ups?|activit(?:y|ies)|calls?|meetings?|appointments?|reminders?|tasks?)\b/.test(normalized);
+  if (overdue && (subject || /\banything\b/.test(normalized) || howMany || /^(is there|do i have)\b/.test(normalized))) {
+    return true;
+  }
+  if ((today || week || howMany) && subject) return true;
+  if (/\bwhat do i need to do today\b/.test(normalized)) return true;
+  if (/\bdo i have (any )?(follow[- ]?ups?|activit(?:y|ies)|calls?)\b/.test(normalized)) return true;
+  return false;
+}
+
 export function looksDoingQuestion(question: string): boolean {
   return looksDoing(normalizeQuestion(question));
 }
@@ -150,10 +207,19 @@ function unitFromQuestion(question: string): ComparisonUnitKind {
   return kind === 'mixed' ? 'person' : kind;
 }
 
-export function routeLiveQuestion(question: string): LiveRoute {
+export function routeLiveQuestion(question: string, navigationPath?: string): LiveRoute {
   const normalized = normalizeQuestion(question);
   const namedAccess = matchNamedAccess(normalized);
   if (namedAccess) return { kind: 'access', mention: namedAccess.mention, topic: namedAccess.topic };
+  if (looksHelpQuestion(normalized) && !looksMyCaseSummaryQuestion(question)) return { kind: 'none' };
+  const caseIdMatch = (navigationPath ?? '').match(
+    /^\/advisor\/cases\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i,
+  );
+  if (looksMyCaseSummaryQuestion(question) && caseIdMatch) {
+    return { kind: 'case_summary', caseId: caseIdMatch[1] };
+  }
+  if (looksMyFollowupsQuestion(question)) return { kind: 'followups' };
+  if (looksMyPipelineQuestion(question)) return { kind: 'mypipeline' };
   if (looksHelpQuestion(normalized)) return { kind: 'none' };
   if (looksLicenceSummary(normalized)) return { kind: 'licence' };
   const dump = looksDumpQuestion(normalized);

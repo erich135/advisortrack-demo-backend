@@ -1,9 +1,4 @@
-import {
-  alreadyOnRouteMessage,
-  routeReachable,
-  type AssistantContext,
-  type AssistantLicencePool,
-} from '../context';
+import { alreadyOnRouteMessage, routeReachable, type AssistantContext, type AssistantLicencePool } from '../context';
 import { publicFactSource } from '../live/classify';
 import { ASSISTANT_PERIOD_LABELS } from '../live/period';
 import { labelForRoute } from '../routes';
@@ -45,7 +40,104 @@ export function navigateActionForRoute(
   };
 }
 
-export function unknownHelpAnswer(): AssistantPublicAnswer {
+function isAdvisorActivitiesRoute(context?: AssistantContext): boolean {
+  const routeId = context?.route.routeId;
+  const path = context?.route.path ?? '';
+  return (
+    context?.workspace === 'advisor' &&
+    (routeId === 'advisor-activities' ||
+      routeId === 'advisor-activity-detail' ||
+      path === '/advisor/activities' ||
+      path.startsWith('/advisor/activities/'))
+  );
+}
+
+function isAdvisorPipelineRoute(context?: AssistantContext): boolean {
+  const routeId = context?.route.routeId;
+  const path = context?.route.path ?? '';
+  return (
+    context?.workspace === 'advisor' &&
+    (routeId === 'advisor-pipeline' || path === '/advisor/pipeline')
+  );
+}
+
+function isAdvisorCaseRoute(context?: AssistantContext): boolean {
+  const routeId = context?.route.routeId;
+  const path = context?.route.path ?? '';
+  return (
+    context?.workspace === 'advisor' &&
+    (routeId === 'advisor-case-detail' || path.startsWith('/advisor/cases/'))
+  );
+}
+
+function isAdvisorContactsRoute(context?: AssistantContext): boolean {
+  const routeId = context?.route.routeId;
+  const path = context?.route.path ?? '';
+  return (
+    context?.workspace === 'advisor' &&
+    (routeId === 'advisor-contacts' ||
+      routeId === 'advisor-contact-detail' ||
+      path === '/advisor/contacts' ||
+      path.startsWith('/advisor/contacts/'))
+  );
+}
+
+export function unknownHelpAnswer(context?: AssistantContext): AssistantPublicAnswer {
+  if (context?.workspace === 'advisor' && (context.route.routeId === 'advisor-home' || context.route.path === '/advisor')) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: 'Are you asking about your dashboard, monthly target, weekly activity, pipeline or upcoming activities?',
+      sources: [],
+    };
+  }
+  if (isAdvisorActivitiesRoute(context)) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: 'Are you asking about scheduling an activity, follow-ups, rescheduling, completing an activity, or recording an outcome?',
+      sources: [],
+    };
+  }
+  if (isAdvisorPipelineRoute(context)) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: 'Are you asking about a pipeline stage, FICA, documents, quotes, next actions, submitting to Production or reviews?',
+      sources: [],
+    };
+  }
+  if (isAdvisorCaseRoute(context)) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: "Are you asking about this case's stage, FICA, documents, quotes, next action, submitting to Production or scheduling a review?",
+      sources: [],
+    };
+  }
+  if (isAdvisorContactsRoute(context)) {
+    return {
+      answerId: 'unknown',
+      intent: 'unknown',
+      confidence: 0,
+      mode: 'unknown',
+      headline: "I couldn't confidently match that yet",
+      body: 'Are you asking about adding or editing a contact, contact status, importing contacts, POPIA consent, Live Preview, activities or cases?',
+      sources: [],
+    };
+  }
   return {
     answerId: 'unknown',
     intent: 'unknown',
@@ -155,7 +247,7 @@ export function answerFromCards(
   decision?: Pick<AssistantModelDecision, 'headline' | 'body' | 'intent'>,
 ): AssistantPublicAnswer {
   const primary = cards[0];
-  if (!primary) return unknownHelpAnswer();
+  if (!primary) return unknownHelpAnswer(context);
 
   const steps = cards.flatMap((card) =>
     card.steps.map((step) => {

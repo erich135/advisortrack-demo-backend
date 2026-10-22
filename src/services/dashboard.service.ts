@@ -133,7 +133,9 @@ const buildInMemorySummary = (store: DataStore, userId: string): DashboardSummar
       type: activity.type,
       status: activity.status,
       contactName: activity.contactName,
+      contactId: activity.contactId,
       scheduledAt: activity.scheduledAt,
+      pipelineStage: activity.pipelineStage,
     }));
 
   return {

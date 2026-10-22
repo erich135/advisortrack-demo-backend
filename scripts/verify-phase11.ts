@@ -85,8 +85,8 @@ function runUnitTests(): void {
   assert(parseDemoPublicRole('executive') === 'executive', 'parses Executive');
   assert(parseDemoPublicRole('Regional Manager') === 'regional_manager', 'parses Regional Manager');
   assert(parseDemoPublicRole('team-leader') === 'team_leader', 'parses Team Leader');
-  assert(parseDemoPublicRole('financial_advisor') === null, 'does not parse Financial Advisor as a public role');
-  assert(isRejectedDemoRole('Financial Advisor'), 'rejects Financial Advisor');
+  assert(parseDemoPublicRole('financial_advisor') === 'financial_advisor', 'parses Financial Advisor as a public role');
+  assert(!isRejectedDemoRole('Financial Advisor'), 'Financial Advisor is a permitted Viewing As persona');
   assert(isRejectedDemoRole('Founder/Admin'), 'rejects Founder/Admin');
   assert(isRejectedDemoRole('App Admin'), 'rejects App Admin');
   assert(isRejectedDemoRole('platform_admin'), 'rejects platform admin');
@@ -113,6 +113,16 @@ function runStaticChecks(): void {
     fs.existsSync(path.join(root, 'database/demo/002_demo_personas.sql')),
     'demo-only persona migration exists'
   );
+  assert(
+    fs.existsSync(path.join(root, 'database/demo/008_advisor_workspace_persona.sql')),
+    'A8.1 demo-only Financial Advisor persona migration exists'
+  );
+  const persona008 = fs.readFileSync(
+    path.join(root, 'database/demo/008_advisor_workspace_persona.sql'),
+    'utf8'
+  );
+  assert(persona008.includes('financial_advisor'), '008 allows Financial Advisor as a demo persona');
+  assert(!/advisor_track\b/.test(persona008), '008 does not target production DB names');
   assert(
     !fs.existsSync(path.join(root, 'database/029_demo_personas.sql')),
     'persona mapping is not a production 029 migration'
@@ -156,14 +166,16 @@ function runStaticChecks(): void {
   assert(entry.includes('Executive'), 'role-selection includes Executive');
   assert(entry.includes('Regional Manager'), 'role-selection includes Regional Manager');
   assert(entry.includes('Team Leader'), 'role-selection includes Team Leader');
-  assert(!/Financial Advisor/.test(entry), 'role-selection does not offer Financial Advisor');
+  assert(entry.includes('Financial Advisor'), 'role-selection includes Financial Advisor');
   assert(!/Founder\/Admin|App Admin|Platform Admin/.test(entry), 'role-selection does not offer internal roles');
 
   const layout = fs.readFileSync(path.join(frontendRoot, 'src/components/Layout.tsx'), 'utf8');
   assert(layout.includes('AdvisorTrack Demo'), 'portal shows a demo indicator');
   assert(layout.includes('Viewing as'), 'portal shows the current demo persona');
   assert(layout.includes('switchDemoPersona'), 'portal can switch demo roles');
-  assert(!/Financial Advisor/.test(layout), 'role switcher does not include Financial Advisor');
+  assert(layout.includes('Financial Advisor'), 'role switcher includes Financial Advisor');
+  const advisorLayout = fs.readFileSync(path.join(frontendRoot, 'src/components/AdvisorLayout.tsx'), 'utf8');
+  assert(advisorLayout.includes('Financial Advisor'), 'Advisor Workspace Viewing As includes Financial Advisor');
 }
 
 async function runLiveRegression(): Promise<void> {
@@ -269,7 +281,7 @@ async function runDemoHttpChecks(baseUrl: string, databaseUrl?: string): Promise
   const advisor =
     execMembers.find((row) => row.firstName === 'Maya' && row.lastName === 'Brooks') ??
     execMembers.find((row) => row.role?.name === 'Financial Advisor');
-  assert(Boolean(advisor), 'fixture includes a Financial Advisor under the team (not a public demo role)');
+  assert(Boolean(advisor), 'fixture includes a Financial Advisor under the team');
 
   const marker = `Chen-${Date.now().toString(36)}`;
   const updated = await api<Member>(baseUrl, `/api/v1/company/members/${advisor!.id}`, {
@@ -340,11 +352,43 @@ async function runDemoHttpChecks(baseUrl: string, databaseUrl?: string): Promise
   });
   assert(bSeesA.status === 404 || bSeesA.status === 403, 'Visitor B cannot access a Visitor A persona');
 
-  const fa = await api(baseUrl, '/api/v1/demo/enter', {
+  const fa = await api<EnterData>(baseUrl, '/api/v1/demo/enter', {
     method: 'POST',
     body: { selectedRole: 'financial_advisor' },
   });
-  assert(fa.status === 403 && fa.body.error?.code === 'DEMO_ROLE_FORBIDDEN', 'Financial Advisor selection is rejected');
+  assert(fa.status === 201, `Financial Advisor enter succeeds (got ${fa.status})`);
+  assert(Boolean(fa.body.data?.user.id), 'FA enter binds a cloned advisor JWT');
+  const faToken = fa.body.data!.token;
+  const faPipeline = await api(baseUrl, '/api/v1/management/pipeline', { token: faToken });
+  assert(faPipeline.status === 403, `demo FA cannot access Team Pipeline (got ${faPipeline.status})`);
+  const faAdvisors = await api(baseUrl, '/api/v1/management/advisors', { token: faToken });
+  assert(
+    faAdvisors.status === 403 || faAdvisors.status === 404,
+    `demo FA cannot access /advisors (got ${faAdvisors.status})`
+  );
+  const faProduction = await api(baseUrl, '/api/v1/management/production', { token: faToken });
+  assert(
+    faProduction.status === 403 || faProduction.status === 404,
+    `demo FA cannot access company Production (got ${faProduction.status})`
+  );
+  const faSelf = await api(baseUrl, '/api/v1/dashboard', { token: faToken });
+  assert(faSelf.status === 200 || faSelf.status === 403, `FA self-scope dashboard is not 500 (${faSelf.status})`);
+  const faB = await api<EnterData>(baseUrl, '/api/v1/demo/enter', {
+    method: 'POST',
+    body: { selectedRole: 'financial_advisor' },
+  });
+  assert(faB.status === 201, 'second FA visitor is provisioned');
+  assert(
+    fa.body.data?.session.companyId !== faB.body.data?.session.companyId,
+    'two FA visitors receive isolated companies'
+  );
+  const faSeesB = await api(baseUrl, `/api/v1/company/members/${faB.body.data!.user.id}`, {
+    token: faToken,
+  });
+  assert(
+    faSeesB.status === 403 || faSeesB.status === 404,
+    'demo FA cannot access another synthetic advisor identity'
+  );
   const founder = await api(baseUrl, '/api/v1/demo/enter', {
     method: 'POST',
     body: { selectedRole: 'founder/admin' },

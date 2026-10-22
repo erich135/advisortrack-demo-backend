@@ -10,6 +10,8 @@ import type {
   ProductionTotals,
   ToolExecutionContext,
 } from './types';
+import type { SelfActivityRow } from './followups';
+import { projectMyCaseSummary, type SelfCaseRow } from './pipelineSelf';
 
 export type FixturePerson = DirectoryPerson & {
   visibleTo: string[];
@@ -37,6 +39,14 @@ export function createFixtureLiveSource(input: {
   production?: Record<string, FixturePeriodTotals>;
   pipeline?: Record<string, PipelineAggregate>;
   attention?: Record<string, { stalledCount: number; missingDocumentsCount: number; noNextActionCount: number }>;
+  activities?: Array<SelfActivityRow & { userId: string }>;
+  cases?: Array<SelfCaseRow & {
+    userId: string;
+    id?: string;
+    quoteCount?: number;
+    insurerSelected?: boolean;
+    documentsSent?: number;
+  }>;
   unavailable?: Array<FixtureService>;
   delayMs?: Partial<Record<FixtureService, number>>;
   hang?: FixtureService[];
@@ -165,6 +175,35 @@ export function createFixtureLiveSource(input: {
       return Object.entries(input.attention ?? {})
         .filter(([id]) => allowed.has(id))
         .map(([memberId, counts]) => ({ memberId, ...counts }));
+    },
+    async listSelfActivities(ctx) {
+      return (input.activities ?? [])
+        .filter((row) => row.userId === ctx.identity.userId)
+        .map(({ userId: _userId, ...row }) => row);
+    },
+    async listSelfCases(ctx) {
+      return (input.cases ?? [])
+        .filter((row) => row.userId === ctx.identity.userId)
+        .map(({ userId: _userId, id: _id, quoteCount: _quoteCount, insurerSelected: _insurerSelected, documentsSent: _documentsSent, ...row }) => row);
+    },
+    async getSelfCaseSummary(ctx, caseId) {
+      const row = (input.cases ?? []).find((item) => item.userId === ctx.identity.userId && item.id === caseId);
+      if (!row) return null;
+      return projectMyCaseSummary({
+        currentStage: row.currentStage,
+        status: row.status,
+        ficaComplete: row.ficaComplete,
+        documentCount: row.documentCount,
+        documentsSent: row.documentsSent ?? 0,
+        documentsReceived: row.documentsReceived,
+        quoteCount: row.quoteCount ?? 0,
+        insurerSelected: row.insurerSelected ?? false,
+        estimatedCommission: row.estimatedCommission,
+        hasNextAction: Boolean(row.nextStepDate),
+        reviewDueAt: row.reviewDueAt,
+        submittedToProduction: Boolean(row.linkedProductionId),
+        now: ctx.now,
+      });
     },
   };
 }

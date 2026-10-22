@@ -170,6 +170,10 @@ export const applyDemoDatePlan = async (
                next_step_date = CASE
                  WHEN next_step_date IS NOT NULL THEN ($2::date + 2)
                  ELSE NULL
+               END,
+               review_due_at = CASE
+                 WHEN review_due_at IS NOT NULL THEN ($2::date + 5)
+                 ELSE NULL
                END
            WHERE id = $1`,
           [newId, ymd, at.toISOString()]
@@ -221,6 +225,22 @@ export const cloneOperationalData = async (
   if (!datePlanExists.rows[0]?.exists) {
     throw new AppError(503, 'Demo date plan is not available', 'DEMO_TEMPLATE_MISSING');
   }
+
+  const copySelfScopeSettings = async (table: string): Promise<void> => {
+    if (!(await tableExists(client, table))) return;
+    const columns = (await tableColumns(client, table)).filter((column) => column !== 'user_id');
+    if (columns.length === 0) return;
+    const sets = columns.map((column) => `${q(column)} = src.${q(column)}`).join(', ');
+    await client.query(
+      `UPDATE ${q(table)} dest
+       SET ${sets}
+       FROM ${q(table)} src
+       INNER JOIN demo_user_map map ON map.old_id = src.user_id
+       WHERE dest.user_id = map.new_id`
+    );
+  };
+  await copySelfScopeSettings('advisor_financial_profile');
+  await copySelfScopeSettings('advisor_general_settings');
 
   await copyMappedTable(client, {
     table: 'contacts',

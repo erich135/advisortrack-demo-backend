@@ -6,6 +6,7 @@ import { caseService } from '../services/case.service';
 import {
   createCaseDocumentSchema,
   createCaseSchema,
+  listCasesQuerySchema,
   updateCaseDocumentSchema,
   updateCaseSchema,
 } from '../validators/schemas';
@@ -37,6 +38,22 @@ export const createCasesRouter = () => {
     try {
       const { userId } = asAuthRequest(req);
       res.json(ok(await caseService.getOrCreateForContact(userId, String(req.params.contactId))));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * GET /api/v1/cases — self-scope list for Advisor Workspace. Additive; Android does not use this.
+   */
+  router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = asAuthRequest(req);
+      const query = listCasesQuerySchema.parse({
+        status: typeof req.query.status === 'string' ? req.query.status : undefined,
+        stage: typeof req.query.stage === 'string' ? req.query.stage : undefined,
+      });
+      res.json(ok(await caseService.list(userId, query)));
     } catch (error) {
       next(error);
     }

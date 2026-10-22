@@ -3,11 +3,13 @@ import { isDatabaseActive } from '../config/database';
 import { userRepository } from '../repositories/user.repository';
 import { createLogger } from '../utils/logger';
 import { asAuthRequest } from './auth';
+import { isWebAdvisorClient } from './clientKind';
 
 const log = createLogger('MobileActivity');
 
 /**
  * Records last Android-app resource activity after authentication.
+ * Web Advisor Workspace requests (X-AdvisorTrack-Client: web) are skipped.
  * Failures are logged and never fail the request.
  */
 export const recordMobileActivity = async (
@@ -15,7 +17,7 @@ export const recordMobileActivity = async (
   _res: Response,
   next: NextFunction
 ): Promise<void> => {
-  if (!isDatabaseActive()) {
+  if (!isDatabaseActive() || isWebAdvisorClient(req)) {
     next();
     return;
   }

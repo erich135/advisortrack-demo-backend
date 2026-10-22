@@ -2,6 +2,8 @@ import type { AssistantContext, AssistantEnvironment, AssistantLicencePool, Trus
 import type { CardEnvironment } from '../types';
 import type { DataClass } from './classify';
 import type { AssistantPeriod } from './period';
+import type { SelfActivityRow } from './followups';
+import type { MyCaseSummaryProjection, SelfCaseRow } from './pipelineSelf';
 
 export type EntityKind = 'person' | 'team' | 'region' | 'company' | 'invoice';
 export type EntityRef = string;
@@ -198,6 +200,9 @@ export type LiveDirectorySource = {
     missingDocumentsCount: number;
     noNextActionCount: number;
   }>>;
+  listSelfActivities?(ctx: ToolExecutionContext): Promise<SelfActivityRow[]>;
+  listSelfCases?(ctx: ToolExecutionContext): Promise<SelfCaseRow[]>;
+  getSelfCaseSummary?(ctx: ToolExecutionContext, caseId: string): Promise<MyCaseSummaryProjection | null>;
 };
 
 export type ProvenanceItem =

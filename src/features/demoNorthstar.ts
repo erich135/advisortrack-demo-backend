@@ -4,8 +4,8 @@
  */
 export const NORTHSTAR_COMPANY_ID = 'd2222222-2222-4222-8222-222222222222';
 export const NORTHSTAR_TEMPLATE_SLUG = 'northstar-advisory-master';
-export const NORTHSTAR_SEED_VERSION = 16;
-export const NORTHSTAR_VERSION_LABEL = 'task15';
+export const NORTHSTAR_SEED_VERSION = 19;
+export const NORTHSTAR_VERSION_LABEL = 'a85-advisor-pipeline';
 export const NORTHSTAR_INVOICE_COUNT = 3;
 export const NORTHSTAR_COMPANY_NAME = 'Northstar Advisory';
 export const NORTHSTAR_EMAIL_DOMAIN = 'northstar.demo.invalid';
@@ -24,6 +24,7 @@ export const NORTHSTAR_PERSONAS = {
   executive: { firstName: 'Alex', lastName: 'Rivera', emailLocal: 'alex.rivera' },
   regional_manager: { firstName: 'Jordan', lastName: 'Hale', emailLocal: 'jordan.hale' },
   team_leader: { firstName: 'Sam', lastName: 'Okonkwo', emailLocal: 'sam.okonkwo' },
+  financial_advisor: { firstName: 'Maya', lastName: 'Brooks', emailLocal: 'maya.brooks' },
 } as const;
 
 export const NORTHSTAR_LAST_MONTH_RANKINGS = {

@@ -83,7 +83,7 @@ function deterministicFromRetrieval(
       modelAttempted: false,
     };
   }
-  return { answer: unknownHelpAnswer(), origin: 'deterministic', modelAttempted: false };
+  return { answer: unknownHelpAnswer(context), origin: 'deterministic', modelAttempted: false };
 }
 
 function shouldBypassModel(
@@ -379,7 +379,7 @@ async function askAssistantInner(input: {
 
   const candidates = candidateCards(allowed, question, context, grounding?.seedCardIds ?? []);
   if (!candidates.length && !(grounding?.tools.length)) {
-    return liveFallback ?? { answer: unknownHelpAnswer(), origin: 'deterministic', modelAttempted: false };
+    return liveFallback ?? { answer: unknownHelpAnswer(context), origin: 'deterministic', modelAttempted: false };
   }
 
   const timeoutMs = remaining();

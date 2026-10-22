@@ -39,6 +39,8 @@ import {
   CASE_DOCUMENTS,
   currentMonthIssuedFor,
   extraCasesFor,
+  extraMayaWorkspaceActivities,
+  extraMayaWorkspaceCases,
   mobileBucketFor,
 } from '../src/features/northstarAdvisorStories';
 
@@ -567,6 +569,12 @@ async function main(): Promise<void> {
       ficaBank?: boolean;
       nextAction?: boolean;
       nextActionTitle?: string;
+      chosenInsurer?: string;
+      reviewDue?: boolean;
+      linkProduction?: boolean;
+      applicationStatus?: string;
+      factFindMode?: 'simple_goal' | 'full_fna';
+      analysisQuotes?: Array<{ productType?: string; insurer?: string; premium?: number; commission?: number }>;
     }) => {
       const won = input.status === 'won';
       const docsReceived = input.docsReceived ?? (won ? 3 : 3);
@@ -600,8 +608,9 @@ async function main(): Promise<void> {
         `INSERT INTO client_cases (
            id, user_id, contact_id, current_stage, status, title, estimated_commission,
            quote_product_type, quote_premium, fica_id_received, fica_residence_received,
-           fica_bank_received, next_step_date
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+           fica_bank_received, next_step_date, chosen_insurer, review_due_at,
+           fact_find_mode, analysis_quotes
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb)`,
         [
           caseId,
           input.advisorId,
@@ -616,6 +625,10 @@ async function main(): Promise<void> {
           ficaResidence,
           ficaBank,
           nextAction ? '2020-06-01' : null,
+          input.chosenInsurer ?? null,
+          input.reviewDue ? '2020-06-15' : null,
+          input.factFindMode ?? null,
+          JSON.stringify(input.analysisQuotes ?? []),
         ]
       );
       datePlans.push({ entityType: 'case', rowId: caseId, bucket: input.bucket, slot: input.slot });
@@ -670,7 +683,7 @@ async function main(): Promise<void> {
         });
       }
 
-      if (input.amount > 0) {
+      if (input.amount > 0 && input.linkProduction !== false) {
         const productionId = crypto.randomUUID();
         await client.query(
           `INSERT INTO production_entries (
@@ -688,7 +701,7 @@ async function main(): Promise<void> {
             'Fictional Northstar demo production.',
             input.issued,
             input.issued ? new Date('2020-01-15T08:00:00Z') : null,
-            input.issued ? 'accepted_issued' : 'pending_underwriting',
+            input.applicationStatus ?? (input.issued ? 'accepted_issued' : 'pending_underwriting'),
             caseId,
           ]
         );
@@ -713,19 +726,26 @@ async function main(): Promise<void> {
       bucket: DatePlan['bucket'],
       slot: number,
       title: string,
-      status: 'scheduled' | 'completed'
+      status: 'scheduled' | 'completed',
+      extras?: {
+        type?: 'call' | 'meeting' | 'email' | 'follow_up' | 'presentation';
+        stage?: string;
+        outcome?: 'proceeded' | 'lost' | 'completed';
+      }
     ) => {
       const id = crypto.randomUUID();
       await client.query(
-        `INSERT INTO activities (id, user_id, title, pipeline_stage, status, tags, notes, legacy_type, duration_minutes)
-         VALUES ($1,$2,$3,'Interview',$4, ARRAY['Life Cover']::product_tag[], $5, $6, 30)`,
+        `INSERT INTO activities (id, user_id, title, pipeline_stage, status, outcome, tags, notes, legacy_type, duration_minutes)
+         VALUES ($1,$2,$3,$4,$5,$6, ARRAY['Life Cover']::product_tag[], $7, $8, 30)`,
         [
           id,
           advisorId,
           title,
+          extras?.stage ?? 'Interview',
           status,
+          extras?.outcome ?? null,
           'Fictional Northstar demo activity.',
-          status === 'completed' ? 'call' : 'meeting',
+          extras?.type ?? (status === 'completed' ? 'call' : 'meeting'),
         ]
       );
       datePlans.push({ entityType: 'activity', rowId: id, bucket, slot });
@@ -890,6 +910,45 @@ async function main(): Promise<void> {
             });
           }
 
+          const isMaya = advisor.firstName === 'Maya' && advisor.lastName === 'Brooks';
+          if (isMaya) {
+            for (const extra of extraMayaWorkspaceCases()) {
+              await insertContactCaseProduction({
+                advisorId: faId,
+                bucket: extra.bucket,
+                slot: advisorIndex * 11 + extra.slotOffset,
+                title: extra.title,
+                amount: extra.amount,
+                issued: extra.issued,
+                stage: extra.stage,
+                status: 'open',
+                product,
+                docsReceived: extra.docsReceived,
+                ficaId: extra.ficaId,
+                ficaResidence: extra.ficaResidence,
+                ficaBank: extra.ficaBank,
+                nextAction: extra.nextAction,
+                nextActionTitle: extra.nextActionTitle,
+                chosenInsurer: extra.chosenInsurer,
+                reviewDue: extra.reviewDue,
+                linkProduction: extra.linkProduction,
+                applicationStatus: extra.applicationStatus,
+                factFindMode: extra.factFindMode,
+                analysisQuotes: extra.analysisQuotes,
+              });
+            }
+            for (const activity of extraMayaWorkspaceActivities()) {
+              await insertActivity(
+                faId,
+                activity.bucket,
+                advisorIndex * 20 + activity.slotOffset,
+                activity.title,
+                activity.status,
+                { type: activity.type, stage: activity.stage, outcome: activity.outcome },
+              );
+            }
+          }
+
           await insertActivity(faId, 'last_week', advisorIndex, 'Follow-up call', 'completed');
           await insertActivity(faId, 'current_month', advisorIndex, 'Review meeting', 'scheduled');
 
@@ -955,14 +1014,110 @@ async function main(): Promise<void> {
       `SELECT id FROM users WHERE company_id = $1 AND email = $2`,
       [companyId, northstarEmail(NORTHSTAR_PERSONAS.team_leader.firstName, NORTHSTAR_PERSONAS.team_leader.lastName)]
     );
+    const faPersona = await client.query<{ id: string }>(
+      `SELECT id FROM users WHERE company_id = $1 AND email = $2`,
+      [
+        companyId,
+        northstarEmail(
+          NORTHSTAR_PERSONAS.financial_advisor.firstName,
+          NORTHSTAR_PERSONAS.financial_advisor.lastName
+        ),
+      ]
+    );
 
     await client.query(
       `INSERT INTO demo_company_personas (company_id, role, user_id, status)
        VALUES
          ($1, 'executive', $2, 'active'),
          ($1, 'regional_manager', $3, 'active'),
-         ($1, 'team_leader', $4, 'active')`,
-      [companyId, execPersona.rows[0].id, rmPersona.rows[0].id, tlPersona.rows[0].id]
+         ($1, 'team_leader', $4, 'active'),
+         ($1, 'financial_advisor', $5, 'active')`,
+      [
+        companyId,
+        execPersona.rows[0].id,
+        rmPersona.rows[0].id,
+        tlPersona.rows[0].id,
+        faPersona.rows[0].id,
+      ]
+    );
+
+    await client.query(
+      `UPDATE advisor_financial_profile afp
+       SET monthly_goal_nett = 80000,
+           monthly_deductions = 15000,
+           commission_split = '70/30',
+           working_weeks_per_year = 48,
+           working_days_per_week = 5,
+           vat_registered = FALSE,
+           vat_rate_percent = 15,
+           setup_completed_at = NOW(),
+           updated_at = NOW()
+       FROM users u
+       INNER JOIN company_roles r ON r.id = u.company_role_id
+       WHERE afp.user_id = u.id
+         AND u.company_id = $1
+         AND r.name = 'Financial Advisor'`,
+      [companyId]
+    );
+    await client.query(
+      `UPDATE advisor_general_settings ags
+       SET updated_at = NOW()
+       FROM users u
+       INNER JOIN company_roles r ON r.id = u.company_role_id
+       WHERE ags.user_id = u.id
+         AND u.company_id = $1
+         AND r.name = 'Financial Advisor'`,
+      [companyId]
+    );
+
+    await client.query(
+      `UPDATE advisor_financial_profile afp
+       SET monthly_goal_nett = 60000,
+           monthly_deductions = 12000,
+           commission_split = '70/30',
+           commission_advisor_type = 'independent',
+           working_weeks_per_year = 48,
+           working_days_per_week = 5,
+           vat_registered = FALSE,
+           vat_rate_percent = 15,
+           setup_completed_at = NOW(),
+           updated_at = NOW()
+       FROM users u
+       WHERE afp.user_id = u.id
+         AND u.company_id = $1
+         AND u.first_name = $2
+         AND u.last_name = $3`,
+      [companyId, NORTHSTAR_PERSONAS.financial_advisor.firstName, NORTHSTAR_PERSONAS.financial_advisor.lastName]
+    );
+    await client.query(
+      `UPDATE production_monthly_goals g
+       SET goal_amount = 60000
+       FROM users u
+       WHERE g.user_id = u.id
+         AND u.company_id = $1
+         AND u.first_name = $2
+         AND u.last_name = $3`,
+      [companyId, NORTHSTAR_PERSONAS.financial_advisor.firstName, NORTHSTAR_PERSONAS.financial_advisor.lastName]
+    );
+    await client.query(
+      `UPDATE advisor_general_settings ags
+       SET cold_call_to_interview_override = TRUE,
+           cold_call_to_interview_ratio = 0.35,
+           interview_to_analysis_override = TRUE,
+           interview_to_analysis_ratio = 0.55,
+           analysis_to_recommendation_override = TRUE,
+           analysis_to_recommendation_ratio = 0.60,
+           recommendation_to_implementation_override = TRUE,
+           recommendation_to_implementation_ratio = 0.70,
+           submission_to_issued_override = TRUE,
+           submission_to_issued_ratio = 0.65,
+           updated_at = NOW()
+       FROM users u
+       WHERE ags.user_id = u.id
+         AND u.company_id = $1
+         AND u.first_name = $2
+         AND u.last_name = $3`,
+      [companyId, NORTHSTAR_PERSONAS.financial_advisor.firstName, NORTHSTAR_PERSONAS.financial_advisor.lastName]
     );
 
     await client.query(

@@ -43,7 +43,7 @@ const requirePermittedRole = (value: unknown): DemoSelectedRole => {
   }
   const role = parseDemoPublicRole(value);
   if (!role) {
-    throw new AppError(400, 'Choose Executive, Regional Manager, or Team Leader.', 'DEMO_ROLE_REQUIRED');
+    throw new AppError(400, 'Choose Executive, Regional Manager, Team Leader, or Financial Advisor.', 'DEMO_ROLE_REQUIRED');
   }
   return role;
 };

@@ -8,6 +8,12 @@
       "description": "Portal versus Android, who signs in where, and account activation."
     },
     {
+      "id": "advisor-workspace",
+      "label": "Advisor Workspace",
+      "environment": "both",
+      "description": "Advisor Home, Contacts, Activities, monthly progress, weekly activity, pipeline snapshot, and upcoming activities."
+    },
+    {
       "id": "people-access",
       "label": "People & Access",
       "environment": "both",
@@ -109,6 +115,21 @@
       "environment": "both"
     },
     {
+      "id": "advisor-workspace",
+      "label": "Advisor Workspace",
+      "categoryId": "advisor-workspace",
+      "environment": "both",
+      "routeIds": [
+        "advisor-home",
+        "advisor-contacts",
+        "advisor-contact-detail",
+        "advisor-activities",
+        "advisor-activity-detail",
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ]
+    },
+    {
       "id": "demo-tips",
       "label": "Demo Tips",
       "categoryId": "demo-tips",
@@ -135,6 +156,136 @@
       "classificationProduction": "customer",
       "classificationDemo": "customer",
       "productionCapability": "canViewDashboard"
+    },
+    {
+      "routeId": "advisor-home",
+      "path": "/advisor",
+      "label": "Advisor Home",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-contacts",
+      "path": "/advisor/contacts",
+      "label": "Contacts",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-contact-detail",
+      "path": "/advisor/contacts/:contactId",
+      "label": "Contact",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-activities",
+      "path": "/advisor/activities",
+      "label": "Activities",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-activity-detail",
+      "path": "/advisor/activities/:activityId",
+      "label": "Activity",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-pipeline",
+      "path": "/advisor/pipeline",
+      "label": "Pipeline",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-case-detail",
+      "path": "/advisor/cases/:caseId",
+      "label": "Case",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-production",
+      "path": "/advisor/production",
+      "label": "My Production",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-planning",
+      "path": "/advisor/planning",
+      "label": "Planning & Targets",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-profile",
+      "path": "/advisor/profile",
+      "label": "Profile",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-settings",
+      "path": "/advisor/settings",
+      "label": "General Settings",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-subscription",
+      "path": "/advisor/subscription",
+      "label": "Subscription / Plan",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
+    },
+    {
+      "routeId": "advisor-setup",
+      "path": "/advisor/setup",
+      "label": "Setup",
+      "environment": "both",
+      "classification": "customer",
+      "classificationProduction": "customer",
+      "classificationDemo": "customer",
+      "productionCapability": "canViewAdvisorWorkspace"
     },
     {
       "routeId": "team-pipeline",
@@ -377,8 +528,8 @@
   "rules": [
     {
       "id": "RULE.PLATFORM.ADVISORS_ARE_MOBILE_ONLY",
-      "title": "Financial Advisors do advisor work in Android",
-      "statement": "Financial Advisors perform their advisor work in the Android app. A Financial Advisor who also holds Organisation Administrator permission may use the Management Portal only for the organisation/account administration functions that permission grants; it does not grant leadership reporting scope. Ordinary Financial Advisors do not use Team Pipeline, Advisors, Production, or Performance in the portal."
+      "title": "Financial Advisors do advisor work in Advisor Workspace and Android",
+      "statement": "Financial Advisors do their own book of business in Advisor Workspace on the web (/advisor) and in the Android app. A Financial Advisor who also holds Organisation Administrator permission may use organisation/account administration in the Management Portal; it does not grant leadership reporting scope. Ordinary Financial Advisors do not use Team Pipeline, Advisors, company Production, or Performance in the Management Portal."
     },
     {
       "id": "RULE.ACCESS.ORG_ADMIN_IS_NOT_A_RANK",
@@ -448,7 +599,7 @@
         "activate"
       ],
       "category": "getting-started",
-      "summary": "The Management Portal is for leadership reporting and for Organisation Administrators. Financial Advisors do advisor work in the Android app. A Financial Advisor who is also Organisation Administrator may use organisation/account administration in the portal; that grant is not leadership reporting scope. Portal users set a password from an activation email. Advisors activate on the phone unless they also hold Organisation Admin.",
+      "summary": "The Management Portal is for leadership reporting and for Organisation Administrators. Financial Advisors do their own book in Advisor Workspace (/advisor) and in the Android app. A Financial Advisor who is also Organisation Administrator may use organisation/account administration in the portal; that grant is not leadership reporting scope. Portal users set a password from an activation email.",
       "steps": [],
       "blockedGuidance": "BLOCK.ADVISOR_USES_MOBILE",
       "requiredFacts": [],
@@ -475,7 +626,7 @@
         "dashboard"
       ],
       "category": "getting-started",
-      "summary": "Executives, Regional Managers, and Team Leaders use the Management Portal for reporting and organisation work. Organisation Administrators use it for users, licences, subscription, and invoices even if they are not a leadership rank. Financial Advisors do advisor work in Android; Organisation Admin is a separate portal grant and does not add reporting scope.",
+      "summary": "Executives, Regional Managers, and Team Leaders use the Management Portal for reporting and organisation work. Organisation Administrators use it for users, licences, subscription, and invoices even if they are not a leadership rank. Financial Advisors use Advisor Workspace for their own book; Organisation Admin is a separate portal grant and does not add reporting scope.",
       "steps": [],
       "blockedGuidance": "BLOCK.ADVISOR_USES_MOBILE",
       "requiredFacts": [],
@@ -504,7 +655,7 @@
         "advisors"
       ],
       "category": "getting-started",
-      "summary": "Financial Advisors use the AdvisorTrack Android app for their own pipeline, contacts, and production. Organisation Admin does not move that advisor work into the portal. Last Mobile Activity on advisor details is Android resource telemetry, not a productivity score.",
+      "summary": "Financial Advisors use Advisor Workspace on the web and the AdvisorTrack Android app for their own pipeline, contacts, and production. Organisation Admin does not move that advisor work into Management reporting. Last Mobile Activity on advisor details is Android resource telemetry, not a productivity score, and web Advisor Workspace use does not update it.",
       "steps": [],
       "blockedGuidance": "BLOCK.ADVISOR_USES_MOBILE",
       "requiredFacts": [],
@@ -553,6 +704,2473 @@
       ]
     },
     {
+      "id": "START.FORGOT_PASSWORD",
+      "kind": "task",
+      "title": "Forgot password",
+      "aliases": [
+        "reset password",
+        "six-digit code",
+        "PIN reset"
+      ],
+      "questionForms": [
+        "How do I reset my password?",
+        "I forgot my password"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [],
+      "routes": [],
+      "category": "getting-started",
+      "summary": "On Sign in, choose Forgot password? Enter the email for your AdvisorTrack account. If an account exists, AdvisorTrack emails the same six-digit code used by the Android app. Codes expire after one hour. Enter the code, then choose a new password with at least 8 characters, a letter, and a number. The page does not say whether an email is registered. There is no reset link and no different token.",
+      "steps": [
+        {
+          "label": "Open Sign in and choose Forgot password?"
+        },
+        {
+          "label": "Enter your email, then the 6-digit code from the email"
+        },
+        {
+          "label": "Choose a new password and return to Sign in"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": []
+    },
+    {
+      "id": "HOME.DASHBOARD",
+      "kind": "route",
+      "title": "Advisor Home",
+      "aliases": [
+        "my home",
+        "advisor dashboard",
+        "book of business",
+        "how do I read my dashboard"
+      ],
+      "questionForms": [
+        "How do I read my dashboard?",
+        "What does my Home page show?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-home"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Advisor Home is your self-scoped book of business, not the Management Dashboard. It shows monthly progress, weekly activity, a pipeline snapshot of this month’s completed stage outcomes, and upcoming activities from your own records. Figures come from the same advisor dashboard, planning targets, and subscription APIs used by Android. You cannot open another advisor’s Home.",
+      "steps": [
+        {
+          "label": "Open Advisor Home",
+          "routeId": "advisor-home"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "HOME.MONTHLY_PROGRESS",
+      "kind": "concept",
+      "title": "Monthly progress",
+      "aliases": [
+        "issued production",
+        "potential production",
+        "estimated commission",
+        "progress percent"
+      ],
+      "questionForms": [
+        "How is my monthly progress calculated?",
+        "What is issued production?",
+        "What is potential production?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-home"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Monthly progress uses your nett goal from Planning. Issued is this month’s production dated by due date or created date, where the entry is issued or the application status is Accepted / Issued. Potential (estimated) is all of this month’s production on that same date rule, plus estimated commission on open cases that are not linked to production. Progress % is issued versus the monthly nett goal. Home issued can differ from Management Production because that page uses a different period basis — Advisor Home follows the existing Home contract and does not mix the two.",
+      "steps": [
+        {
+          "label": "Open Advisor Home",
+          "routeId": "advisor-home"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "HOME.WEEKLY_ACTIVITY",
+      "kind": "concept",
+      "title": "Weekly activity and points",
+      "aliases": [
+        "weekly points",
+        "locked weekly",
+        "calls meetings quotes submission"
+      ],
+      "questionForms": [
+        "What are weekly points?",
+        "Why are weekly points locked?",
+        "Why is something locked?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-home",
+        "advisor-subscription"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Weekly activity shows this week’s completed Calls, Meetings, Quotes/Analysis, and Submissions against your planning targets, plus weekly points earned versus the weekly point target. Those tiles come from the advisor dashboard, not invented frontend maths. If weekly points or another Home tile is locked, your current plan does not include that feature — the page shows the genuine locked state from subscription. Open Subscription / Plan in Advisor Workspace to see your plan.",
+      "steps": [
+        {
+          "label": "Open Advisor Home",
+          "routeId": "advisor-home"
+        },
+        {
+          "label": "Open Subscription / Plan",
+          "routeId": "advisor-subscription"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "HOME.PIPELINE_SNAPSHOT",
+      "kind": "concept",
+      "title": "Pipeline snapshot",
+      "aliases": [
+        "six stages",
+        "fact-finding",
+        "interview label",
+        "advice journey"
+      ],
+      "questionForms": [
+        "What does the pipeline snapshot show?",
+        "What are the six pipeline stages?",
+        "Why is Interview shown as Fact-finding?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-home"
+      ],
+      "category": "advisor-workspace",
+      "summary": "The Home pipeline snapshot is this month’s completed activity outcomes for your book, not the Management Team Pipeline. The six displayed stages are Initial contact, Fact-finding, Analysis & quotes, Recommendation, Implementation, and Review & servicing. The database and API may still store Fact-finding as Interview; the web label is Fact-finding. Conversion percentages are proceeded versus lost at each stage for the month. If pipeline analytics are not on your plan, the snapshot is locked.",
+      "steps": [
+        {
+          "label": "Open Advisor Home",
+          "routeId": "advisor-home"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "HOME.UPCOMING_ACTIVITIES",
+      "kind": "concept",
+      "title": "Upcoming activities",
+      "aliases": [
+        "next actions",
+        "follow-ups",
+        "upcoming events"
+      ],
+      "questionForms": [
+        "What are upcoming activities?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-home",
+        "advisor-activities"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Upcoming activities are your own scheduled follow-ups and case next-action dates in the next 30 days. Home shows time, type, title, contact when the API supplies it, and stage. Tapping a row opens Activities. If upcoming events are not on your plan, the list is locked. Home does not create or complete activities.",
+      "steps": [
+        {
+          "label": "Open Advisor Home",
+          "routeId": "advisor-home"
+        },
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "HOME.SET_TARGET",
+      "kind": "task",
+      "title": "Set my monthly target",
+      "aliases": [
+        "monthly goal",
+        "nett goal",
+        "planning targets"
+      ],
+      "questionForms": [
+        "How do I set my target?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-home",
+        "advisor-planning"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Your monthly nett goal is stored on your advisor planning profile and shown on Home as the Monthly Progress target. Open Planning & Targets in Advisor Workspace to set or change it. Home does not calculate a different goal. Until a goal is set, Monthly Progress explains that no monthly nett goal is set yet.",
+      "steps": [
+        {
+          "label": "Open Planning & Targets",
+          "routeId": "advisor-planning"
+        },
+        {
+          "label": "Return to Advisor Home",
+          "routeId": "advisor-home"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.ADD",
+      "kind": "task",
+      "title": "Add a contact",
+      "aliases": [
+        "create contact",
+        "new contact",
+        "add a person",
+        "add a customer",
+        "add a lead"
+      ],
+      "questionForms": [
+        "How do I add a contact?",
+        "What information do I need to add a contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open Contacts in Advisor Workspace and choose Add Contact. First name is required, and you must also enter an email or a phone number. Last name, company, status, priority, rating, notes, and POPIA consent are optional. The stored statuses are Prospect, Active, Inactive, and Client — not lead, hot lead, qualified, or converted. Saving a contact also opens a case for that person. You only see your own contacts.",
+      "steps": [
+        {
+          "label": "Open Contacts",
+          "routeId": "advisor-contacts"
+        },
+        {
+          "label": "Choose Add Contact"
+        },
+        {
+          "label": "Enter first name and an email or phone number"
+        },
+        {
+          "label": "Save the contact"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.EMAIL_OR_PHONE",
+      "kind": "concept",
+      "title": "Email or phone is required",
+      "aliases": [
+        "email or phone",
+        "phone required",
+        "email required",
+        "contact validation"
+      ],
+      "questionForms": [
+        "Why do I need an email or phone number?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "AdvisorTrack will not save a contact without a first name and at least one of email or phone. That is the same Android and API rule. You do not need both. Search still uses name and company only — entering an email or phone does not add extra search fields.",
+      "steps": [
+        {
+          "label": "Open Contacts",
+          "routeId": "advisor-contacts"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.EDIT",
+      "kind": "task",
+      "title": "Edit a contact",
+      "aliases": [
+        "update contact",
+        "change contact",
+        "save contact"
+      ],
+      "questionForms": [
+        "How do I edit this contact?",
+        "How do I edit a contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open the contact and choose Edit. You can change the same API-supported fields used on Android: name, email, phone, company, status, priority, rating, and notes. Practice contacts stay editable. Archived real contacts on free or Live Preview plans are read-only until you activate a slot or upgrade to Pro. The API returns the actual restriction, such as CONTACT_ARCHIVED or LIVE_PREVIEW_REQUIRED — not a generic save failure.",
+      "steps": [
+        {
+          "label": "Open the contact"
+        },
+        {
+          "label": "Choose Edit"
+        },
+        {
+          "label": "Save changes"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.SEARCH",
+      "kind": "task",
+      "title": "Search contacts",
+      "aliases": [
+        "find contact",
+        "filter contacts",
+        "look up a person"
+      ],
+      "questionForms": [
+        "How do I search for a contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Use the search box on Contacts. Search matches first name, last name, and company through the existing contacts API. It does not search email or phone. You cannot invent extra server filters. Results stay limited to your own book.",
+      "steps": [
+        {
+          "label": "Open Contacts",
+          "routeId": "advisor-contacts"
+        },
+        {
+          "label": "Type a name or company"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.STATUS",
+      "kind": "concept",
+      "title": "Contact status",
+      "aliases": [
+        "contact statuses",
+        "what does this status mean",
+        "lead"
+      ],
+      "questionForms": [
+        "What does this contact's status mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Canonical contact statuses are Prospect, Active, Inactive, and Client. Prospect is the default for a new contact. Inactive may follow a Lost activity outcome. Client is set when production income is recognised or issued. People may say “lead” in conversation; that is not a stored AdvisorTrack status. Priority and rating are separate from status.",
+      "steps": [
+        {
+          "label": "Open the contact"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.PROSPECT",
+      "kind": "glossary",
+      "title": "Prospect",
+      "aliases": [
+        "prospect status",
+        "new prospect"
+      ],
+      "questionForms": [
+        "What does Prospect mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Prospect is the default contact status when you add someone. It means they are in your book and not yet a recognised client. It is not a separate CRM stage such as lead, hot lead, or qualified.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.CLIENT",
+      "kind": "glossary",
+      "title": "Client",
+      "aliases": [
+        "client status",
+        "became a client"
+      ],
+      "questionForms": [
+        "What does Client mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Client is the contact status used when production income for that person is recognised or issued. It is not a manual “converted” label you invent. If a prospect became a client, look at issued or recognised production linked to that contact.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.INACTIVE",
+      "kind": "glossary",
+      "title": "Inactive",
+      "aliases": [
+        "inactive status",
+        "lost contact"
+      ],
+      "questionForms": [
+        "What does Inactive mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Inactive is a contact status. It may result from an activity outcome of Lost. It is not the same as an archived Live Preview slot. Archived is activation state on a real contact; Inactive is the contact status field.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.PRIORITY",
+      "kind": "concept",
+      "title": "Contact priority",
+      "aliases": [
+        "high priority",
+        "low priority",
+        "medium priority"
+      ],
+      "questionForms": [
+        "What is priority?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Priority is Low, Medium, or High on the contact. It is independent of status and of rating. Changing priority does not turn a prospect into a client.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.RATING",
+      "kind": "concept",
+      "title": "Contact rating",
+      "aliases": [
+        "star rating",
+        "rate a contact"
+      ],
+      "questionForms": [
+        "What is contact rating?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Rating is a 0 to 5 value on the contact. It is your own ranking, separate from Prospect / Inactive / Client status and separate from Low / Medium / High priority.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.POPIA",
+      "kind": "concept",
+      "title": "POPIA consent",
+      "aliases": [
+        "consent",
+        "popia",
+        "privacy consent",
+        "consent recorded"
+      ],
+      "questionForms": [
+        "What is POPIA consent?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts"
+      ],
+      "category": "advisor-workspace",
+      "summary": "POPIA consent is the attestation that you may keep this person’s details. On Add Contact you can record consent. Import requires consentAccepted true and writes a POPIA audit entry without extra client PII. The contact then shows when consent was recorded. This is personal-contact POPIA handling, not Organisation Bulk User Import.",
+      "steps": [
+        {
+          "label": "Open Contacts",
+          "routeId": "advisor-contacts"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.ADD_ACTIVITY",
+      "kind": "task",
+      "title": "Add Activity from a contact",
+      "aliases": [
+        "create activity",
+        "schedule follow up",
+        "add a call"
+      ],
+      "questionForms": [
+        "How do I create an activity?",
+        "How do I create an activity for a contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open the contact and choose Add Activity. Title, type, the contact, and scheduled time are required. Duration, description, and pipeline stage are optional. This uses POST /activities with the same fields as Android. Saved activities also appear on Activities and on Home upcoming.",
+      "steps": [
+        {
+          "label": "Open the contact"
+        },
+        {
+          "label": "Choose Add Activity"
+        },
+        {
+          "label": "Enter title, type, and scheduled time"
+        },
+        {
+          "label": "Save the activity"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.OPEN_CASE",
+      "kind": "task",
+      "title": "Open Case",
+      "aliases": [
+        "start a case",
+        "open pipeline case",
+        "client case"
+      ],
+      "questionForms": [
+        "How do I open a case?",
+        "How do I start/open a case?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open the contact and choose Open Case. AdvisorTrack loads or creates the open case for that contact through GET /cases/contact/:contactId. Do not create a second case from the browser. That same case opens at /advisor/cases/:caseId. Pipeline is your own book at /advisor/pipeline, not Team Pipeline.",
+      "steps": [
+        {
+          "label": "Open the contact"
+        },
+        {
+          "label": "Choose Open Case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.CREATE_OPENS_CASE",
+      "kind": "concept",
+      "title": "A case opens when you add a contact",
+      "aliases": [
+        "automatic case",
+        "why a case appeared"
+      ],
+      "questionForms": [
+        "Why was a case created when I added a contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "When you add a contact, AdvisorTrack automatically creates an open case for that person. That is the existing Android/backend side effect. Import does not create cases the same way; use Open Case, which get-or-creates the case. Do not add a second case from the web form.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.IMPORT",
+      "kind": "task",
+      "title": "Import contacts",
+      "aliases": [
+        "import contacts",
+        "contact import",
+        "device import",
+        "bulk contacts"
+      ],
+      "questionForms": [
+        "How do I import contacts?",
+        "How many contacts can I import?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Import on Contacts sends 1 to 50 structured contact rows to POST /contacts/import with consentAccepted true. It is a Pro entitlement. It is not Organisation Bulk User Import and not an XLSX workbook. Duplicates are skipped by email/phone fingerprint. Practice/Live Preview limits still apply to real contacts after import.",
+      "steps": [
+        {
+          "label": "Open Contacts",
+          "routeId": "advisor-contacts"
+        },
+        {
+          "label": "Choose Import"
+        },
+        {
+          "label": "Enter up to 50 rows and confirm POPIA consent"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.LIVE_PREVIEW",
+      "kind": "concept",
+      "title": "Live Preview",
+      "aliases": [
+        "three contact limit",
+        "3 real contacts",
+        "live preview contacts"
+      ],
+      "questionForms": [
+        "What is Live Preview?",
+        "What is the three-contact limit?",
+        "Why can't I add another real contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Live Preview is a personal Android/advisor subscription option, not a company licence seat pool. On Live Preview you may keep up to 3 active real contacts. Practice contacts are excluded from that cap. If Live Preview is off, enable it or upgrade to Pro before adding real clients. CONTACT_LIMIT_REACHED means the 3 active real slots are full. Company licence counts do not appear on Advisor Contacts.",
+      "steps": [
+        {
+          "label": "Open Contacts",
+          "routeId": "advisor-contacts"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.ACTIVATE",
+      "kind": "task",
+      "title": "Activate a contact slot",
+      "aliases": [
+        "swap live preview slot",
+        "unarchive contact",
+        "activate archived client"
+      ],
+      "questionForms": [
+        "What happens when I activate another contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "POST /contacts/:id/activate moves an archived real contact into an active Live Preview slot. If you already have 3 active real contacts, the oldest active real contact is archived so the new one can take the slot. Practice contacts are not part of that swap. Pro users are not capped at 3.",
+      "steps": [
+        {
+          "label": "Open the archived contact"
+        },
+        {
+          "label": "Choose Activate this contact"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.PRACTICE_VS_REAL",
+      "kind": "concept",
+      "title": "Practice contact versus real contact",
+      "aliases": [
+        "sandbox contact",
+        "practice client",
+        "real client",
+        "is practice"
+      ],
+      "questionForms": [
+        "What's the difference between a practice contact and a real contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Practice contacts are sandbox people for learning. They do not count toward the Live Preview limit of 3 active real contacts. Real contacts are your actual book and use Live Preview or Pro entitlements. Company licence seats are a different product and are not shown on Advisor Contacts.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "CONTACT.DELETE",
+      "kind": "task",
+      "title": "Delete a contact",
+      "aliases": [
+        "remove contact",
+        "erase contact"
+      ],
+      "questionForms": [
+        "Can I delete a contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-contact-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "The current Android/backend contact API still hard-deletes a single contact after confirmation. Web Contacts offers the same Delete with a warning that linked activities, cases, and production may be affected by existing database relationships. There is no bulk delete on this page. This is current contract behaviour, not a new retention design.",
+      "steps": [
+        {
+          "label": "Open the contact"
+        },
+        {
+          "label": "Choose Delete contact"
+        },
+        {
+          "label": "Confirm the warning"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "ACTIVITY.ADD",
+      "kind": "task",
+      "title": "Add an activity",
+      "aliases": [
+        "new activity",
+        "create activity",
+        "schedule activity",
+        "add appointment",
+        "schedule a call"
+      ],
+      "questionForms": [
+        "How do I add an activity?",
+        "How do I create an activity from a contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open Activities and choose New Activity, or open a contact and choose Add Activity. Title, type, and scheduled date and time are required. Contact, duration, description, and pipeline stage are optional. Types are Call, Meeting, Email, Follow-up, Presentation, and Other. The same create form is used from Contacts and from Activities — one activity row, not a second task system.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        },
+        {
+          "label": "Choose New Activity"
+        },
+        {
+          "label": "Enter title, type, and scheduled time"
+        },
+        {
+          "label": "Save the activity"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "ACTIVITY.FOLLOW_UP",
+      "kind": "concept",
+      "title": "Follow-up",
+      "aliases": [
+        "follow up",
+        "followup",
+        "follow-ups",
+        "what does follow-up mean"
+      ],
+      "questionForms": [
+        "How do I schedule a follow-up?",
+        "What does Follow-up mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities",
+        "advisor-activity-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Follow-up is a normal activity type (`follow_up`), not a separate database. Use it when the next action is a follow-up. Today, upcoming, and overdue lists still come from Activities. Asking the Assistant about “follow-ups today” counts this type; asking about “activities today” counts all scheduled types.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "ACTIVITY.EDIT",
+      "kind": "task",
+      "title": "Edit an activity",
+      "aliases": [
+        "change activity",
+        "update activity",
+        "reschedule",
+        "move appointment"
+      ],
+      "questionForms": [
+        "How do I reschedule an activity?",
+        "How do I edit an activity?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open the activity and choose Edit. You can change title, scheduled date and time, description, and status using the existing PATCH fields. Type, contact, duration, and pipeline stage are set at create and are not part of the current PATCH contract. After save, the page uses the server response rather than guessing.",
+      "steps": [
+        {
+          "label": "Open the activity"
+        },
+        {
+          "label": "Choose Edit"
+        },
+        {
+          "label": "Change the supported fields and save"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "ACTIVITY.COMPLETE",
+      "kind": "task",
+      "title": "Complete an activity",
+      "aliases": [
+        "mark complete",
+        "finish activity",
+        "i finished this meeting",
+        "what now"
+      ],
+      "questionForms": [
+        "How do I complete an activity?",
+        "What does Complete do?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activity-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open the activity and choose Complete / Record Outcome, then Complete. Complete records the outcome as completed and does not automatically create the next activity. You may optionally advance the open case to the next pipeline stage (`advanceCase`). If the activity is at Implementation, or you choose submit to production with a valid amount, the backend may submit the open case to production. The web does not create a second production row.",
+      "steps": [
+        {
+          "label": "Open the activity"
+        },
+        {
+          "label": "Choose Complete / Record Outcome"
+        },
+        {
+          "label": "Choose Complete"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "ACTIVITY.PROCEED",
+      "kind": "concept",
+      "title": "Proceed",
+      "aliases": [
+        "proceed outcome",
+        "next activity",
+        "advance pipeline",
+        "why was another activity created"
+      ],
+      "questionForms": [
+        "What does Proceed do?",
+        "What happens when I choose Proceed?",
+        "When is the next activity created?",
+        "Why was another activity created automatically?",
+        "How do Activities affect my pipeline?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Proceed records the outcome as proceeded and creates the next activity at the next pipeline stage. The default next time is tomorrow at 11:00 unless you override it. Stage-to-type mapping is owned by the backend (Initial contact → call, Fact-finding/Interview → meeting, Analysis → follow-up, Recommendation → presentation, Implementation → other, Review → follow-up). The open case is moved to that next stage. There is no next stage after Review — the API returns NO_NEXT_STAGE. Do not recreate this mapping in the browser.",
+      "steps": [
+        {
+          "label": "Open the activity"
+        },
+        {
+          "label": "Choose Complete / Record Outcome"
+        },
+        {
+          "label": "Choose Proceed"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "ACTIVITY.LOST",
+      "kind": "concept",
+      "title": "Lost",
+      "aliases": [
+        "mark lost",
+        "lost outcome",
+        "prospect became inactive",
+        "case became lost"
+      ],
+      "questionForms": [
+        "What happens if I choose Lost?",
+        "What does Lost do?",
+        "What happens when I mark an activity Lost?",
+        "Why did my prospect become inactive?",
+        "Why did my case become Lost?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Lost records the outcome as lost. If the activity has a contact, that contact becomes Inactive and any open case for that contact becomes lost. Confirm before you continue — the web warning tells you this will happen. Lost does not create a next activity. Current product does not offer an undo for this side effect.",
+      "steps": [
+        {
+          "label": "Open the activity"
+        },
+        {
+          "label": "Choose Complete / Record Outcome"
+        },
+        {
+          "label": "Read the Lost warning, then confirm"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "ACTIVITY.TYPES",
+      "kind": "concept",
+      "title": "Activity types",
+      "aliases": [
+        "call",
+        "meeting",
+        "email",
+        "presentation",
+        "appointment",
+        "activity types"
+      ],
+      "questionForms": [
+        "What activity types are available?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities",
+        "advisor-activity-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "The product types are call, meeting, email, follow_up, presentation, and other. The web shows Call, Meeting, Email, Follow-up, Presentation, and Other. There are no extra desktop-only types.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "ACTIVITY.OVERDUE",
+      "kind": "concept",
+      "title": "Overdue activity",
+      "aliases": [
+        "late activity",
+        "past due",
+        "missed follow-up"
+      ],
+      "questionForms": [
+        "What is an overdue activity?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities",
+        "advisor-activity-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "An activity is overdue when its scheduled date and time is earlier than now and its status is still scheduled. Completed or cancelled activities are not overdue. Dates use Africa/Johannesburg. Being created earlier does not make an activity overdue.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "ACTIVITY.DELETE",
+      "kind": "task",
+      "title": "Delete an activity",
+      "aliases": [
+        "remove activity",
+        "permanently delete activity"
+      ],
+      "questionForms": [
+        "Can I delete an activity?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activity-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "The current Android activity API hard-deletes an activity. Web mirrors that with a confirmation that the activity will be permanently removed. There is no bulk delete and no archive conversion in this phase. Restoring a deleted activity is not available. This is the same future retention product debt as contact delete.",
+      "steps": [
+        {
+          "label": "Open the activity"
+        },
+        {
+          "label": "Choose Delete"
+        },
+        {
+          "label": "Confirm permanent removal"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.WHAT",
+      "kind": "route",
+      "title": "My Pipeline",
+      "aliases": [
+        "my cases",
+        "advisor pipeline",
+        "client case",
+        "deal",
+        "opportunity"
+      ],
+      "questionForms": [
+        "What is my pipeline?",
+        "Where is my pipeline?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "My Pipeline at /advisor/pipeline is your own book of cases. It is not Team Pipeline and not a leadership downline view. Cases come from GET /cases using the authenticated advisor identity. You cannot list another advisor’s cases. Open a card to work the case at /advisor/cases/:caseId.",
+      "steps": [
+        {
+          "label": "Open Pipeline",
+          "routeId": "advisor-pipeline"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.STAGES",
+      "kind": "concept",
+      "title": "The six pipeline stages",
+      "aliases": [
+        "six stages",
+        "advice journey",
+        "pipeline stages"
+      ],
+      "questionForms": [
+        "What are the six pipeline stages?",
+        "What are the six stages?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail",
+        "advisor-home"
+      ],
+      "category": "advisor-workspace",
+      "summary": "The canonical advice journey has six stages: Initial contact, Fact-finding, Analysis & quotes, Recommendation, Implementation, and Review & servicing. Desktop Pipeline uses those labels. Do not invent extra stages.",
+      "steps": [
+        {
+          "label": "Open Pipeline",
+          "routeId": "advisor-pipeline"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.STAGE.INITIAL",
+      "kind": "concept",
+      "title": "Initial contact",
+      "aliases": [
+        "first contact",
+        "new enquiry"
+      ],
+      "questionForms": [
+        "What happens in Initial contact?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Initial contact is the first pipeline stage. Capture the contact, start the case, send the document checklist items, and set a next action if you want one. FICA is not required at this stage. A next action is optional.",
+      "steps": [
+        {
+          "label": "Open Pipeline",
+          "routeId": "advisor-pipeline"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.STAGE.FACT_FIND",
+      "kind": "concept",
+      "title": "Fact-finding",
+      "aliases": [
+        "fact find",
+        "interview stage"
+      ],
+      "questionForms": [
+        "What happens in Fact-finding?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Fact-finding is where you record a simple goal or a full FNA. Moving into or past this stage with incomplete FICA produces a warning, not a hard block. Complete the FICA items or acknowledge the skip if you continue.",
+      "steps": [
+        {
+          "label": "Open the case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.STAGE.ANALYSIS",
+      "kind": "concept",
+      "title": "Analysis & quotes",
+      "aliases": [
+        "analysis",
+        "quoting"
+      ],
+      "questionForms": [
+        "What happens in Analysis & quotes?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Analysis & quotes is where you record up to three quotes on the case. Quotes are typed records (product type, insurer, premium, commission), not an external insurer integration. You can still move stages if FICA is incomplete; the API returns a warning.",
+      "steps": [
+        {
+          "label": "Open Quotes on the case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.STAGE.RECOMMENDATION",
+      "kind": "concept",
+      "title": "Recommendation",
+      "aliases": [
+        "recommend stage"
+      ],
+      "questionForms": [
+        "What happens in Recommendation?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Recommendation is where you select a chosen insurer and estimated commission from the recorded quotes. AdvisorTrack records your selection. It does not recommend a product or insurer for you.",
+      "steps": [
+        {
+          "label": "Open Quotes on the case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.STAGE.IMPLEMENTATION",
+      "kind": "concept",
+      "title": "Implementation",
+      "aliases": [
+        "submit stage",
+        "application stage"
+      ],
+      "questionForms": [
+        "What happens in Implementation?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Implementation is where you submit the case to Production when estimated commission is greater than 0. Submission creates or links a production record (application received, not issued). The case stays open unless you change status separately. Submit also moves the case to Implementation and sets a review due date about 11 months ahead.",
+      "steps": [
+        {
+          "label": "Open the case"
+        },
+        {
+          "label": "Submit to Production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.STAGE.REVIEW",
+      "kind": "concept",
+      "title": "Review & servicing",
+      "aliases": [
+        "review stage",
+        "servicing"
+      ],
+      "questionForms": [
+        "What happens in Review & servicing?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Review & servicing is the last canonical stage. Schedule Review sets the stage to Review and stores a review due date about 11 months ahead using the backend date calculation. There is no next pipeline stage after Review.",
+      "steps": [
+        {
+          "label": "Open Review on the case"
+        },
+        {
+          "label": "Schedule review"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.INTERVIEW_ALIAS",
+      "kind": "concept",
+      "title": "Why the API says Interview",
+      "aliases": [
+        "interview vs fact-finding",
+        "why interview"
+      ],
+      "questionForms": [
+        "Why does the API call Fact-finding Interview?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "The database and API still store Fact-finding as Interview for Android compatibility. Advisor Workspace always displays Fact-finding. That is a label mapping, not a seventh stage.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.MOVE_STAGE",
+      "kind": "task",
+      "title": "Move a case to the next stage",
+      "aliases": [
+        "change stage",
+        "move to stage"
+      ],
+      "questionForms": [
+        "How do I move a case to the next stage?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open the case and use Move to stage. The web sends PATCH /cases/:id with currentStage. The backend owns validation and side effects. Drag-and-drop is not used because stage movement must stay an explicit PATCH. Incomplete FICA on later stages returns a warning; it does not return HTTP 400.",
+      "steps": [
+        {
+          "label": "Open the case"
+        },
+        {
+          "label": "Choose Move to stage"
+        },
+        {
+          "label": "Save"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.FICA",
+      "kind": "concept",
+      "title": "FICA",
+      "aliases": [
+        "fica checks",
+        "proof of identity"
+      ],
+      "questionForms": [
+        "What is FICA?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "FICA on a case is three flags: proof of ID, residence, and bank details. Complete means all three are received. There is also a skip acknowledgement. These are case fields, not uploaded files.",
+      "steps": [
+        {
+          "label": "Open FICA & Documents on the case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.FICA_REQUIRED",
+      "kind": "concept",
+      "title": "Do I have to complete FICA?",
+      "aliases": [
+        "fica mandatory",
+        "fica required"
+      ],
+      "questionForms": [
+        "Do I have to complete FICA?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "FICA is expected before Fact-finding and later stages, but incomplete FICA is currently a warning/soft gate, not a hard 400. You can still save the stage change. The warning remains until the three flags are complete or skip is acknowledged.",
+      "steps": [
+        {
+          "label": "Open FICA & Documents on the case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.FICA_SKIP",
+      "kind": "task",
+      "title": "Skip FICA",
+      "aliases": [
+        "acknowledge fica",
+        "skip fica"
+      ],
+      "questionForms": [
+        "Can I skip FICA?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Yes. Mark skip acknowledged on the case. That is the existing Android/backend acknowledgement, not a desktop-only bypass. Completing the three FICA flags also clears the incomplete warning.",
+      "steps": [
+        {
+          "label": "Open FICA & Documents"
+        },
+        {
+          "label": "Acknowledge skip if you are continuing without the three items"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.DOCUMENTS",
+      "kind": "concept",
+      "title": "Document checklist",
+      "aliases": [
+        "case documents",
+        "letter of consent"
+      ],
+      "questionForms": [
+        "What are the document checklist items?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Case documents are checklist timestamps, not uploaded files. Default items are Letter of consent, Broker disclosure, and Letter of appointment. Mark sent or received. There is no document vault or file picker on this page.",
+      "steps": [
+        {
+          "label": "Open FICA & Documents on the case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.DOC_SENT",
+      "kind": "task",
+      "title": "Mark a document as sent",
+      "aliases": [
+        "document sent"
+      ],
+      "questionForms": [
+        "How do I mark a document as sent?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open FICA & Documents and choose Mark sent on the checklist item. That PATCHes the document with markSent and stores a timestamp. It does not upload a file.",
+      "steps": [
+        {
+          "label": "Open the case"
+        },
+        {
+          "label": "Choose Mark sent"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.DOC_RECEIVED",
+      "kind": "task",
+      "title": "Mark a document as received",
+      "aliases": [
+        "document received"
+      ],
+      "questionForms": [
+        "How do I mark a document as received?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open FICA & Documents and choose Mark received. That PATCHes the document with markReceived and stores a timestamp. It does not upload a file.",
+      "steps": [
+        {
+          "label": "Open the case"
+        },
+        {
+          "label": "Choose Mark received"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.SIMPLE_GOAL",
+      "kind": "concept",
+      "title": "Simple goal",
+      "aliases": [
+        "simple_goal"
+      ],
+      "questionForms": [
+        "What is a simple goal?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Simple goal is one of two fact-find modes (`simple_goal`). Record the product and amount the client described. It does not run financial-planning calculations.",
+      "steps": [
+        {
+          "label": "Open Fact-find on the case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.FULL_FNA",
+      "kind": "concept",
+      "title": "Full FNA",
+      "aliases": [
+        "full_fna",
+        "fact find full",
+        "needs analysis"
+      ],
+      "questionForms": [
+        "What is a full FNA?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Full FNA is the other fact-find mode (`full_fna`). It stores the supported needs-analysis fields already on the case (income, expenses, assets, liabilities, risk profile, notes). It does not invent extra planning maths.",
+      "steps": [
+        {
+          "label": "Open Fact-find on the case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.QUOTES",
+      "kind": "concept",
+      "title": "Quotes",
+      "aliases": [
+        "case quotes",
+        "quote cards"
+      ],
+      "questionForms": [
+        "How do quotes work?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Quotes are up to three lines on the case: product type, insurer, premium, and commission. Save them with PATCH /cases/:id. Desktop may show them side by side. There is no live insurer feed.",
+      "steps": [
+        {
+          "label": "Open Quotes on the case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.QUOTE_LIMIT",
+      "kind": "concept",
+      "title": "How many quotes can I add?",
+      "aliases": [
+        "three quotes",
+        "max quotes"
+      ],
+      "questionForms": [
+        "How many quotes can I add?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Up to three quotes. The API rejects a fourth quote line. Edit or replace an existing quote instead.",
+      "steps": [
+        {
+          "label": "Open Quotes on the case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.INSURER",
+      "kind": "task",
+      "title": "Select an insurer",
+      "aliases": [
+        "chosen insurer",
+        "pick insurer"
+      ],
+      "questionForms": [
+        "How do I select an insurer?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Set chosen insurer on the case (typically from a recorded quote). That stores your selection. AdvisorTrack does not recommend which insurer to choose.",
+      "steps": [
+        {
+          "label": "Open Quotes"
+        },
+        {
+          "label": "Choose the insurer and save"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.COMMISSION",
+      "kind": "concept",
+      "title": "Estimated commission",
+      "aliases": [
+        "pipeline value",
+        "case commission"
+      ],
+      "questionForms": [
+        "What is estimated commission?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Estimated commission is the amount stored on the case. Submit to Production requires it to be greater than 0. Pipeline totals use this field on your open cases. It is not issued production.",
+      "steps": [
+        {
+          "label": "Open the case Overview"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.NEXT_ACTION",
+      "kind": "task",
+      "title": "Set the next action",
+      "aliases": [
+        "next step",
+        "next step date"
+      ],
+      "questionForms": [
+        "How do I set the next action?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open Next Action and save a next step date (and time if you set nextStepScheduledAt). The backend upserts a scheduled Activity for that case. The web does not create a second activity in React. After refresh, Activities and Home upcoming show it.",
+      "steps": [
+        {
+          "label": "Open Next Action"
+        },
+        {
+          "label": "Save the date"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.NEXT_ACTION_ACTIVITY",
+      "kind": "concept",
+      "title": "Why a next action created an activity",
+      "aliases": [
+        "auto activity",
+        "synced activity"
+      ],
+      "questionForms": [
+        "Why did setting a next action create an activity?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail",
+        "advisor-activities"
+      ],
+      "category": "advisor-workspace",
+      "summary": "The case service upserts a scheduled Activity when nextStepDate is saved. That is canonical backend behaviour. You should not add another activity by hand for the same next action.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.NEXT_ACTION_OPTIONAL",
+      "kind": "concept",
+      "title": "Do I have to set a next action?",
+      "aliases": [
+        "next action required",
+        "missing next action"
+      ],
+      "questionForms": [
+        "Do I have to set a next action?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "No. Android and the backend allow a case with no next action. Management Needs Attention may flag that. Advisor Workspace encourages a next action visually but does not hard-block save.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.SUBMIT",
+      "kind": "task",
+      "title": "Submit a case to Production",
+      "aliases": [
+        "submit application",
+        "send to production"
+      ],
+      "questionForms": [
+        "How do I submit a case to Production?",
+        "How do I submit to Production?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open the case, confirm estimated commission and chosen insurer, then Submit to Production. The web PATCHes submitToProduction. The backend creates or links production (application received, not issued) when estimated commission is greater than 0. My Production remains a later page; you will see a placeholder link after success.",
+      "steps": [
+        {
+          "label": "Open the case"
+        },
+        {
+          "label": "Confirm estimated commission is greater than 0"
+        },
+        {
+          "label": "Submit to Production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.SUBMIT_BLOCKED",
+      "kind": "concept",
+      "title": "Why I cannot submit to Production",
+      "aliases": [
+        "submit disabled"
+      ],
+      "questionForms": [
+        "Why can't I submit to Production?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Submit only creates production when estimated commission is greater than 0. If commission is missing or 0, the backend does not submit. Confirm the amount on the case. You also cannot submit a case you do not own.",
+      "steps": [
+        {
+          "label": "Open Overview"
+        },
+        {
+          "label": "Enter estimated commission greater than 0"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.AFTER_SUBMIT",
+      "kind": "concept",
+      "title": "What happens after I submit",
+      "aliases": [
+        "after submit",
+        "application received"
+      ],
+      "questionForms": [
+        "What happens after I submit?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "The backend links or creates a production record, typically application received and not issued, and stores linked production on the case. The case moves to Implementation and a review due date about 11 months ahead is set. The case is not closed by submit.",
+      "steps": [
+        {
+          "label": "Open My Production later",
+          "routeId": "advisor-production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.SUBMIT_DOES_NOT_CLOSE",
+      "kind": "concept",
+      "title": "Does submitting close the case?",
+      "aliases": [
+        "submit close case"
+      ],
+      "questionForms": [
+        "Does submitting close the case?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "No. Submit to Production does not set status to closed. Status stays open unless you or an activity outcome changes it (for example Lost).",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.SCHEDULE_REVIEW",
+      "kind": "task",
+      "title": "Schedule a review",
+      "aliases": [
+        "book review"
+      ],
+      "questionForms": [
+        "How do I schedule a review?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Open Review and choose Schedule review. That POSTs /cases/:id/schedule-review. The backend sets stage to Review and calculates review due about 11 months ahead. Do not calculate a competing date in the browser.",
+      "steps": [
+        {
+          "label": "Open Review"
+        },
+        {
+          "label": "Schedule review"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.REVIEW_11_MONTHS",
+      "kind": "concept",
+      "title": "Why review is 11 months ahead",
+      "aliases": [
+        "11 months",
+        "review due date"
+      ],
+      "questionForms": [
+        "Why is review scheduled 11 months ahead?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Schedule review and submit-to-production both add 11 months on the server. That is the existing Android/backend rule, not a web-only date.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.DUPLICATE",
+      "kind": "task",
+      "title": "Duplicate a case",
+      "aliases": [
+        "copy case",
+        "additional product"
+      ],
+      "questionForms": [
+        "How do I duplicate a case?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Duplicate creates a NEW open case for the same contact, starting at Fact-finding (API Interview), copying fact-find fields. It does not copy production. Confirm before you duplicate. There is no delete-case route.",
+      "steps": [
+        {
+          "label": "Open the case"
+        },
+        {
+          "label": "Duplicate case"
+        },
+        {
+          "label": "Confirm"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.LOST",
+      "kind": "concept",
+      "title": "What Lost means",
+      "aliases": [
+        "lost case",
+        "lost status"
+      ],
+      "questionForms": [
+        "What does Lost mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail",
+        "advisor-activities"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Lost is a case status. Recording Lost on an activity can also mark a prospect contact inactive and the open case lost. Pipeline shows that after refresh. The web must not mark Lost on its own without the canonical outcome API.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.STATUSES",
+      "kind": "concept",
+      "title": "Case statuses",
+      "aliases": [
+        "open won lost closed"
+      ],
+      "questionForms": [
+        "What do open/won/lost/closed mean?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "Cases use only open, won, lost, and closed. Open is in progress. Won is a recorded win. Lost is a recorded loss. Closed is closed without those outcomes. Desktop does not invent extra statuses. There is no delete case.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "PIPELINE.NO_ADVICE",
+      "kind": "concept",
+      "title": "The Assistant is not a financial adviser",
+      "aliases": [
+        "financial advice",
+        "recommend a product",
+        "which insurer"
+      ],
+      "questionForms": [
+        "Can the Assistant recommend a product?",
+        "Which insurer should I choose?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "advisor-workspace",
+      "summary": "The AdvisorTrack Assistant explains product workflow only: stages, FICA, documents, quotes recorded on the case, next actions, and how to submit. It must not recommend a product or insurer, interpret the client’s financial needs, or tell you which policy is best.",
+      "steps": [],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
       "id": "PEOPLE.ADD_USER",
       "kind": "task",
       "title": "Add User",
@@ -575,7 +3193,7 @@
         "licences"
       ],
       "category": "people-access",
-      "summary": "Open Users & Access and choose Add user. Choose the reporting role, region or team when required, and whether to assign a licence. Financial Advisors are invited to the Android app. Leadership and Organisation Administrators are invited to the portal. Assigning a licence needs an Available licence.",
+      "summary": "Open Users & Access and choose Add user. Choose the reporting role, region or team when required, and whether to assign a licence. Financial Advisors are invited to Advisor Workspace and the Android app. Leadership and Organisation Administrators are invited to the Management Portal. Assigning a licence needs an Available licence.",
       "steps": [
         {
           "label": "Open Users & Access",
@@ -1652,7 +4270,7 @@
         "dashboard"
       ],
       "category": "troubleshooting",
-      "summary": "The Management Portal only shows pages your rank, Organisation Admin grant, and permissions allow. Ordinary Financial Advisors do advisor work in Android, not leadership reporting pages. A Financial Advisor who is also Organisation Administrator may see organisation/account administration only. Team Leaders see their team, not the company. Some commercial pages are Organisation Admin only. Ask your Organisation Administrator, or contact AdvisorTrack support.",
+      "summary": "The Management Portal only shows pages your rank, Organisation Admin grant, and permissions allow. Ordinary Financial Advisors use Advisor Workspace for their own book, not leadership reporting pages. A Financial Advisor who is also Organisation Administrator may see organisation/account administration only. Team Leaders see their team, not the company. Some commercial pages are Organisation Admin only. Ask your Organisation Administrator, or contact AdvisorTrack support.",
       "steps": [],
       "blockedGuidance": "BLOCK.NOT_ORG_ADMIN",
       "requiredFacts": [],
@@ -1772,6 +4390,803 @@
       ]
     },
     {
+      "id": "TROUBLE.CONTACT_CANNOT_ADD",
+      "kind": "troubleshoot",
+      "title": "I can’t add a contact",
+      "aliases": [
+        "cannot create contact",
+        "add contact blocked",
+        "contact save failed"
+      ],
+      "questionForms": [
+        "I can’t add a contact"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts"
+      ],
+      "category": "troubleshooting",
+      "summary": "If Add Contact is blocked, check the API reason. First name plus email or phone is required. LIVE_PREVIEW_REQUIRED means enable Live Preview or upgrade to Pro. CONTACT_LIMIT_REACHED means you already have 3 active real contacts on Live Preview. Are you missing email/phone, or did the page mention Live Preview or a contact limit?",
+      "steps": [
+        {
+          "label": "Open Contacts",
+          "routeId": "advisor-contacts"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CONTACT_CANNOT_EDIT",
+      "kind": "troubleshoot",
+      "title": "I can’t edit this contact",
+      "aliases": [
+        "contact read only",
+        "archived contact edit",
+        "save contact blocked"
+      ],
+      "questionForms": [
+        "I can’t edit this contact"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contact-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "If Edit is blocked, the API usually returns CONTACT_ARCHIVED or LIVE_PREVIEW_REQUIRED. Archived real contacts are read-only on free/Live Preview until you activate a slot or upgrade to Pro. Practice contacts stay editable. Are you looking at an archived real contact, or did Live Preview need to be enabled?",
+      "steps": [
+        {
+          "label": "Open the contact"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CONTACT_DISAPPEARED",
+      "kind": "troubleshoot",
+      "title": "My contact disappeared",
+      "aliases": [
+        "missing contact",
+        "contact not found",
+        "cannot see contact"
+      ],
+      "questionForms": [
+        "My contact disappeared"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts"
+      ],
+      "category": "troubleshooting",
+      "summary": "Contacts are self-scoped. A URL for another advisor’s contact looks like “not in your book” and does not reveal that it exists. Search only matches name and company. Archived real contacts still appear in your list, marked Archived. On the public demo, Reset Demo restores the canonical Maya book. Did you search by email/phone, open someone else’s link, or reset the demo?",
+      "steps": [
+        {
+          "label": "Open Contacts",
+          "routeId": "advisor-contacts"
+        },
+        {
+          "label": "Search by name or company"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CONTACT_LIMIT",
+      "kind": "troubleshoot",
+      "title": "I reached the contact limit",
+      "aliases": [
+        "contact cap",
+        "cannot add real client",
+        "three contacts"
+      ],
+      "questionForms": [
+        "I reached the contact limit"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts"
+      ],
+      "category": "troubleshooting",
+      "summary": "Live Preview allows 3 active real contacts. Practice contacts are not counted. Activate an archived contact to swap the oldest active slot, or upgrade to Pro for unlimited real contacts. This is not a company licence seat limit. Did the message say CONTACT_LIMIT_REACHED, or were you trying to import on a non-Pro plan?",
+      "steps": [
+        {
+          "label": "Open Contacts",
+          "routeId": "advisor-contacts"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CONTACT_IMPORT",
+      "kind": "troubleshoot",
+      "title": "Import isn’t working",
+      "aliases": [
+        "contact import failed",
+        "cannot import contacts",
+        "import pro required"
+      ],
+      "questionForms": [
+        "Import isn’t working"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts"
+      ],
+      "category": "troubleshooting",
+      "summary": "Advisor contact import needs Pro (IMPORT_PRO_REQUIRED), 1–50 rows, first name plus email or phone on each row, and consentAccepted true. It is structured rows, not an XLSX company user workbook. Duplicates are counted, not overwritten. Are you on Pro, and did you confirm POPIA consent for advisor contacts rather than company Bulk Import?",
+      "steps": [
+        {
+          "label": "Open Contacts",
+          "routeId": "advisor-contacts"
+        },
+        {
+          "label": "Choose Import"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CONTACT_BECAME_INACTIVE",
+      "kind": "troubleshoot",
+      "title": "Why did this contact become inactive?",
+      "aliases": [
+        "status changed to inactive",
+        "lost outcome"
+      ],
+      "questionForms": [
+        "Why did this contact become inactive?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contact-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Inactive may result from an activity outcome of Lost. That is contact status, not Live Preview archive. If the contact is Archived instead, an active Live Preview slot was swapped or the plan archived excess real contacts. Was the status Inactive, or was the activation state Archived?",
+      "steps": [
+        {
+          "label": "Open the contact"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CONTACT_BECAME_CLIENT",
+      "kind": "troubleshoot",
+      "title": "Why did this prospect become a client?",
+      "aliases": [
+        "prospect converted",
+        "status client"
+      ],
+      "questionForms": [
+        "Why did this prospect become a client?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contact-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Client is set when production income for that contact is recognised or issued. It is not a “converted” status you invent in Contacts. If the status is still Prospect, issued production has not been recognised for them yet.",
+      "steps": [
+        {
+          "label": "Open the contact"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.ACTIVITY_CANNOT_CREATE",
+      "kind": "troubleshoot",
+      "title": "I can't create an activity",
+      "aliases": [
+        "activity save failed",
+        "cannot schedule"
+      ],
+      "questionForms": [
+        "I can't create an activity"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities",
+        "advisor-activity-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Title, type, and a valid scheduled date and time are required. Type must be one of call, meeting, email, follow_up, presentation, or other. Contact is optional. If the contact ID is not in your book, the API returns not found without saying whether another advisor has that person. Check the form values first, then retry. You cannot create an activity for another advisor.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        },
+        {
+          "label": "Choose New Activity"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.ACTIVITY_CANNOT_COMPLETE",
+      "kind": "troubleshoot",
+      "title": "I can't complete this activity",
+      "aliases": [
+        "outcome failed",
+        "cannot proceed"
+      ],
+      "questionForms": [
+        "I can't complete this activity",
+        "Why can't I proceed?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities",
+        "advisor-activity-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "An outcome can be recorded only once. If the activity is already completed with an outcome, the API returns OUTCOME_EXISTS. Proceed at Review has no next stage and returns NO_NEXT_STAGE. Out-of-scope IDs return not found. If you meant Complete instead of Proceed, Complete does not create a next activity.",
+      "steps": [
+        {
+          "label": "Open the activity"
+        },
+        {
+          "label": "Read the outcome error"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.ACTIVITY_DISAPPEARED",
+      "kind": "troubleshoot",
+      "title": "My follow-up disappeared",
+      "aliases": [
+        "activity missing",
+        "where did my activity go"
+      ],
+      "questionForms": [
+        "My follow-up disappeared"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities",
+        "advisor-activity-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Check the Today, Upcoming, Overdue, and Completed tabs — a completed activity leaves Today. If it was deleted, the current API permanently removes it and it cannot be restored. Reset Demo on the public demo restores Maya’s canonical activities. You cannot see another advisor’s activity even if you guess the ID.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        },
+        {
+          "label": "Check Completed and Overdue"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.ACTIVITY_NEW_CREATED",
+      "kind": "troubleshoot",
+      "title": "Why was a new activity created?",
+      "aliases": [
+        "automatic next activity",
+        "proceed created another"
+      ],
+      "questionForms": [
+        "Why was a new activity created?",
+        "Why did my case stage change?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities",
+        "advisor-activity-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Proceed creates the next activity at the next pipeline stage and updates the open case to that stage. Complete only advances the case if you chose advanceCase. The web does not invent a second activity. If you did not choose Proceed, ask whether someone else on this demo session recorded an outcome.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.ACTIVITY_LOST_MISTAKE",
+      "kind": "troubleshoot",
+      "title": "I picked Lost by mistake",
+      "aliases": [
+        "undo lost",
+        "restore lost case"
+      ],
+      "questionForms": [
+        "I picked Lost by mistake"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities",
+        "advisor-activity-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Lost already marked the related prospect Inactive and the open case lost. Current product does not offer an undo. You can add a new activity later, but the Lost outcome stays on the original activity. On the public demo, Reset Demo restores canonical Maya data.",
+      "steps": [
+        {
+          "label": "Open the contact if you still have it"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.ACTIVITY_SHOWING_OVERDUE",
+      "kind": "troubleshoot",
+      "title": "My activity is showing overdue",
+      "aliases": [
+        "why is this overdue",
+        "timezone overdue"
+      ],
+      "questionForms": [
+        "My activity is showing overdue"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-activities",
+        "advisor-activity-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Overdue means the scheduled date and time is already past and the status is still scheduled. Africa/Johannesburg is used. Complete, Proceed, Lost, or reschedule the time if it should no longer be outstanding.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        },
+        {
+          "label": "Open Overdue"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CASE_CANNOT_MOVE",
+      "kind": "troubleshoot",
+      "title": "I can't move this case",
+      "aliases": [
+        "cannot change stage"
+      ],
+      "questionForms": [
+        "I can't move this case"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Stage movement uses PATCH /cases/:id and only works on a case you own. If the case is lost or closed, it will not sit in an open pipeline column. Incomplete FICA shows a warning but does not block the save. If this is not your case, you cannot open it. Are you trying to move an open case you own, or is the case already lost/closed?",
+      "steps": [
+        {
+          "label": "Open the case"
+        },
+        {
+          "label": "Use Move to stage"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CASE_CANNOT_SUBMIT",
+      "kind": "troubleshoot",
+      "title": "I can't submit to Production",
+      "aliases": [
+        "submit blocked",
+        "cannot submit case"
+      ],
+      "questionForms": [
+        "I can't submit to Production"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Submit requires estimated commission greater than 0 on this case. If the amount is 0 or blank, the backend does not create production. Confirm you own the case. Already submitted cases keep their linked production; submitting again updates that draft rather than inventing a second book. Is estimated commission greater than 0?",
+      "steps": [
+        {
+          "label": "Open Overview"
+        },
+        {
+          "label": "Enter estimated commission"
+        },
+        {
+          "label": "Submit to Production"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.FICA_WARNING",
+      "kind": "troubleshoot",
+      "title": "My FICA warning won't go away",
+      "aliases": [
+        "fica warning stays"
+      ],
+      "questionForms": [
+        "My FICA warning won't go away"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "The warning stays until proof of ID, residence, and bank are all received, or skip is acknowledged. It is a warning, not a 400. Mark the three flags or acknowledge skip, then save.",
+      "steps": [
+        {
+          "label": "Open FICA & Documents"
+        },
+        {
+          "label": "Complete the three items or acknowledge skip"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.QUOTE_LIMIT",
+      "kind": "troubleshoot",
+      "title": "I can't add another quote",
+      "aliases": [
+        "fourth quote"
+      ],
+      "questionForms": [
+        "I can't add another quote"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "A case may have at most three quotes. Edit or replace one of the existing three. There is no extra quote slot and no insurer integration.",
+      "steps": [
+        {
+          "label": "Open Quotes"
+        },
+        {
+          "label": "Edit an existing quote"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CASE_LOST",
+      "kind": "troubleshoot",
+      "title": "Why is this case Lost?",
+      "aliases": [
+        "case became lost"
+      ],
+      "questionForms": [
+        "Why is this case Lost?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-case-detail",
+        "advisor-activities"
+      ],
+      "category": "troubleshooting",
+      "summary": "Lost is a case status. Recording Lost on an activity sets the open case to lost and can mark a prospect contact inactive. Pipeline shows that after refresh. There is no undo. On the public demo, Reset Demo restores canonical Maya data. Did you record Lost on an activity for this contact?",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CONTACT_INACTIVE",
+      "kind": "troubleshoot",
+      "title": "Why did my contact become inactive?",
+      "aliases": [
+        "contact inactive after lost"
+      ],
+      "questionForms": [
+        "Why did my contact become inactive?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-contacts",
+        "advisor-activities"
+      ],
+      "category": "troubleshooting",
+      "summary": "Lost on an activity can set a prospect contact to inactive as well as the open case to lost. That is backend behaviour, not a separate Contacts action. If the contact was already a client, ask whether status was changed on the contact form instead.",
+      "steps": [
+        {
+          "label": "Open the contact"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.NEXT_ACTION_ACTIVITY",
+      "kind": "troubleshoot",
+      "title": "My next action created an activity",
+      "aliases": [
+        "unexpected activity from case"
+      ],
+      "questionForms": [
+        "My next action created an activity"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail",
+        "advisor-activities"
+      ],
+      "category": "troubleshooting",
+      "summary": "Saving nextStepDate upserts a scheduled Activity on the server. That is expected. Do not create a second activity in React for the same next action. After refresh it appears on Activities and Home upcoming.",
+      "steps": [
+        {
+          "label": "Open Activities",
+          "routeId": "advisor-activities"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CASE_NOT_FOUND",
+      "kind": "troubleshoot",
+      "title": "I can't find my case",
+      "aliases": [
+        "missing case",
+        "case 404"
+      ],
+      "questionForms": [
+        "I can't find my case"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-pipeline",
+        "advisor-contacts"
+      ],
+      "category": "troubleshooting",
+      "summary": "Pipeline lists only your own cases. Another advisor’s case returns not found. Filter by stage or status, or open the contact and choose Open Case — that get-or-creates the open case for that contact. Lost cases still exist but are not open. Are you looking in your own Pipeline, or opening a case id from another book?",
+      "steps": [
+        {
+          "label": "Open Pipeline",
+          "routeId": "advisor-pipeline"
+        },
+        {
+          "label": "Or open the contact and choose Open Case"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.CASE_STILL_OPEN",
+      "kind": "troubleshoot",
+      "title": "Why is this case still open after submitting?",
+      "aliases": [
+        "submitted still open"
+      ],
+      "questionForms": [
+        "Why is this case still open after submitting?"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Submitting to Production does not close the case. Status stays open, stage becomes Implementation, and production is linked as not issued. Close or win the case only if you change status through the existing case fields — not as an automatic submit side effect.",
+      "steps": [
+        {
+          "label": "Open the case Overview"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "TROUBLE.REVIEW_DATE",
+      "kind": "troubleshoot",
+      "title": "My review date looks wrong",
+      "aliases": [
+        "wrong review due"
+      ],
+      "questionForms": [
+        "My review date looks wrong"
+      ],
+      "audience": "customer",
+      "environment": "both",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-case-detail"
+      ],
+      "category": "troubleshooting",
+      "summary": "Schedule review and submit-to-production both set review due about 11 months ahead on the server from today’s date. The web does not calculate a second date. If you scheduled again, the backend recalculates from now. Check whether you scheduled review or submitted, rather than typing a date locally.",
+      "steps": [
+        {
+          "label": "Open Review"
+        },
+        {
+          "label": "Schedule review again if you need a fresh 11-month date"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
       "id": "GLOSS.LICENCE",
       "kind": "glossary",
       "title": "Licence",
@@ -1842,7 +5257,7 @@
         "advisors"
       ],
       "category": "glossary",
-      "summary": "The customer rank that does advisor work in the Android app. Organisation Admin is a separate grant and may allow organisation/account administration in the portal; it does not grant leadership reporting. Advisor work appears to leadership through Team Pipeline, Advisors, and Production.",
+      "summary": "The customer rank that does advisor work in Advisor Workspace (/advisor) and the Android app. Organisation Admin is a separate grant and may allow organisation/account administration in the portal; it does not grant leadership reporting. Advisor work appears to leadership through Team Pipeline, Advisors, and Production.",
       "steps": [],
       "blockedGuidance": "BLOCK.ADVISOR_USES_MOBILE",
       "requiredFacts": [],
@@ -1907,7 +5322,7 @@
     {
       "id": "BLOCK.ADVISOR_USES_MOBILE",
       "kind": "blocked",
-      "title": "Financial Advisors use the Android app",
+      "title": "Financial Advisors use Advisor Workspace",
       "aliases": [
         "advisor no portal"
       ],
@@ -1917,9 +5332,11 @@
       "audience": "customer",
       "environment": "both",
       "requiredCapabilities": [],
-      "routes": [],
+      "routes": [
+        "advisor-home"
+      ],
       "category": "troubleshooting",
-      "summary": "Financial Advisors do advisor work in the Android app. A Financial Advisor who is also Organisation Administrator may use organisation/account administration in the portal; it does not grant Team Pipeline or other leadership reporting. Invite ordinary advisors to the mobile app, not to leadership portal sign-in.",
+      "summary": "Financial Advisors do their own book in Advisor Workspace (/advisor) and in the Android app. They do not use Management Portal leadership reporting (Team Pipeline, Advisors, company Production, Performance). A Financial Advisor who is also Organisation Administrator may switch to organisation/account administration; that grant is not leadership scope.",
       "steps": [],
       "blockedGuidance": null,
       "requiredFacts": [],

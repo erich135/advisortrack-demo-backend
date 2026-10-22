@@ -356,7 +356,9 @@ export const dashboardRepository = {
         type: event.type,
         status: event.status,
         contactName: event.contactName,
+        contactId: event.contactId,
         scheduledAt: event.scheduledAt,
+        pipelineStage: event.pipelineStage,
         source: 'activity' as const,
       })),
       ...upcomingCaseSteps.map((step) => ({
@@ -367,6 +369,7 @@ export const dashboardRepository = {
         contactName: step.contactName,
         contactId: step.contactId,
         scheduledAt: step.scheduledAt,
+        pipelineStage: step.pipelineStage,
         source: 'case' as const,
       })),
     ]

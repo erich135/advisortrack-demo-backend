@@ -91,11 +91,18 @@ export const ASSISTANT_CAPABILITIES: AssistantCapability[] = [
     description: 'Settings & Roles. Customer Executive, and in production also platform admin.',
   },
   {
+    key: 'canViewAdvisorWorkspace',
+    helper: 'hierarchy.rank === financial_advisor (not platform staff, not leadership)',
+    repositories: ['Advisor-Track-Dashboard', 'advisortrack-demo-frontend'],
+    description:
+      'Advisor Workspace (/advisor). Ordinary Financial Advisors and FA + Organisation Admin. Leadership and platform staff are not granted Advisor Workspace in A8.1.',
+  },
+  {
     key: 'canViewDashboard',
     helper: 'authenticated Management Portal session (route is ungated once signed in)',
     repositories: ['Advisor-Track-Dashboard', 'advisortrack-demo-frontend'],
     description:
-      'Dashboard is reachable to anyone who can sign into the portal. Ordinary Financial Advisors do not; Organisation Admin is a separate portal grant.',
+      'Management Dashboard. Leadership portal access or Organisation Admin. Ordinary Financial Advisors use Advisor Workspace instead of this dashboard.',
   },
   {
     key: 'isOrganisationAdmin',

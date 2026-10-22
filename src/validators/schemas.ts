@@ -636,6 +636,11 @@ const pipelineStageSchema = z.enum([
   'Review',
 ]);
 
+export const listCasesQuerySchema = z.object({
+  status: z.enum(['open', 'won', 'lost', 'closed']).optional(),
+  stage: pipelineStageSchema.optional(),
+});
+
 export const createCaseSchema = z.object({
   contactId: z.string().uuid(),
   currentStage: pipelineStageSchema.optional(),

@@ -161,6 +161,51 @@ export const ATTENTION_SUMMARY_TOOL: AssistantToolDefinition = {
   auditClass: 'read_person',
 };
 
+export const MY_FOLLOWUPS_TOOL: AssistantToolDefinition = {
+  id: 'MY_FOLLOWUPS',
+  version: 1,
+  title: 'My follow-ups',
+  domain: 'reporting',
+  audiences: ['mobile_advisor'],
+  environments: ['both'],
+  requiredCapabilities: ['canViewAdvisorWorkspace'],
+  scopeResolver: 'self',
+  acceptsEntityKinds: [],
+  limits: { maxRows: 1, timeoutMs: 4000 },
+  cache: { ttlSeconds: 30, keyBy: ['scope'] },
+  auditClass: 'read_summary',
+};
+
+export const MY_PIPELINE_TOOL: AssistantToolDefinition = {
+  id: 'MY_PIPELINE',
+  version: 1,
+  title: 'My pipeline',
+  domain: 'reporting',
+  audiences: ['mobile_advisor'],
+  environments: ['both'],
+  requiredCapabilities: ['canViewAdvisorWorkspace'],
+  scopeResolver: 'self',
+  acceptsEntityKinds: [],
+  limits: { maxRows: 1, timeoutMs: 4000 },
+  cache: { ttlSeconds: 30, keyBy: ['scope'] },
+  auditClass: 'read_summary',
+};
+
+export const MY_CASE_SUMMARY_TOOL: AssistantToolDefinition = {
+  id: 'MY_CASE_SUMMARY',
+  version: 1,
+  title: 'My case summary',
+  domain: 'reporting',
+  audiences: ['mobile_advisor'],
+  environments: ['both'],
+  requiredCapabilities: ['canViewAdvisorWorkspace'],
+  scopeResolver: 'self',
+  acceptsEntityKinds: [],
+  limits: { maxRows: 1, timeoutMs: 4000 },
+  cache: { ttlSeconds: 30, keyBy: ['scope', 'entity'] },
+  auditClass: 'read_summary',
+};
+
 export const ASSISTANT_TOOLS: AssistantToolDefinition[] = [
   PERSON_SUMMARY_TOOL,
   LICENCE_SUMMARY_TOOL,
@@ -172,6 +217,9 @@ export const ASSISTANT_TOOLS: AssistantToolDefinition[] = [
   COMPARISON_SUMMARY_TOOL,
   RANKING_SUMMARY_TOOL,
   ATTENTION_SUMMARY_TOOL,
+  MY_FOLLOWUPS_TOOL,
+  MY_PIPELINE_TOOL,
+  MY_CASE_SUMMARY_TOOL,
 ];
 
 export const personSummaryInputSchema = z.object({
@@ -230,6 +278,18 @@ export function canUseRankingSummary(ctx: ToolExecutionContext): boolean {
 
 export function canUseAttentionSummary(ctx: ToolExecutionContext): boolean {
   return canUseLeadershipReporting(ctx) && ctx.assistant.capabilities.canViewAdvisors === true;
+}
+
+export function canUseMyFollowups(ctx: ToolExecutionContext): boolean {
+  return ctx.assistant.capabilities.canViewAdvisorWorkspace === true;
+}
+
+export function canUseMyPipeline(ctx: ToolExecutionContext): boolean {
+  return ctx.assistant.capabilities.canViewAdvisorWorkspace === true;
+}
+
+export function canUseMyCaseSummary(ctx: ToolExecutionContext): boolean {
+  return ctx.assistant.capabilities.canViewAdvisorWorkspace === true;
 }
 
 export function executePersonSummary(

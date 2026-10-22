@@ -39,6 +39,8 @@ export interface DashboardUpcomingEvent {
   contactName?: string;
   contactId?: string;
   scheduledAt: string;
+  /** Additive optional field. Android ignores unknown properties. */
+  pipelineStage?: string;
 }
 
 export interface DashboardPipelineStageStat {

@@ -803,6 +803,7 @@ export class ActivityService {
       ...(input.status !== undefined ? { status: input.status } : {}),
       ...(input.description !== undefined ? { description: input.description || undefined } : {}),
       ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.scheduledAt !== undefined ? { scheduledAt: input.scheduledAt } : {}),
     };
     this.store.activities[index] = updated;
     const { userId: _uid, ...dto } = updated;

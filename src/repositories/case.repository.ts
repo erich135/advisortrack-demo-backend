@@ -168,6 +168,67 @@ export const caseRepository = {
   },
 
   /**
+   * Lists cases owned by the authenticated advisor. Optional status/stage filters.
+   */
+  async listByUserId(
+    userId: string,
+    filters: { status?: string; stage?: string } = {},
+  ): Promise<ClientCaseRow[]> {
+    const params: unknown[] = [userId];
+    const where = ['c.user_id = $1'];
+    if (filters.status) {
+      params.push(filters.status);
+      where.push(`c.status::text = $${params.length}`);
+    }
+    if (filters.stage) {
+      params.push(filters.stage);
+      where.push(`c.current_stage::text = $${params.length}`);
+    }
+    const result = await getPool().query<ClientCaseRow>(
+      `SELECT ${CASE_SELECT}
+       FROM client_cases c
+       JOIN contacts ct ON ct.id = c.contact_id
+       WHERE ${where.join(' AND ')}
+       ORDER BY c.updated_at DESC`,
+      params,
+    );
+    return result.rows;
+  },
+
+  /**
+   * Document sent/received counts for pipeline cards. No document bodies.
+   */
+  async listDocumentSummaries(
+    caseIds: string[],
+  ): Promise<Map<string, { total: number; sent: number; received: number }>> {
+    const summaries = new Map<string, { total: number; sent: number; received: number }>();
+    if (!caseIds.length) return summaries;
+    const result = await getPool().query<{
+      case_id: string;
+      total: string;
+      sent: string;
+      received: string;
+    }>(
+      `SELECT case_id,
+              COUNT(*)::text AS total,
+              COUNT(sent_at)::text AS sent,
+              COUNT(received_at)::text AS received
+       FROM case_documents
+       WHERE case_id = ANY($1::uuid[])
+       GROUP BY case_id`,
+      [caseIds],
+    );
+    for (const row of result.rows) {
+      summaries.set(row.case_id, {
+        total: Number(row.total),
+        sent: Number(row.sent),
+        received: Number(row.received),
+      });
+    }
+    return summaries;
+  },
+
+  /**
    * Loads a case by id for the owning advisor.
    */
   async findById(userId: string, caseId: string): Promise<ClientCaseRow | null> {
@@ -478,6 +539,7 @@ export const caseRepository = {
       contactName: string;
       title: string;
       scheduledAt: string;
+      pipelineStage?: string;
     }>
   > {
     const result = await getPool().query<{
@@ -519,6 +581,7 @@ export const caseRepository = {
         contactName,
         title: row.title?.trim() || row.current_stage.replace('Interview', 'Fact-finding'),
         scheduledAt: row.event_date.toISOString().slice(0, 10),
+        pipelineStage: row.current_stage,
       };
     });
   },

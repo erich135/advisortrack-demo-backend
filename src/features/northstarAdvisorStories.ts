@@ -38,7 +38,139 @@ export type ExtraCaseSpec = {
   ficaBank: boolean;
   nextAction: boolean;
   nextActionTitle?: string;
+  chosenInsurer?: string;
+  reviewDue?: boolean;
+  linkProduction?: boolean;
+  applicationStatus?: string;
+  factFindMode?: 'simple_goal' | 'full_fna';
+  analysisQuotes?: Array<{ productType?: string; insurer?: string; premium?: number; commission?: number }>;
 };
+
+export type ExtraActivitySpec = {
+  title: string;
+  bucket: DemoDateBucket;
+  slotOffset: number;
+  status: 'scheduled' | 'completed';
+  type: 'call' | 'meeting' | 'email' | 'follow_up' | 'presentation';
+  stage: (typeof STAGES)[number];
+  outcome?: 'proceeded' | 'lost' | 'completed';
+};
+
+export const extraMayaWorkspaceCases = (): ExtraCaseSpec[] => [
+  {
+    title: 'Life Cover new enquiry',
+    stage: 'Initial Contact',
+    bucket: 'current_month',
+    slotOffset: 21,
+    amount: 0,
+    issued: false,
+    docsReceived: 0,
+    ficaId: false,
+    ficaResidence: false,
+    ficaBank: false,
+    nextAction: true,
+    nextActionTitle: 'Call client',
+    linkProduction: false,
+  },
+  {
+    title: 'Retirement annuity fact-find',
+    stage: 'Interview',
+    bucket: 'yesterday',
+    slotOffset: 22,
+    amount: 0,
+    issued: false,
+    docsReceived: 1,
+    ficaId: true,
+    ficaResidence: false,
+    ficaBank: false,
+    nextAction: true,
+    nextActionTitle: 'Gather FICA',
+    linkProduction: false,
+    factFindMode: 'simple_goal',
+  },
+  {
+    title: 'Income protection quotes',
+    stage: 'Analysis',
+    bucket: 'hours_ago',
+    slotOffset: 23,
+    amount: 0,
+    issued: false,
+    docsReceived: 2,
+    ficaId: true,
+    ficaResidence: true,
+    ficaBank: false,
+    nextAction: true,
+    nextActionTitle: 'Call client',
+    linkProduction: false,
+    analysisQuotes: [
+      { productType: 'Income protection', insurer: 'Discovery', premium: 1850, commission: 22000 },
+      { productType: 'Income protection', insurer: 'Sanlam', premium: 1720, commission: 19800 },
+    ],
+  },
+  {
+    title: 'Investment recommendation pack',
+    stage: 'Recommendation',
+    bucket: 'current_month',
+    slotOffset: 24,
+    amount: 0,
+    issued: false,
+    docsReceived: 3,
+    ficaId: true,
+    ficaResidence: true,
+    ficaBank: true,
+    nextAction: true,
+    nextActionTitle: 'Submit application',
+    chosenInsurer: 'Sanlam',
+    linkProduction: false,
+  },
+  {
+    title: 'Disability cover implementation',
+    stage: 'Implementation',
+    bucket: 'current_month',
+    slotOffset: 25,
+    amount: 24500,
+    issued: false,
+    docsReceived: 3,
+    ficaId: true,
+    ficaResidence: true,
+    ficaBank: true,
+    nextAction: false,
+    chosenInsurer: 'Old Mutual',
+    linkProduction: true,
+    applicationStatus: 'application_received',
+  },
+  {
+    title: 'Life Cover annual review',
+    stage: 'Review',
+    bucket: 'current_month',
+    slotOffset: 26,
+    amount: 0,
+    issued: false,
+    docsReceived: 3,
+    ficaId: true,
+    ficaResidence: true,
+    ficaBank: true,
+    nextAction: false,
+    chosenInsurer: 'Discovery',
+    reviewDue: true,
+    linkProduction: false,
+  },
+];
+
+export const extraMayaWorkspaceActivities = (): ExtraActivitySpec[] => [
+  { title: 'Follow-up call today', bucket: 'hours_ago', slotOffset: 1, status: 'scheduled', type: 'call', stage: 'Initial Contact' },
+  { title: 'Fact-find later this week', bucket: 'upcoming', slotOffset: 2, status: 'scheduled', type: 'meeting', stage: 'Interview' },
+  { title: 'Quote review this week', bucket: 'upcoming', slotOffset: 4, status: 'scheduled', type: 'follow_up', stage: 'Analysis' },
+  { title: 'Overdue FICA chase', bucket: 'days_ago_3', slotOffset: 1, status: 'scheduled', type: 'call', stage: 'Interview' },
+  { title: 'Overdue implementation check', bucket: 'days_ago_4', slotOffset: 2, status: 'scheduled', type: 'email', stage: 'Implementation' },
+  { title: 'Completed initial contact', bucket: 'hours_ago', slotOffset: 3, status: 'completed', type: 'call', stage: 'Initial Contact', outcome: 'proceeded' },
+  { title: 'Completed fact-find', bucket: 'yesterday', slotOffset: 4, status: 'completed', type: 'meeting', stage: 'Interview', outcome: 'proceeded' },
+  { title: 'Completed analysis', bucket: 'current_month', slotOffset: 5, status: 'completed', type: 'follow_up', stage: 'Analysis', outcome: 'proceeded' },
+  { title: 'Completed recommendation', bucket: 'current_month', slotOffset: 6, status: 'completed', type: 'presentation', stage: 'Recommendation', outcome: 'proceeded' },
+  { title: 'Completed implementation', bucket: 'current_month', slotOffset: 7, status: 'completed', type: 'meeting', stage: 'Implementation', outcome: 'proceeded' },
+  { title: 'Completed review', bucket: 'current_month', slotOffset: 8, status: 'completed', type: 'meeting', stage: 'Review', outcome: 'completed' },
+  { title: 'Last-week review call', bucket: 'last_week', slotOffset: 2, status: 'completed', type: 'call', stage: 'Review', outcome: 'proceeded' },
+];
 
 export const mobileBucketFor = (
   archetype: AdvisorArchetype,

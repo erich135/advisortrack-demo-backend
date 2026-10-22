@@ -125,5 +125,26 @@ export function wrapLiveSource(source: LiveDirectorySource, ctx: ToolExecutionCo
         load: () => source.listAttentionInputs!(ctx),
       })
       : undefined,
+    listSelfActivities: source.listSelfActivities
+      ? () => runLiveFetch(ctx, {
+        service: 'activities',
+        keyParts: ['self', ctx.identity.userId],
+        load: () => source.listSelfActivities!(ctx),
+      })
+      : undefined,
+    listSelfCases: source.listSelfCases
+      ? () => runLiveFetch(ctx, {
+        service: 'cases',
+        keyParts: ['self', ctx.identity.userId],
+        load: () => source.listSelfCases!(ctx),
+      })
+      : undefined,
+    getSelfCaseSummary: source.getSelfCaseSummary
+      ? (_ignored, caseId) => runLiveFetch(ctx, {
+        service: 'cases',
+        keyParts: ['self', ctx.identity.userId, caseId],
+        load: () => source.getSelfCaseSummary!(ctx, caseId),
+      })
+      : undefined,
   };
 }

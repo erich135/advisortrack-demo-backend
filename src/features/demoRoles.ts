@@ -1,4 +1,9 @@
-export const DEMO_PUBLIC_ROLES = ['executive', 'regional_manager', 'team_leader'] as const;
+export const DEMO_PUBLIC_ROLES = [
+  'executive',
+  'regional_manager',
+  'team_leader',
+  'financial_advisor',
+] as const;
 
 export type DemoPublicRole = (typeof DEMO_PUBLIC_ROLES)[number];
 export type DemoSelectedRole = DemoPublicRole;
@@ -7,12 +12,10 @@ const ROLE_LABELS: Record<DemoPublicRole, string> = {
   executive: 'Executive',
   regional_manager: 'Regional Manager',
   team_leader: 'Team Leader',
+  financial_advisor: 'Financial Advisor',
 };
 
 const REJECTED_ROLE_ALIASES = new Set([
-  'financial_advisor',
-  'financial advisor',
-  'advisor',
   'founder/admin',
   'founder admin',
   'founder',
