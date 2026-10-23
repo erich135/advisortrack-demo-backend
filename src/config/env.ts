@@ -11,9 +11,18 @@ import {
   DEFAULT_DEMO_SESSION_TTL_MINUTES,
 } from '../features/demoSessionPolicy';
 
-const envFile = process.env.ADVISORTRACK_ENV_FILE
-  ? path.resolve(process.env.ADVISORTRACK_ENV_FILE)
-  : path.resolve(process.cwd(), '.env');
+function resolveEnvFile(): string {
+  if (process.env.ADVISORTRACK_ENV_FILE) {
+    return path.resolve(process.env.ADVISORTRACK_ENV_FILE);
+  }
+  const demoFile = path.resolve(process.cwd(), '.env.demo');
+  if (!process.env.DATABASE_URL && fs.existsSync(demoFile)) {
+    return demoFile;
+  }
+  return path.resolve(process.cwd(), '.env');
+}
+
+const envFile = resolveEnvFile();
 
 if (process.env.ADVISORTRACK_ENV_FILE && !fs.existsSync(envFile)) {
   console.error(`ADVISORTRACK_ENV_FILE does not exist: ${envFile}`);
@@ -29,7 +38,7 @@ if (fs.existsSync(envFile)) {
 const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  ADVISORTRACK_MODE: z.enum(['live', 'demo']).default('live'),
+  ADVISORTRACK_MODE: z.enum(['live', 'demo']).default('demo'),
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
   DEMO_SESSION_TTL_MINUTES: z.coerce.number().int().positive().default(DEFAULT_DEMO_SESSION_TTL_MINUTES),
@@ -50,12 +59,15 @@ const envSchema = z.object({
   MAIL_FROM_NAME: z.string().default('AdvisorTrack'),
   /** Deep link scheme used in verification / reset emails (matches app.json scheme). */
   APP_DEEP_LINK_SCHEME: z.string().default('advisortrack'),
-  /** AdvisorTrack Assistant runtime model. Default disabled. `xai` uses Grok 4.6. */
-  ASSISTANT_MODEL_PROVIDER: z.enum(['disabled', 'http', 'xai']).default('disabled'),
+  /** AdvisorTrack Assistant runtime model. Default disabled. `xai` uses Grok 4.6. `groq` uses GroqCloud. */
+  ASSISTANT_MODEL_PROVIDER: z.enum(['disabled', 'http', 'xai', 'groq']).default('disabled'),
   ASSISTANT_MODEL_URL: z.string().optional(),
   ASSISTANT_MODEL_API_KEY: z.string().optional(),
   ASSISTANT_MODEL_TIMEOUT_MS: z.coerce.number().int().positive().default(8000),
   XAI_API_KEY: z.string().optional(),
+  GROQ_API_KEY: z.string().optional(),
+  GROQ_MODEL: z.string().optional(),
+  GROQ_BASE_URL: z.string().optional(),
   /** Chat Completions base URL. Default global; set US regional later without a code change. */
   ASSISTANT_MODEL_BASE_URL: z.string().optional(),
   ASSISTANT_MODEL_NAME: z.string().optional(),
@@ -113,6 +125,9 @@ export const env = {
   assistantModelApiKey: data.ASSISTANT_MODEL_API_KEY?.trim() || '',
   assistantModelTimeoutMs: data.ASSISTANT_MODEL_TIMEOUT_MS,
   xaiApiKey: data.XAI_API_KEY?.trim() || data.ASSISTANT_MODEL_API_KEY?.trim() || '',
+  groqApiKey: data.GROQ_API_KEY?.trim() || '',
+  groqModel: data.GROQ_MODEL?.trim() || 'openai/gpt-oss-120b',
+  groqBaseUrl: data.GROQ_BASE_URL?.trim() || 'https://api.groq.com/openai/v1',
   assistantModelBaseUrl: data.ASSISTANT_MODEL_BASE_URL?.trim() || 'https://api.x.ai/v1',
   assistantModelName: data.ASSISTANT_MODEL_NAME?.trim() || 'grok-4.6',
   assistantModelReasoning: data.ASSISTANT_MODEL_REASONING,

@@ -175,10 +175,13 @@ function runStaticChecks(): void {
   assert(layout.includes('switchDemoPersona'), 'portal can switch demo roles');
   assert(layout.includes('Financial Advisor'), 'role switcher includes Financial Advisor');
   const advisorLayout = fs.readFileSync(path.join(frontendRoot, 'src/components/AdvisorLayout.tsx'), 'utf8');
-  assert(advisorLayout.includes('Financial Advisor'), 'Advisor Workspace Viewing As includes Financial Advisor');
+  assert(advisorLayout.includes('WorkspaceSwitcher'), 'Advisor Workspace keeps the workspace switcher');
+  assert(!advisorLayout.includes('Viewing as'), 'Advisor Workspace does not duplicate Viewing As chrome');
+  assert(layout.includes("id: 'financial_advisor'"), 'Advisor Workspace Viewing As includes Financial Advisor');
 }
 
 async function runLiveRegression(): Promise<void> {
+  process.env.ADVISORTRACK_MODE = 'live';
   require('dotenv').config({ path: path.join(root, '.env') });
   const { createApp } = await import('../src/app');
   const { env } = await import('../src/config/env');

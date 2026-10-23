@@ -4,6 +4,15 @@ export { createToolExecutionContext } from './context';
 export { createOrganisationLiveSource } from './organisationSource';
 export { createFixtureLiveSource } from './source';
 export { routeLiveQuestion } from './router';
+export {
+  companionAnswer,
+  companionPriorityItems,
+  detectCompanionFocus,
+  looksCompanionBriefingQuestion,
+  looksCompanionEndOfDayQuestion,
+  looksCompanionQuestion,
+} from './companion';
+export type { CompanionFocus, CompanionPriorityItem, CompanionSnapshot } from './companion';
 export { resolvePersonInScope, resolveTeamInScope, resolveRegionInScope } from './resolve';
 export { mintPersonRef, mintTeamRef, mintRegionRef, readEntityRef, createTurnRefTable } from './refs';
 export {

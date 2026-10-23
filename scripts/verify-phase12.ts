@@ -274,6 +274,7 @@ function runStaticChecks(): void {
 }
 
 async function runLiveRegression(): Promise<void> {
+  process.env.ADVISORTRACK_MODE = 'live';
   require('dotenv').config({ path: path.join(root, '.env') });
   const { createApp } = await import('../src/app');
   const { env } = await import('../src/config/env');

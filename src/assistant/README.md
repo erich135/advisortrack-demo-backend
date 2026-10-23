@@ -45,8 +45,13 @@ ASSISTANT_MODEL_NAME=grok-4.6
 ASSISTANT_MODEL_REASONING=medium
 ASSISTANT_MODEL_TIMEOUT_MS=8000
 ASSISTANT_MODEL_BASE_URL=https://api.x.ai/v1
+
+ASSISTANT_MODEL_PROVIDER=groq
+GROQ_API_KEY=
+GROQ_MODEL=openai/gpt-oss-120b
+GROQ_BASE_URL=https://api.groq.com/openai/v1
 ```
 
-`ASSISTANT_MODEL_PROVIDER=disabled` remains valid. Default endpoint is global; US regional `https://us.api.x.ai/v1` is config-only. Demo synthetic fields are not privacy-minimised. Product scope simulation still applies.
+`ASSISTANT_MODEL_PROVIDER=disabled` remains valid. xAI remains supported. GroqCloud is the initial Dex provider for local testing. Demo talks to GroqCloud or xAI directly — never to api.advisortrack.co.za. End-client PII is never sent to GroqCloud. Zero Data Retention is a GroqCloud organisation setting and is not assumed enabled. Default xAI endpoint is global; US regional `https://us.api.x.ai/v1` is config-only. Demo synthetic fields are not privacy-minimised for xAI; GroqCloud still refuses end-client PII in the prompt. Product scope simulation still applies.
 
 Prompt caching uses `x-grok-conv-id: advisortrack-assistant-decision-v1:<environment>:<opaque-company-key>`. Production and demo never share an affinity id. Live tool facts are untrusted data. Model retries are limited to one repair attempt and never retry 401/403/429. Customer frontend snapshots contain no staff cards.

@@ -1,4 +1,5 @@
 import { AppError } from '../../middleware/errorHandler';
+// Demo live tools use the process DATABASE_URL. Startup refuses anything except advisortrack_demo.
 import { RANK_LABELS, type HierarchyRank } from '../../features/customerHierarchy';
 import {
   hasNoNextAction,

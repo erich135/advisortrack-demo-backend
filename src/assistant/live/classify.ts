@@ -152,6 +152,13 @@ export const MY_DASHBOARD_FIELDS: FieldCatalog = {
   overdueActivities: 'operational',
   todayActivities: 'operational',
   followUpsToday: 'operational',
+  todayMeetingCount: 'operational',
+  todayCallCount: 'operational',
+  thisWeekCount: 'operational',
+  completedTodayCount: 'operational',
+  followUpOverdueCount: 'operational',
+  pendingUnderwritingCount: 'operational',
+  awaitingAdvisorInfoCount: 'operational',
 };
 
 export const MY_PIPELINE_FIELDS: FieldCatalog = {

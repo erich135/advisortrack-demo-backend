@@ -374,12 +374,24 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  const { assertConfiguredDatabaseForMode } = await import('../src/config/databaseSafety');
+  assertConfiguredDatabaseForMode('demo', process.env.DATABASE_URL);
+
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
   const client = await pool.connect();
   try {
-    const identity = await client.query<{ db: string }>(`SELECT current_database() AS db`);
+    const identity = await client.query<{ db: string; db_user: string }>(
+      `SELECT current_database() AS db, current_user AS db_user`
+    );
     if (identity.rows[0]?.db !== DEMO_DB) {
       console.error(`Refusing Northstar seed: connected to "${identity.rows[0]?.db}", expected "${DEMO_DB}".`);
+      process.exit(1);
+    }
+    if (
+      identity.rows[0]?.db === 'advisor_track' ||
+      identity.rows[0]?.db === 'advisortrack_local'
+    ) {
+      console.error(`Refusing Northstar seed: production or production-development database.`);
       process.exit(1);
     }
 

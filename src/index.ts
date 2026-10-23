@@ -29,9 +29,9 @@ const start = async () => {
     process.exit(1);
   }
 
-  if (env.isDemoMode && !dbStatus.connected) {
+  if (!dbStatus.connected) {
     console.error(
-      'FATAL demo isolation: demo mode cannot start without a connected advisortrack_demo database. No in-memory fallback.'
+      'FATAL demo isolation: this demo backend cannot start without a connected advisortrack_demo database. No in-memory fallback.'
     );
     process.exit(1);
   }

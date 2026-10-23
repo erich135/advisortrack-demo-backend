@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Starts the local public-demo API from .env.demo on 127.0.0.1:3001.
- * Does not load the live .env and does not change `npm run dev`.
+ * Canonical local startup for both `npm run dev` and `npm run dev:demo`.
  */
 const path = require('path');
 const { spawn } = require('child_process');

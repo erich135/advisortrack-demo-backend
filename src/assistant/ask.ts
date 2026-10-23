@@ -20,6 +20,8 @@ import { countToolProjectionFields, minimiseLiveToolsForModel } from './live/min
 import { containsEndClientPii } from './live/privacy';
 import type { LiveDirectorySource } from './live/types';
 import { filterCards } from './filter';
+import { buildFactPack } from './factPack';
+import { classifyHighLevelIntent, shouldPreferDirectAnswer } from './intent';
 import {
   answerFromCards,
   answerFromGrounding,
@@ -29,8 +31,15 @@ import {
   privacyRefuseAnswer,
   financialAdviceRefuseAnswer,
   leadershipScopeRefuseAnswer,
+  synthesizeFromCards,
+  frustrationHelpAnswer,
+  productOverviewAnswer,
+  navigateAreaAnswer,
+  submitStillBlockedAnswer,
+  troubleshootAnswer,
 } from './model/compose';
 import { createDisabledProvider, AssistantProviderError, remainingTurnMs, shouldRetryProviderError, staticRetryReason, MIN_MODEL_ATTEMPT_MS } from './model/provider';
+import { assistantModelCooldownRemaining } from './model/rateLimit';
 import { assistantModelDecisionSchema } from './model/types';
 import { candidateFromCard, looksCompositeQuestion, buildModelPrompt } from './model/prompt';
 import { redactQuestion } from './model/redact';
@@ -39,6 +48,7 @@ import type { AssistantAskResult, AssistantModelDecision, AssistantModelProvider
 import { rankCards, retrieveCards } from './retrieve';
 import { expandConversationFollowUp } from './phrases';
 import { looksClientPiiAsk, looksFinancialAdviceQuestion, looksLeadershipScopeAsk } from './privacyAsk';
+import { nodeById, nodeForRoute } from './productMap';
 import { routeById } from './routes';
 import type { ServerKnowledgeBundle, ServerKnowledgeCard } from './serverBundle';
 import type { AssistantRoute } from './types';
@@ -72,7 +82,59 @@ function deterministicFromRetrieval(
   question: string,
   context: AssistantContext,
   routes: AssistantRoute[],
+  previousQuestion?: string | null,
 ): AssistantAskResult {
+  const intent = classifyHighLevelIntent(question, context, previousQuestion);
+  if (intent.kind === 'FRUSTRATION_HELP') {
+    return { answer: frustrationHelpAnswer(context, intent.subject), origin: 'deterministic', modelAttempted: false };
+  }
+  if (intent.kind === 'PRODUCT_OVERVIEW') {
+    return { answer: productOverviewAnswer(context), origin: 'deterministic', modelAttempted: false };
+  }
+  if (intent.kind === 'CURRENT_STATE') {
+    return { answer: navigateAreaAnswer(context, intent.subject), origin: 'deterministic', modelAttempted: false };
+  }
+  if (intent.kind === 'NAVIGATE') {
+    const mapped = (intent.subject ? nodeById(context.workspace, intent.subject) : null)
+      ?? nodeForRoute(context.workspace, context.route.routeId);
+    if (mapped && intent.subject && mapped.id === intent.subject) {
+      return { answer: navigateAreaAnswer(context, intent.subject), origin: 'deterministic', modelAttempted: false };
+    }
+  }
+  if (intent.kind === 'WHAT_NEXT' || intent.kind === 'LIVE_STATUS') {
+    return { answer: synthesizeFromCards([], context, routes, intent), origin: 'deterministic', modelAttempted: false };
+  }
+  if (intent.kind === 'TROUBLESHOOT' && intent.subject === 'pipeline' && /\b(missing|fica|done the fica|cant get|cannot get|case through)\b/i.test(question)) {
+    if (/\b(missing|fica|done the fica)\b/i.test(question)) {
+      return { answer: submitStillBlockedAnswer(), origin: 'deterministic', modelAttempted: false };
+    }
+    return { answer: troubleshootAnswer(context, 'pipeline'), origin: 'deterministic', modelAttempted: false };
+  }
+  if (
+    intent.kind === 'TROUBLESHOOT'
+    && /\b(this (thing|page|screen|app) isn'?t working|isn'?t working)\b/i.test(question)
+    && !/\b(import|submit|fica|licence|license)\b/i.test(question)
+  ) {
+    return { answer: troubleshootAnswer(context, intent.subject), origin: 'deterministic', modelAttempted: false };
+  }
+  if (intent.kind === 'TROUBLESHOOT') {
+    const retrievedFirst = retrieveCards(allowed, question, context.route.routeId);
+    if (retrievedFirst.kind === 'match') {
+      return {
+        answer: answerFromCards([retrievedFirst.card], context, routes),
+        origin: 'deterministic',
+        modelAttempted: false,
+      };
+    }
+    if (retrievedFirst.kind === 'compose') {
+      return {
+        answer: synthesizeFromCards(retrievedFirst.cards.map((hit) => hit.card), context, routes, intent),
+        origin: 'deterministic',
+        modelAttempted: false,
+      };
+    }
+    return { answer: synthesizeFromCards([], context, routes, intent), origin: 'deterministic', modelAttempted: false };
+  }
   const retrieved = retrieveCards(allowed, question, context.route.routeId);
   if (retrieved.kind === 'match') {
     return {
@@ -81,12 +143,29 @@ function deterministicFromRetrieval(
       modelAttempted: false,
     };
   }
-  if (retrieved.kind === 'disambiguate') {
+  if (retrieved.kind === 'compose') {
+    return {
+      answer: synthesizeFromCards(retrieved.cards.map((hit) => hit.card), context, routes, intent),
+      origin: 'deterministic',
+      modelAttempted: false,
+    };
+  }
+  if (retrieved.kind === 'disambiguate' && !shouldPreferDirectAnswer(intent)) {
     return {
       answer: disambiguationAnswer(retrieved.cards.map((hit) => hit.card)),
       origin: 'deterministic',
       modelAttempted: false,
     };
+  }
+  if (retrieved.kind === 'disambiguate') {
+    return {
+      answer: synthesizeFromCards(retrieved.cards.map((hit) => hit.card), context, routes, intent),
+      origin: 'deterministic',
+      modelAttempted: false,
+    };
+  }
+  if (shouldPreferDirectAnswer(intent)) {
+    return { answer: synthesizeFromCards([], context, routes, intent), origin: 'deterministic', modelAttempted: false };
   }
   return { answer: unknownHelpAnswer(context), origin: 'deterministic', modelAttempted: false };
 }
@@ -100,6 +179,10 @@ function shouldBypassModel(
   if (retrieved.kind === 'match' && retrieved.exactForm && !looksCompositeQuestion(question)) {
     return true;
   }
+  const intent = classifyHighLevelIntent(question, context);
+  if (shouldPreferDirectAnswer(intent) && intent.kind !== 'LIVE_STATUS') {
+    return false;
+  }
   if (retrieved.kind === 'unknown') {
     if (looksCompositeQuestion(question)) {
       return rankCards(allowed, question, context.route.routeId).length === 0;
@@ -111,6 +194,15 @@ function shouldBypassModel(
   }
   return false;
 }
+
+const OVERVIEW_ROUTE_SEEDS = [
+  'advisor-home',
+  'advisor-contacts',
+  'advisor-activities',
+  'advisor-pipeline',
+  'advisor-production',
+  'advisor-planning',
+];
 
 function candidateCards(
   allowed: ServerKnowledgeCard[],
@@ -127,7 +219,7 @@ function candidateCards(
     picked.push(card);
   };
   if (retrieved.kind === 'match') add(retrieved.card);
-  if (retrieved.kind === 'disambiguate') {
+  if (retrieved.kind === 'compose' || retrieved.kind === 'disambiguate') {
     for (const hit of retrieved.cards) add(hit.card);
   }
   for (const id of seedIds) {
@@ -138,6 +230,19 @@ function candidateCards(
   for (const hit of ranked) {
     if (hit.score < minScore) continue;
     add(hit.card);
+  }
+  const intent = classifyHighLevelIntent(question, context);
+  if (intent.kind === 'PRODUCT_OVERVIEW') {
+    for (const routeId of OVERVIEW_ROUTE_SEEDS) {
+      const card = allowed.find((item) => item.routes.includes(routeId));
+      if (card) add(card);
+    }
+  } else if (intent.subject) {
+    const node = nodeById(context.workspace, intent.subject);
+    for (const routeId of node?.routeIds ?? []) {
+      const card = allowed.find((item) => item.routes.includes(routeId));
+      if (card) add(card);
+    }
   }
   return picked;
 }
@@ -320,16 +425,6 @@ async function askAssistantInner(input: {
     return { answer: privacyRefuseAnswer(), origin: 'deterministic', modelAttempted: false };
   }
 
-  const conversation = detectConversationIntent(rawQuestion, input.bundle.categories);
-  if (conversation.kind === 'conversation' && conversation.intent !== 'off_topic') {
-    return {
-      answer: buildConversationResponse(conversation.intent, input.bundle.categories, input.environment),
-      origin: 'deterministic',
-      modelAttempted: false,
-    };
-  }
-
-  const question = conversation.kind === 'continue' ? conversation.remainder : rawQuestion;
   const routes = asRoutes(input.bundle);
   const context = withLicenceFacts(
     buildAssistantContext({
@@ -338,11 +433,34 @@ async function askAssistantInner(input: {
       navigation: {
         pathname: input.navigation.pathname,
         search: input.navigation.search,
+        viewport: input.navigation.viewport,
       },
       routes,
     }),
     input.licencePool,
   );
+
+  const conversation = detectConversationIntent(rawQuestion, input.bundle.categories);
+  const socialOnly =
+    conversation.kind === 'conversation' &&
+    conversation.intent !== 'off_topic' &&
+    conversation.intent !== 'frustration';
+  if (socialOnly) {
+    return {
+      answer: buildConversationResponse(
+        conversation.intent,
+        input.bundle.categories,
+        input.environment,
+        context,
+        rawQuestion,
+        input.previousQuestion,
+      ),
+      origin: 'deterministic',
+      modelAttempted: false,
+    };
+  }
+
+  const question = conversation.kind === 'continue' ? conversation.remainder : rawQuestion;
   const allowed = filterCards(input.bundle.cards, {
     environment: context.environment,
     audience: contextAudience(context),
@@ -350,16 +468,27 @@ async function askAssistantInner(input: {
   }, (routeId) => routeById(routeId) ?? routes.find((route) => route.routeId === routeId));
 
   if (looksFinancialAdviceQuestion(question)) {
-    const card = allowed.find((item) => item.id === 'PIPELINE.NO_ADVICE')
-      ?? allowed.find((item) => item.id === 'PRODUCTION.NOT_ADVICE');
-    return {
-      answer: card ? answerFromCards([card], context, routes) : financialAdviceRefuseAnswer(),
-      origin: 'deterministic',
-      modelAttempted: false,
-    };
+    return { answer: financialAdviceRefuseAnswer(), origin: 'deterministic', modelAttempted: false };
   }
   if (looksLeadershipScopeAsk(question) && context.workspace === 'advisor') {
     return { answer: leadershipScopeRefuseAnswer(), origin: 'deterministic', modelAttempted: false };
+  }
+
+  const highLevel = classifyHighLevelIntent(question, context, input.previousQuestion);
+  const provider = input.provider ?? createDisabledProvider();
+  const providerUsable = provider.id !== 'disabled';
+  if (
+    highLevel.kind === 'FRUSTRATION_HELP'
+    || (conversation.kind === 'conversation' && conversation.intent === 'frustration')
+  ) {
+    return {
+      answer: frustrationHelpAnswer(
+        context,
+        highLevel.kind === 'FRUSTRATION_HELP' ? highLevel.subject : null,
+      ),
+      origin: 'deterministic',
+      modelAttempted: false,
+    };
   }
 
   const turnTimeoutMs = input.timeoutMs ?? ASSISTANT_MODEL_LIMITS.timeoutMs;
@@ -373,6 +502,8 @@ async function askAssistantInner(input: {
       context,
       source: input.liveSource,
       timeoutMs: remaining() || 1,
+      previousQuestion: input.previousQuestion,
+      askedQuestion: rawQuestion,
     })
     : null;
 
@@ -399,15 +530,23 @@ async function askAssistantInner(input: {
   }
 
   if (conversation.kind === 'conversation' && conversation.intent === 'off_topic' && !grounding) {
+    if (highLevel.kind !== 'OUT_OF_SCOPE' && shouldPreferDirectAnswer(highLevel)) {
+      return deterministicFromRetrieval(allowed, question, context, routes, input.previousQuestion);
+    }
     return {
-      answer: buildConversationResponse(conversation.intent, input.bundle.categories, input.environment),
+      answer: buildConversationResponse(
+        conversation.intent,
+        input.bundle.categories,
+        input.environment,
+        context,
+        rawQuestion,
+        input.previousQuestion,
+      ),
       origin: 'deterministic',
       modelAttempted: false,
     };
   }
 
-  const provider = input.provider ?? createDisabledProvider();
-  const providerUsable = provider.id !== 'disabled';
   const liveFallback = grounding
     ? compositionFallback(grounding, allowed, question, context, routes)
     : null;
@@ -417,21 +556,24 @@ async function askAssistantInner(input: {
   }
 
   if (!grounding && (!providerUsable || shouldBypassModel(allowed, question, context))) {
-    return deterministicFromRetrieval(allowed, question, context, routes);
+    return deterministicFromRetrieval(allowed, question, context, routes, input.previousQuestion);
   }
 
   const candidates = candidateCards(allowed, question, context, grounding?.seedCardIds ?? []);
   if (!candidates.length && !(grounding?.tools.length)) {
-    return liveFallback ?? { answer: unknownHelpAnswer(context), origin: 'deterministic', modelAttempted: false };
+    return liveFallback ?? deterministicFromRetrieval(allowed, question, context, routes, input.previousQuestion);
   }
 
   const timeoutMs = remaining();
-  const fallback = liveFallback ?? deterministicFromRetrieval(allowed, question, context, routes);
+  const fallback = liveFallback ?? deterministicFromRetrieval(allowed, question, context, routes, input.previousQuestion);
   const modelTools = grounding
     ? minimiseLiveToolsForModel(question, grounding.tools, context)
     : undefined;
 
   if (timeoutMs < MIN_MODEL_ATTEMPT_MS) {
+    return fallback;
+  }
+  if (provider.id === 'groq' && assistantModelCooldownRemaining() > 0) {
     return fallback;
   }
 
@@ -449,6 +591,14 @@ async function askAssistantInner(input: {
       tools: modelTools,
       derivations: grounding?.derivations,
       period: grounding?.period,
+      factPack: buildFactPack({
+        context,
+        intent: highLevel,
+        cards: candidates,
+        live: modelTools,
+        derivations: grounding?.derivations,
+        viewport: context.viewport,
+      }),
     });
     if (grounding?.result.provenance) {
       grounding.result.provenance.promptChars = prompt.user.length;
@@ -458,9 +608,12 @@ async function askAssistantInner(input: {
     if (prompt.user.length > ASSISTANT_MODEL_LIMITS.maxPromptChars) {
       return fallback;
     }
-    if (context.environment === 'production' && containsEndClientPii(prompt.user)) {
-      const error = new AssistantProviderError('Production model input contained end-client PII', 'schema');
-      error.validation = { code: 'client_pii', message: 'Production model input contained end-client PII' };
+    if (
+      (provider.id === 'groq' || context.environment === 'production')
+      && containsEndClientPii(prompt.user)
+    ) {
+      const error = new AssistantProviderError('Model input contained end-client PII', 'schema');
+      error.validation = { code: 'client_pii', message: 'Model input contained end-client PII' };
       throw error;
     }
     const completion = await completeDecision(provider, prompt, attemptBudget, {
@@ -476,6 +629,7 @@ async function askAssistantInner(input: {
       candidateIds: candidates.map((card) => card.id),
       routes,
       question,
+      previousQuestion: input.previousQuestion,
       extraToolNumbers: extraNumbersFromGrounding({
         tools: modelTools,
         derivations: grounding?.derivations,

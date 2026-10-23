@@ -57,6 +57,23 @@ const describeTarget = (target: ParsedDatabaseTarget): string =>
   `${target.database} as ${target.user || '(unknown-user)'} @ ${target.host}:${target.port}`;
 
 /**
+ * This repository is the demo backend. Production and local production-dev
+ * databases are forbidden in every mode, including an accidental ADVISORTRACK_MODE=live.
+ */
+export const assertNotProductionDevelopmentDatabase = (target: ParsedDatabaseTarget): void => {
+  if (DEMO_FORBIDDEN_DATABASE_NAMES.has(target.database) || PRODUCTION_DATABASE_NAMES.has(target.database)) {
+    throw new Error(
+      `FATAL demo isolation: this demo backend cannot use database "${target.database}" (configured ${describeTarget(target)}). Refusing to start.`
+    );
+  }
+  if (PRODUCTION_DATABASE_USERS.has(target.user)) {
+    throw new Error(
+      `FATAL demo isolation: this demo backend cannot use production database user "${target.user}". Refusing to start.`
+    );
+  }
+};
+
+/**
  * Throws when demo/live mode is pointed at the wrong database.
  * Never includes the password in the error.
  */
@@ -76,14 +93,10 @@ export const assertConfiguredDatabaseForMode = (
         'FATAL demo isolation: DATABASE_URL could not be parsed. Refusing to start demo mode.'
       );
     }
+    assertNotProductionDevelopmentDatabase(target);
     if (target.database !== DEMO_DATABASE_NAME) {
       throw new Error(
         `FATAL demo isolation: demo mode must use database "${DEMO_DATABASE_NAME}" (configured ${describeTarget(target)}). Refusing to start.`
-      );
-    }
-    if (DEMO_FORBIDDEN_DATABASE_NAMES.has(target.database) || PRODUCTION_DATABASE_NAMES.has(target.database)) {
-      throw new Error(
-        `FATAL demo isolation: demo mode cannot use database "${target.database}". Refusing to start.`
       );
     }
     if (PRODUCTION_DATABASE_USERS.has(target.user)) {
@@ -104,23 +117,33 @@ export const assertConfiguredDatabaseForMode = (
     return target;
   }
 
-  const target = parseDatabaseUrl(connectionString);
-  if (!target) {
-    return {
-      database: '',
-      user: '',
-      host: '',
-      port: '',
-    };
-  }
-  if (LIVE_FORBIDDEN_DATABASE_NAMES.has(target.database)) {
+  // This repository is the demo backend. ADVISORTRACK_MODE=live must still
+  // use advisortrack_demo — never production or production-development DBs.
+  if (!connectionString?.trim()) {
     throw new Error(
-      `FATAL database isolation: live/production mode cannot use demo database "${target.database}". Refusing to start.`
+      'FATAL demo isolation: DATABASE_URL is required for advisortrack_demo. Refusing to start.'
     );
   }
-  if (isAllowedDemoDatabaseUser(target.user)) {
+  const target = parseDatabaseUrl(connectionString);
+  if (!target?.database) {
     throw new Error(
-      `FATAL database isolation: live/production mode cannot use demo database user "${target.user}". Refusing to start.`
+      'FATAL demo isolation: DATABASE_URL could not be parsed. Refusing to start.'
+    );
+  }
+  assertNotProductionDevelopmentDatabase(target);
+  if (target.database !== DEMO_DATABASE_NAME) {
+    throw new Error(
+      `FATAL demo isolation: this demo backend must use database "${DEMO_DATABASE_NAME}" (configured ${describeTarget(target)}). Refusing to start.`
+    );
+  }
+  if (target.user && !isAllowedDemoDatabaseUser(target.user)) {
+    throw new Error(
+      `FATAL demo isolation: this demo backend must use database user "${DEMO_DATABASE_USER}" or "${DEMO_DATABASE_LOCAL_USER}" (configured ${describeTarget(target)}). Refusing to start.`
+    );
+  }
+  if (target.host && !DEMO_ALLOWED_DATABASE_HOSTS.has(target.host)) {
+    throw new Error(
+      `FATAL demo isolation: this demo backend must use a local PostgreSQL host (configured ${describeTarget(target)}). Refusing to start.`
     );
   }
   return target;
@@ -130,39 +153,30 @@ export const assertConfiguredDatabaseForMode = (
  * Confirms the live PostgreSQL current_database() matches the configured mode.
  */
 export const assertConnectedDatabaseForMode = (
-  mode: AppMode,
+  _mode: AppMode,
   configured: ParsedDatabaseTarget,
   connectedDatabase: string | undefined,
   connectedUser?: string
 ): void => {
   const liveName = (connectedDatabase ?? '').trim();
-  if (mode === 'demo') {
-    if (liveName !== DEMO_DATABASE_NAME) {
-      throw new Error(
-        `FATAL demo isolation: connected database is "${liveName || '(unknown)'}", expected "${DEMO_DATABASE_NAME}". Refusing to start.`
-      );
-    }
-    if (connectedUser && !isAllowedDemoDatabaseUser(connectedUser)) {
-      throw new Error(
-        `FATAL demo isolation: connected as "${connectedUser}", expected "${DEMO_DATABASE_USER}" or "${DEMO_DATABASE_LOCAL_USER}". Refusing to start.`
-      );
-    }
-    return;
-  }
-
-  if (liveName === DEMO_DATABASE_NAME) {
+  if (DEMO_FORBIDDEN_DATABASE_NAMES.has(liveName) || PRODUCTION_DATABASE_NAMES.has(liveName)) {
     throw new Error(
-      `FATAL database isolation: live/production process connected to "${DEMO_DATABASE_NAME}". Refusing to start.`
+      `FATAL demo isolation: connected database is "${liveName}". This demo backend cannot use production or production-development databases. Refusing to start.`
     );
   }
-  if (connectedUser && isAllowedDemoDatabaseUser(connectedUser)) {
+  if (liveName !== DEMO_DATABASE_NAME) {
     throw new Error(
-      `FATAL database isolation: live/production process connected as demo user "${connectedUser}". Refusing to start.`
+      `FATAL demo isolation: connected database is "${liveName || '(unknown)'}", expected "${DEMO_DATABASE_NAME}". Refusing to start.`
     );
   }
-  if (configured.database && liveName && configured.database !== liveName) {
+  if (connectedUser && !isAllowedDemoDatabaseUser(connectedUser)) {
     throw new Error(
-      `FATAL database isolation: DATABASE_URL database "${configured.database}" does not match connected "${liveName}". Refusing to start.`
+      `FATAL demo isolation: connected as "${connectedUser}", expected "${DEMO_DATABASE_USER}" or "${DEMO_DATABASE_LOCAL_USER}". Refusing to start.`
+    );
+  }
+  if (configured.database && configured.database !== liveName) {
+    throw new Error(
+      `FATAL demo isolation: DATABASE_URL database "${configured.database}" does not match connected "${liveName}". Refusing to start.`
     );
   }
 };

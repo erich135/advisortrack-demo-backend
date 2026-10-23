@@ -1,5 +1,6 @@
 import pg from 'pg';
 import { env } from './env';
+import { assertConfiguredDatabaseForMode, assertConnectedDatabaseForMode } from './databaseSafety';
 
 const { Pool } = pg;
 
@@ -52,6 +53,7 @@ export const getPool = (): pg.Pool => {
   if (!env.databaseUrl) {
     throw new Error('DATABASE_URL is not configured');
   }
+  assertConfiguredDatabaseForMode(env.appMode, env.databaseUrl);
   if (!pool) {
     pool = new Pool({
       connectionString: env.databaseUrl,
@@ -86,6 +88,7 @@ export const checkDatabaseConnection = async (): Promise<DatabaseStatus> => {
       );
       const row = result.rows[0];
 
+      assertConnectedDatabaseForMode(env.appMode, env.configuredDatabase, row?.db, row?.db_user);
       lastStatus = {
         connected: true,
         message: `Connected to PostgreSQL (${label})`,
@@ -98,6 +101,9 @@ export const checkDatabaseConnection = async (): Promise<DatabaseStatus> => {
     }
   } catch (error) {
     const detail = error instanceof Error ? error.message : 'Unknown error';
+    if (detail.includes('FATAL demo isolation') || detail.includes('FATAL database isolation')) {
+      throw error;
+    }
     lastStatus = {
       connected: false,
       message: `PostgreSQL connection failed (${label})`,

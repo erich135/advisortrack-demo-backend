@@ -76,7 +76,8 @@ export const ASSISTANT_CAPABILITIES: AssistantCapability[] = [
     key: 'canViewProduction',
     helper: 'hasLeadershipPortalAccess',
     repositories: ['Advisor-Track-Dashboard', 'advisortrack-demo-frontend'],
-    description: 'Production page. Leadership portal access — not a separate permission flag.',
+    description:
+      'Management Production (/production). Leadership portal access — not a separate permission flag. Advisor My Production (/advisor/production) is gated by canViewAdvisorWorkspace, not this key.',
   },
   {
     key: 'canViewUsers',

@@ -4,12 +4,11 @@
  */
 import { spawnSync } from 'child_process';
 import fs from 'fs';
-import http from 'http';
 import path from 'path';
-import { AddressInfo } from 'net';
 import pg from 'pg';
 import {
   assertConfiguredDatabaseForMode,
+  assertConnectedDatabaseForMode,
   DEMO_DATABASE_NAME,
   DEMO_DATABASE_LOCAL_USER,
   DEMO_DATABASE_USER,
@@ -67,7 +66,7 @@ function runUnitTests(): void {
         'demo',
         'postgresql://advisortrack:secret@127.0.0.1:5432/advisor_track'
       ),
-    'advisortrack_demo',
+    'cannot use database "advisor_track"',
     'demo mode rejects advisor_track'
   );
   expectThrow(
@@ -76,7 +75,7 @@ function runUnitTests(): void {
         'demo',
         'postgresql://advisortrack_dev:secret@localhost:5432/advisortrack_local'
       ),
-    'advisortrack_demo',
+    'cannot use database "advisortrack_local"',
     'demo mode rejects advisortrack_local'
   );
   expectThrow(
@@ -84,14 +83,13 @@ function runUnitTests(): void {
     'requires DATABASE_URL',
     'demo mode refuses missing DATABASE_URL'
   );
-  expectThrow(
-    () =>
-      assertConfiguredDatabaseForMode(
-        'live',
-        `postgresql://${DEMO_DATABASE_USER}:secret@127.0.0.1:5432/${DEMO_DATABASE_NAME}`
-      ),
-    'demo database',
-    'live mode rejects advisortrack_demo'
+  const okLiveDemo = assertConfiguredDatabaseForMode(
+    'live',
+    `postgresql://${DEMO_DATABASE_USER}:secret@127.0.0.1:5432/${DEMO_DATABASE_NAME}`
+  );
+  assert(
+    okLiveDemo.database === DEMO_DATABASE_NAME,
+    'live mode on this demo backend still only accepts advisortrack_demo'
   );
 
   const okDemo = assertConfiguredDatabaseForMode(
@@ -105,6 +103,36 @@ function runUnitTests(): void {
     `postgresql://${DEMO_DATABASE_LOCAL_USER}:secret@127.0.0.1:5432/${DEMO_DATABASE_NAME}`
   );
   assert(okLocalDemo.user === DEMO_DATABASE_LOCAL_USER, 'demo mode accepts local advisortrack_demo_dev');
+
+  assertConnectedDatabaseForMode(
+    'demo',
+    okDemo,
+    DEMO_DATABASE_NAME,
+    DEMO_DATABASE_USER
+  );
+  assert(true, 'connected-database guard accepts advisortrack_demo');
+  expectThrow(
+    () =>
+      assertConnectedDatabaseForMode(
+        'demo',
+        okDemo,
+        'advisortrack_local',
+        'advisortrack_dev'
+      ),
+    'cannot use production or production-development',
+    'connected-database guard rejects advisortrack_local'
+  );
+  expectThrow(
+    () =>
+      assertConnectedDatabaseForMode(
+        'live',
+        okDemo,
+        'advisor_track',
+        'advisortrack'
+      ),
+    'cannot use production or production-development',
+    'connected-database guard rejects advisor_track'
+  );
 
   expectThrow(
     () =>
@@ -125,20 +153,32 @@ function runUnitTests(): void {
     'demo mode rejects advisortrack_dev'
   );
 
-  const okLive = assertConfiguredDatabaseForMode(
-    'live',
-    'postgresql://advisortrack_dev:secret@localhost:5432/advisortrack_local'
-  );
-  assert(okLive.database === 'advisortrack_local', 'live mode accepts advisortrack_local');
-
   expectThrow(
     () =>
       assertConfiguredDatabaseForMode(
         'live',
-        `postgresql://${DEMO_DATABASE_LOCAL_USER}:secret@127.0.0.1:5432/${DEMO_DATABASE_NAME}`
+        'postgresql://advisortrack_dev:secret@localhost:5432/advisortrack_local'
       ),
-    'demo database',
-    'live mode rejects advisortrack_demo with the local demo user'
+    'cannot use database "advisortrack_local"',
+    'this demo backend rejects advisortrack_local even in live mode'
+  );
+  expectThrow(
+    () =>
+      assertConfiguredDatabaseForMode(
+        'live',
+        'postgresql://advisortrack:secret@127.0.0.1:5432/advisor_track'
+      ),
+    'cannot use database "advisor_track"',
+    'this demo backend rejects advisor_track even in live mode'
+  );
+
+  const okLiveLocalDemo = assertConfiguredDatabaseForMode(
+    'live',
+    `postgresql://${DEMO_DATABASE_LOCAL_USER}:secret@127.0.0.1:5432/${DEMO_DATABASE_NAME}`
+  );
+  assert(
+    okLiveLocalDemo.user === DEMO_DATABASE_LOCAL_USER,
+    'live mode on this demo backend accepts the local demo user against advisortrack_demo'
   );
 }
 
@@ -161,12 +201,32 @@ function runBootGuardTests(): void {
   });
   assert(rejectLocal.status !== 0, 'demo startup process exits when pointed at advisortrack_local');
 
-  const rejectLiveDemo = bootEnv({
+  const rejectLiveLocal = bootEnv({
+    ADVISORTRACK_MODE: 'live',
+    DATABASE_URL: 'postgresql://advisortrack_dev:not-a-secret@localhost:5432/advisortrack_local',
+    JWT_SECRET: 'phase10-demo-guard-secret',
+  });
+  assert(rejectLiveLocal.status !== 0, 'live startup on this demo backend exits when pointed at advisortrack_local');
+
+  const acceptLiveDemo = bootEnv({
     ADVISORTRACK_MODE: 'live',
     DATABASE_URL: `postgresql://${DEMO_DATABASE_USER}:not-a-secret@127.0.0.1:5432/${DEMO_DATABASE_NAME}`,
     JWT_SECRET: 'phase10-demo-guard-secret',
   });
-  assert(rejectLiveDemo.status !== 0, 'live startup process exits when pointed at advisortrack_demo');
+  assert(
+    acceptLiveDemo.status === 0,
+    'live startup on this demo backend boots only when pointed at advisortrack_demo'
+  );
+
+  const loadDotenvReject = spawnSync(process.execPath, ['-e', "require('./scripts/load-dotenv')"], {
+    cwd: root,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      DATABASE_URL: 'postgresql://advisortrack_dev:not-a-secret@localhost:5432/advisortrack_local',
+    },
+  });
+  assert(loadDotenvReject.status !== 0, 'load-dotenv refuses advisortrack_local');
 }
 
 function runStaticIsolationChecks(): void {
@@ -198,8 +258,15 @@ function runStaticIsolationChecks(): void {
   assert(nginxApi.includes('127.0.0.1:3000'), 'production API still proxies to 3000 in repo config');
 
   const eco = fs.readFileSync(path.join(root, 'deploy/ecosystem.config.cjs'), 'utf8');
-  assert(eco.includes("name: 'advisortrack-api'"), 'production PM2 process name unchanged');
-  assert(!eco.includes('advisortrack-demo-api'), 'production PM2 file does not start the demo process');
+  assert(
+    eco.includes('this repository must not start advisortrack-api'),
+    'demo repo refuses to start the production PM2 process'
+  );
+  assert(!/name:\s*'advisortrack-api'/.test(eco), 'demo repo does not define advisortrack-api');
+
+  const envSrc = fs.readFileSync(path.join(root, 'src/config/env.ts'), 'utf8');
+  assert(envSrc.includes('.env.demo'), 'canonical local env file is .env.demo');
+  assert(envSrc.includes("default('demo')"), 'this demo backend defaults ADVISORTRACK_MODE to demo');
 
   const ecoDemo = fs.readFileSync(path.join(root, 'deploy/ecosystem-demo.config.cjs'), 'utf8');
   assert(ecoDemo.includes("name: 'advisortrack-demo-api'"), 'demo PM2 process is advisortrack-demo-api');
@@ -228,23 +295,15 @@ function runStaticIsolationChecks(): void {
 }
 
 async function runDatabaseAndHttpTests(): Promise<void> {
-  require('dotenv').config({ path: path.join(root, '.env') });
-  const liveUrl = process.env.DATABASE_URL;
-  if (!liveUrl) {
-    throw new Error('Local .env DATABASE_URL is required for isolation comparison');
-  }
-  const liveParsed = parseDatabaseUrl(liveUrl);
-  assert(liveParsed?.database !== DEMO_DATABASE_NAME, 'local live DATABASE_URL is not advisortrack_demo');
-
-  const live = new pg.Client({ connectionString: liveUrl });
-  await live.connect();
-  let liveUsersBefore = 0;
-  try {
-    const count = await live.query('SELECT COUNT(*)::int AS n FROM users');
-    liveUsersBefore = count.rows[0].n;
-    assert(liveParsed?.database === 'advisortrack_local' || liveParsed?.database === 'advisor_track', 'live test DB is the local/production-style database');
-  } finally {
-    await live.end();
+  const localEnvPath = path.join(root, '.env');
+  if (fs.existsSync(localEnvPath)) {
+    const localEnv = fs.readFileSync(localEnvPath, 'utf8');
+    const localUrl = localEnv.match(/^DATABASE_URL=(.+)$/m)?.[1]?.trim();
+    const localParsed = parseDatabaseUrl(localUrl);
+    assert(
+      localParsed?.database !== 'advisortrack_local' && localParsed?.database !== 'advisor_track',
+      'local .env must not point at advisortrack_local or advisor_track'
+    );
   }
 
   const demoEnvPath = path.join(root, '.env.demo');
@@ -252,28 +311,6 @@ async function runDatabaseAndHttpTests(): Promise<void> {
     console.log(
       'NOTE  local .env.demo is absent (this machine cannot CREATE ROLE). Demo database checks continue on the AWS host.'
     );
-    const { createApp } = await import('../src/app');
-    const { env } = await import('../src/config/env');
-    assert(env.appMode === 'live', 'test process remains in live mode');
-    assert(!env.isDemoMode, 'live mode is unaffected when ADVISORTRACK_MODE is not demo');
-    const app = await createApp();
-    const server = http.createServer(app);
-    await new Promise<void>((resolve) => server.listen(0, resolve));
-    const { port } = server.address() as AddressInfo;
-    const liveHealth = await fetch(`http://127.0.0.1:${port}/health`);
-    const liveBody = (await liveHealth.json()) as { data?: { mode?: string } };
-    assert(liveBody.data?.mode === 'live', 'live health reports mode=live');
-    const livePlatform = await fetch(`http://127.0.0.1:${port}/api/v1/platform/companies`);
-    assert(livePlatform.status === 401, 'live /platform still requires auth rather than demo-block');
-    server.close();
-    const liveAfter = new pg.Client({ connectionString: liveUrl });
-    await liveAfter.connect();
-    try {
-      const count = await liveAfter.query('SELECT COUNT(*)::int AS n FROM users');
-      assert(count.rows[0].n === liveUsersBefore, 'live/local user count unchanged by demo setup');
-    } finally {
-      await liveAfter.end();
-    }
     return;
   }
   const demoEnv = fs.readFileSync(demoEnvPath, 'utf8');
@@ -354,33 +391,6 @@ async function runDatabaseAndHttpTests(): Promise<void> {
   } finally {
     await demo.end();
   }
-
-  const liveAfter = new pg.Client({ connectionString: liveUrl });
-  await liveAfter.connect();
-  try {
-    const count = await liveAfter.query('SELECT COUNT(*)::int AS n FROM users');
-    assert(count.rows[0].n === liveUsersBefore, 'live/local user count unchanged by demo setup');
-    const demoName = await liveAfter.query('SELECT current_database() AS db');
-    assert(demoName.rows[0].db !== DEMO_DATABASE_NAME, 'live connection is still not advisortrack_demo');
-  } finally {
-    await liveAfter.end();
-  }
-
-  const { createApp } = await import('../src/app');
-  const { env } = await import('../src/config/env');
-  assert(env.appMode === 'live', 'test process remains in live mode');
-  assert(!env.isDemoMode, 'live mode is unaffected when ADVISORTRACK_MODE is not demo');
-
-  const app = await createApp();
-  const server = http.createServer(app);
-  await new Promise<void>((resolve) => server.listen(0, resolve));
-  const { port } = server.address() as AddressInfo;
-  const liveHealth = await fetch(`http://127.0.0.1:${port}/health`);
-  const liveBody = (await liveHealth.json()) as { data?: { mode?: string } };
-  assert(liveBody.data?.mode === 'live', 'live health reports mode=live');
-  const livePlatform = await fetch(`http://127.0.0.1:${port}/api/v1/platform/companies`);
-  assert(livePlatform.status === 401, 'live /platform still requires auth rather than demo-block');
-  server.close();
 
   const demoBoot = bootEnv({
     ADVISORTRACK_ENV_FILE: path.join(root, '.env.demo'),

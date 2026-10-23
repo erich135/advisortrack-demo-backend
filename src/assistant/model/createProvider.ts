@@ -2,6 +2,12 @@ import { env } from '../../config/env';
 import { createDisabledProvider } from './provider';
 import { createHttpProvider } from './httpProvider';
 import {
+  DEFAULT_GROQ_BASE_URL,
+  DEFAULT_GROQ_MAX_OUTPUT_TOKENS,
+  DEFAULT_GROQ_MODEL,
+  createGroqProvider,
+} from './groqProvider';
+import {
   DEFAULT_XAI_BASE_URL,
   DEFAULT_XAI_MAX_OUTPUT_TOKENS,
   DEFAULT_XAI_MODEL,
@@ -12,11 +18,14 @@ import {
 import type { AssistantModelProvider } from './types';
 
 export type AssistantProviderSettings = {
-  provider: 'disabled' | 'http' | 'xai';
+  provider: 'disabled' | 'http' | 'xai' | 'groq';
   httpUrl?: string;
   httpApiKey?: string;
   xaiApiKey?: string;
   xaiBaseUrl?: string;
+  groqApiKey?: string;
+  groqBaseUrl?: string;
+  groqModel?: string;
   modelName?: string;
   reasoning?: AssistantModelReasoning;
   timeoutMs: number;
@@ -26,6 +35,18 @@ export type AssistantProviderSettings = {
 export function createAssistantProviderFromConfig(
   settings: AssistantProviderSettings,
 ): AssistantModelProvider {
+  if (settings.provider === 'groq') {
+    const apiKey = settings.groqApiKey?.trim() || '';
+    if (!apiKey) return createDisabledProvider();
+    return createGroqProvider({
+      apiKey,
+      baseUrl: settings.groqBaseUrl?.trim() || DEFAULT_GROQ_BASE_URL,
+      model: settings.groqModel?.trim() || DEFAULT_GROQ_MODEL,
+      reasoning: settings.reasoning || DEFAULT_XAI_REASONING,
+      timeoutMs: settings.timeoutMs,
+      maxOutputTokens: settings.maxOutputTokens || DEFAULT_GROQ_MAX_OUTPUT_TOKENS,
+    });
+  }
   if (settings.provider === 'xai') {
     const apiKey = settings.xaiApiKey?.trim() || '';
     if (!apiKey) return createDisabledProvider();
@@ -55,6 +76,9 @@ export function createConfiguredAssistantProvider(): AssistantModelProvider {
     httpApiKey: env.assistantModelApiKey,
     xaiApiKey: env.xaiApiKey,
     xaiBaseUrl: env.assistantModelBaseUrl,
+    groqApiKey: env.groqApiKey,
+    groqBaseUrl: env.groqBaseUrl,
+    groqModel: env.groqModel,
     modelName: env.assistantModelName,
     reasoning: env.assistantModelReasoning,
     timeoutMs: env.assistantModelTimeoutMs,

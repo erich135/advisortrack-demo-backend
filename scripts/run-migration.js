@@ -3,7 +3,7 @@
  * Runs a single SQL migration file against DATABASE_URL.
  * Usage: npm run db:migrate -- database/012_johan_pipeline.sql
  */
-require('dotenv').config();
+require('./load-dotenv');
 const fs = require('fs');
 const path = require('path');
 const pg = require('pg');
@@ -26,8 +26,11 @@ const main = async () => {
   const sql = fs.readFileSync(filePath, 'utf8');
   console.log(`Running migration: ${filename}`);
 
+  const { assertConnectedDemoDatabase } = require('./assert-demo-database');
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
+  const identity = await client.query('SELECT current_database() AS db, current_user AS db_user');
+  assertConnectedDemoDatabase(identity.rows[0].db, identity.rows[0].db_user);
 
   try {
     await ensureMigrationsTable(client);

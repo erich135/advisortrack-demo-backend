@@ -32,7 +32,13 @@ import { APPLICATION_STATUS_LABELS } from '../../features/applicationStatus';
 import type { MyProductionFocus, MyProductionProjection } from './productionSelf';
 import type { MyTargetProgressFocus, MyTargetProgressProjection } from './targetProgress';
 import type { MyContactsSummaryFocus, MyContactsSummaryProjection } from './contactsSummary';
-import { attentionItems, type MyDashboardFocus, type MyDashboardProjection } from './dashboardSelf';
+import { companionAnswer, type CompanionFocus } from './companion';
+import { type MyDashboardFocus, type MyDashboardProjection } from './dashboardSelf';
+import {
+  cheekyClearOverdue,
+  cheekyManyWithoutNextAction,
+  cheekyTargetReached,
+} from '../voice';
 
 const NOT_FOUND_COPY =
   "I couldn't find that in your AdvisorTrack scope. If you're looking for someone on your team or in your region, try their full name.";
@@ -101,7 +107,7 @@ export function myFollowupsAnswer(
   if (focus === 'overdue') {
     headline = projection.overdueCount === 0 ? 'Nothing overdue' : 'Overdue activities';
     body = projection.overdueCount === 0
-      ? 'You have no overdue scheduled activities.'
+      ? cheekyClearOverdue()
       : `You have ${noun(projection.overdueCount, 'overdue activity', 'overdue activities')}, including ${noun(projection.followUpOverdueCount, 'follow-up', 'follow-ups')}.`;
   } else if (focus === 'this_week') {
     headline = 'This week';
@@ -162,7 +168,11 @@ export function myPipelineAnswer(
     body = `Estimated commission on your open cases is ${formatLiveRand(projection.totalEstimatedCommission)}.`;
   } else if (focus === 'no_next_action') {
     headline = 'Next actions';
-    body = `You have ${noun(projection.casesWithoutNextActionCount, 'open case', 'open cases')} without a next action. A next action is optional.`;
+    body = cheekyManyWithoutNextAction(projection.casesWithoutNextActionCount)
+      ?? `You have ${noun(projection.casesWithoutNextActionCount, 'open case', 'open cases')} without a next action. A next action is optional.`;
+    if (projection.casesWithoutNextActionCount >= 3) {
+      body = `${body} Set a next action on the case if you want it moving.`;
+    }
   } else if (focus === 'fica') {
     headline = 'FICA';
     body = `You have ${noun(projection.ficaIncompleteCount, 'open case', 'open cases')} still needing FICA. Incomplete FICA is a warning, not a hard block.`;
@@ -239,6 +249,25 @@ export function myProductionAnswer(
   } else if (focus === 'withdrawn') {
     headline = APPLICATION_STATUS_LABELS.withdrawn;
     body = `You have ${noun(projection.withdrawnCount, 'application', 'applications')} withdrawn.`;
+  } else if (focus === 'blockers') {
+    headline = 'Recorded pending statuses';
+    const pending = [
+      projection.pendingUnderwritingCount > 0
+        ? noun(projection.pendingUnderwritingCount, 'application pending underwriting', 'applications pending underwriting')
+        : null,
+      projection.awaitingMedicalsCount > 0
+        ? noun(projection.awaitingMedicalsCount, 'application awaiting medicals', 'applications awaiting medicals')
+        : null,
+      projection.pmaPendingCount > 0
+        ? noun(projection.pmaPendingCount, 'application with PMA pending', 'applications with PMA pending')
+        : null,
+      projection.awaitingAdvisorInfoCount > 0
+        ? noun(projection.awaitingAdvisorInfoCount, 'application awaiting advisor information', 'applications awaiting advisor information')
+        : null,
+    ].filter(Boolean);
+    body = pending.length
+      ? `Recorded statuses: ${pending.join(', ')}. Dex cannot see insurer decisions that are not on the record.`
+      : 'Nothing in your recorded application statuses is sitting in a pending bucket. Dex cannot see insurer decisions that are not on the record.';
   }
   return {
     answerId: 'live:MY_PRODUCTION',
@@ -273,7 +302,10 @@ export function myTargetProgressAnswer(
   const issued = formatLiveRand(projection.issuedCommission);
   const goal = formatLiveRand(projection.monthlyGoal);
   let headline = 'Target progress';
-  let body = `Your monthly nett goal is ${goal}. Home issued toward that goal is ${issued} (${projection.progressPercent}%). ${remaining} remains.`;
+  const reached = cheekyTargetReached(projection.progressPercent);
+  let body = reached
+    ? `${reached} Your monthly nett goal is ${goal}. Home issued toward that goal is ${issued}.`
+    : `Your monthly nett goal is ${goal}. Home issued toward that goal is ${issued} (${projection.progressPercent}%). ${remaining} remains.`;
   if (focus === 'remaining') {
     headline = 'Remaining to target';
     body = `You have ${remaining} remaining against a ${goal} monthly nett goal. Home issued so far is ${issued}.`;
@@ -366,42 +398,43 @@ export function myContactsSummaryAnswer(
   };
 }
 
+const COMPANION_FOCUS: CompanionFocus[] = ['briefing', 'eod', 'first', 'next', 'why', 'else'];
+
 export function myDashboardAnswer(
   projection: MyDashboardProjection,
   focus: MyDashboardFocus,
+  question?: string | null,
+  previousQuestion?: string | null,
 ): AssistantPublicAnswer {
   const source = publicFactSource('MY_DASHBOARD');
   const noun = (count: number, singular: string, plural: string) =>
     `${count} ${count === 1 ? singular : plural}`;
-  const items = attentionItems(projection);
-  if (focus === 'attention') {
-    const body = items.length
-      ? `Items worth checking: ${items.map((item) => `${item.count} ${item.label}`).join(', ')}.`
-      : 'Nothing in the workflow lists needs checking right now — no overdue activities, reviews due, missing next actions, or incomplete FICA/documents.';
-    return {
-      answerId: 'live:MY_DASHBOARD',
-      intent: 'live.MY_DASHBOARD',
-      confidence: 1,
-      mode: 'allowed',
-      headline: items.length ? 'Items worth checking' : 'Nothing outstanding',
-      body,
-      facts: [
-        { label: 'Overdue activities', value: String(projection.overdueActivities), source },
-        { label: 'Reviews due', value: String(projection.reviewDue), source },
-        { label: 'No next action', value: String(projection.casesWithoutNextAction), source },
-        { label: 'FICA incomplete', value: String(projection.ficaIncomplete), source },
-      ],
-      sources: [{ cardId: 'MY_DASHBOARD', title: 'My dashboard' }],
-      caveats: ['This is workflow state from your own book, not a performance judgement or financial advice.'],
-    };
+  if (focus === 'attention' || COMPANION_FOCUS.includes(focus as CompanionFocus)) {
+    return companionAnswer(
+      projection,
+      focus === 'attention' ? 'briefing' : focus as CompanionFocus,
+      question,
+      previousQuestion,
+    );
   }
-  const body = `You are at ${projection.progressPercent}% of your monthly target. You have ${noun(projection.openCases, 'open case', 'open cases')}, ${noun(projection.casesWithoutNextAction, 'case', 'cases')} without a next action, ${noun(projection.overdueActivities, 'overdue activity', 'overdue activities')} and ${noun(projection.followUpsToday, 'follow-up', 'follow-ups')} today.`;
+  const reached = cheekyTargetReached(projection.progressPercent);
+  const nextActionLine = cheekyManyWithoutNextAction(projection.casesWithoutNextAction);
+  const progressLine = reached
+    ? reached
+    : `You're at ${projection.progressPercent}% of this month's target.`;
+  const body = [
+    progressLine,
+    `You have ${noun(projection.openCases, 'open case', 'open cases')}, ${noun(projection.overdueActivities, 'overdue activity', 'overdue activities')} and ${noun(projection.followUpsToday, 'follow-up', 'follow-ups')} today.`,
+    nextActionLine ?? (projection.casesWithoutNextAction > 0
+      ? `${noun(projection.casesWithoutNextAction, 'case', 'cases')} still has no next action.`
+      : null),
+  ].filter(Boolean).join(' ');
   return {
     answerId: 'live:MY_DASHBOARD',
     intent: 'live.MY_DASHBOARD',
     confidence: 1,
     mode: 'allowed',
-    headline: 'How you are tracking',
+    headline: reached ? 'Target reached' : 'How you are tracking',
     body,
     facts: [
       { label: 'Target progress', value: `${projection.progressPercent}%`, source },

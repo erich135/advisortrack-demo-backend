@@ -175,6 +175,9 @@ function neededFieldsForTool(toolId: string, question: string): Set<string> | nu
       'overdueActivities',
       'todayActivities',
       'followUpsToday',
+      'todayMeetingCount',
+      'completedTodayCount',
+      'documentsIncomplete',
     ]);
   }
   return null;

@@ -12,9 +12,9 @@ export function looksFinancialAdviceQuestion(question: string): boolean {
   const normalized = normalizeQuestion(question);
   if (/\bhow do i (record|capture|save|choose|select)\b/.test(normalized)) return false;
   return (
-    /\bwhich (insurer|product|quote|policy) (should|shall|do) i (pick|choose|recommend|sell|use)\b/.test(normalized)
+    /\bwhich (insurer|product|quote|policy) (should|shall|do) i (pick|choose|recommend|sell|use|push)\b/.test(normalized)
     || /\b(based on the quotes|which one should i pick|which insurer looks best)\b/.test(normalized)
-    || /\bwhat (product|policy|insurer) should i (recommend|sell|advise|pick)\b/.test(normalized)
+    || /\bwhat (product|policy|insurer) should i (recommend|sell|advise|pick|push)\b/.test(normalized)
     || /\bthe client is \d+\b/.test(normalized)
     || /\bwhat should i sell (them|him|her|the client)\b/.test(normalized)
     || /\b(asset allocation|suitability|financial advice for (the |this )?client)\b/.test(normalized)

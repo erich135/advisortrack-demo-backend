@@ -2632,7 +2632,10 @@
       "title": "Quotes",
       "aliases": [
         "case quotes",
-        "quote cards"
+        "quote cards",
+        "quotes bit",
+        "where are quotes",
+        "find quotes"
       ],
       "questionForms": [
         "How do quotes work?"
@@ -2646,7 +2649,7 @@
         "advisor-case-detail"
       ],
       "category": "advisor-workspace",
-      "summary": "Quotes are up to three lines on the case: product type, insurer, premium, and commission. Save them with PATCH /cases/:id. Desktop may show them side by side. There is no live insurer feed.",
+      "summary": "Quotes live on the case in Analysis & quotes. Record up to three lines: product type, insurer, premium, and commission. Open the case to add or edit them. Desktop may show them side by side. There is no live insurer feed.",
       "steps": [
         {
           "label": "Open Quotes on the case"
@@ -3160,14 +3163,14 @@
     {
       "id": "PIPELINE.NO_ADVICE",
       "kind": "concept",
-      "title": "The Assistant is not a financial adviser",
+      "title": "Dex is not a financial adviser",
       "aliases": [
         "financial advice",
         "recommend a product",
         "which insurer"
       ],
       "questionForms": [
-        "Can the Assistant recommend a product?",
+        "Can Dex recommend a product?",
         "Which insurer should I choose?"
       ],
       "audience": "customer",
@@ -3180,7 +3183,7 @@
         "advisor-case-detail"
       ],
       "category": "advisor-workspace",
-      "summary": "The AdvisorTrack Assistant explains product workflow only: stages, FICA, documents, quotes recorded on the case, next actions, and how to submit. It must not recommend a product or insurer, interpret the client’s financial needs, or tell you which policy is best.",
+      "summary": "Dex explains product workflow only: stages, FICA, documents, quotes recorded on the case, next actions, and how to submit. Dex must not recommend a product or insurer, interpret the client’s financial needs, or tell you which policy is best.",
       "steps": [],
       "blockedGuidance": null,
       "requiredFacts": [],
@@ -3198,7 +3201,9 @@
         "sales",
         "commission book",
         "my production",
-        "placed business"
+        "placed business",
+        "issued numbers",
+        "issued business"
       ],
       "questionForms": [
         "What is Production?",
@@ -3213,7 +3218,7 @@
         "advisor-production"
       ],
       "category": "advisor-workspace",
-      "summary": "My Production at /advisor/production is your own production book from GET /api/v1/production. It is not Management Production, company production, team production, or downline production. Rows come from production_entries for the authenticated advisor. Identity is never taken from a browser userId, advisorId, or companyId. Cases you submit to Production appear here from the same backend rows.",
+      "summary": "My Production at /advisor/production is your own production book. It is not Management Production, company production, team production, or downline production. Eligible Financial Advisers in Advisor Workspace can open it. Cases you submit to Production appear here as your own entries.",
       "steps": [
         {
           "label": "Open My Production",
@@ -3829,10 +3834,14 @@
       "aliases": [
         "submit to production",
         "case submitted",
-        "linked production"
+        "linked production",
+        "know its submitted",
+        "has it been submitted"
       ],
       "questionForms": [
-        "How does submitting a case create production?"
+        "How does submitting a case create production?",
+        "How do I know its submitted?",
+        "How do I know it is submitted?"
       ],
       "audience": "customer",
       "environment": "both",
@@ -3845,7 +3854,7 @@
         "advisor-case-detail"
       ],
       "category": "advisor-workspace",
-      "summary": "Submit to Production on a case creates or links a production_entries row: application status Application received, not issued, with the case id. That row appears on My Production from GET /production. It is not a second copy. Submitting does not close the case; stage becomes Implementation.",
+      "summary": "Submit to Production on a case creates or links a production record: application status Application received, not issued, with the case id. That row appears on My Production. It is not a second copy. Submitting does not close the case; stage becomes Implementation.",
       "steps": [
         {
           "label": "Open the case",
@@ -3987,7 +3996,9 @@
         "planning",
         "targets",
         "my target",
-        "planning workspace"
+        "planning workspace",
+        "planning numbers",
+        "target stuck"
       ],
       "questionForms": [
         "What is Planning & Targets?",
@@ -4003,7 +4014,7 @@
         "advisor-home"
       ],
       "category": "advisor-workspace",
-      "summary": "Planning & Targets at /advisor/planning is your personal planning workspace from the same Android APIs: GET /planning/targets (computed weekly deliverables), GET/PATCH /planning/settings (conversion ratios), and your financial profile monthly nett goal. It is not Management reporting and does not invent a second forecasting model.",
+      "summary": "Planning & Targets at /advisor/planning is your personal planning workspace: monthly nett goal, computed weekly activity targets, and conversion assumptions. It is not Management reporting and does not invent a second forecasting model.",
       "steps": [
         {
           "label": "Open Planning & Targets",
@@ -4042,7 +4053,7 @@
         "advisor-profile"
       ],
       "category": "advisor-workspace",
-      "summary": "Your monthly nett goal is stored on advisor_financial_profile.monthly_goal_nett and returned on GET /profile and GET /profile/financial. Change it on Planning & Targets or Financial Settings. There is no PATCH /planning/targets — weekly numbers are recalculated from the goal, deductions, commission split, working weeks/days, and conversion ratios. Home Monthly Progress uses the same nett goal (the dashboard substitutes R50,000 only when the goal has never been set).",
+      "summary": "Your monthly nett goal is stored on your financial profile. Change it on Planning & Targets or Financial Settings. Weekly numbers are recalculated from the goal, deductions, commission split, working weeks/days, and conversion ratios — they are not edited as independent weekly figures. Home Monthly Progress uses the same nett goal (Home substitutes R50,000 only when the goal has never been set).",
       "steps": [
         {
           "label": "Open Planning & Targets",
@@ -4083,7 +4094,7 @@
         "advisor-production"
       ],
       "category": "advisor-workspace",
-      "summary": "Target progress uses the Advisor Home issued definition from GET /dashboard: this month’s production dated by due date or created date, where is_issued OR application_status is Accepted / Issued, divided by your monthly nett goal. Remaining is goal minus that issued amount. Production issued totals use the issued flag only. Planning does not silently combine those rules. Potential on Home can also include open-case estimated commission without linked production.",
+      "summary": "Target progress uses the Advisor Home issued definition: this month’s production dated by due date or created date, where issued or application status is Accepted / Issued, divided by your monthly nett goal. Remaining is goal minus that issued amount. Production issued totals use the issued flag only. Planning does not silently combine those rules. Potential on Home can also include open-case estimated commission without linked production.",
       "steps": [
         {
           "label": "Open Planning & Targets",
@@ -4123,7 +4134,7 @@
         "advisor-planning"
       ],
       "category": "advisor-workspace",
-      "summary": "Weekly targets are computed by the planning engine (GET /planning/targets), not stored as independent numbers. The engine reverse-funnels from your nett goal using tax, deductions, commission split, average commission, working weeks/days, and conversion ratios. Labels are Initial contact, Fact-finding (API field interviewsPerWeek / Interview), Analysis & quotes, Recommendation, Implementation, and issued cases. Change weekly activity by changing those inputs — there is no PATCH /planning/targets.",
+      "summary": "Weekly targets are computed by the planning engine, not stored as independent numbers. The engine reverse-funnels from your nett goal using tax, deductions, commission split, average commission, working weeks/days, and conversion ratios. Labels are Initial contact, Fact-finding, Analysis & quotes, Recommendation, Implementation, and issued cases. Change weekly activity by changing those inputs rather than typing weekly counts directly.",
       "steps": [
         {
           "label": "Open Planning & Targets",
@@ -4202,7 +4213,7 @@
         "advisor-setup"
       ],
       "category": "advisor-workspace",
-      "summary": "Conversion ratios are 0–10 sliders on GET/PATCH /planning/settings. The engine treats the slider divided by 10 as a conversion rate (4 means 40%). They run cold call → fact-finding → analysis → recommendation → implementation → issued. These are planning inputs, not product or suitability advice. Adaptive ratios may blend with your actual results once a month unless you freeze a slider with its override. Submission-to-issued is included in Setup and General Settings.",
+      "summary": "Conversion ratios are 0–10 sliders in General Settings. The engine treats the slider divided by 10 as a conversion rate (4 means 40%). They run cold call → fact-finding → analysis → recommendation → implementation → issued. These are planning inputs, not product or suitability advice. Adaptive ratios may blend with your actual results once a month unless you freeze a slider with its override. Submission-to-issued is included in Setup and General Settings.",
       "steps": [
         {
           "label": "Open General Settings",

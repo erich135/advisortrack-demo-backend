@@ -44,6 +44,8 @@ async function main(): Promise<void> {
   });
   assert.equal(hello.modelAttempted, false);
   assert.equal(hello.answer.intent, 'conversation.greeting');
+  assert.match(hello.answer.body, /\bDex\b/);
+  assert.doesNotMatch(hello.answer.body, /AdvisorTrack Assistant/);
 
   const addUser = await askAssistant({
     question: 'Hi, how do I add a user?',
@@ -85,9 +87,9 @@ async function main(): Promise<void> {
     bundle,
     provider: boomProvider,
   });
-  assert.equal(suck.answer.intent, 'conversation.frustration');
+  assert.equal(suck.answer.intent, 'FRUSTRATION_HELP');
   assert.equal(suck.modelAttempted, false);
-  assert.match(suck.answer.body, /Fair enough/);
+  assert.match(suck.answer.body, /trying to do|stuck on|point you/i);
 
   const swearyLicence = await askAssistant({
     question: 'This is fucking useless, how do I assign a licence?',
@@ -109,6 +111,31 @@ async function main(): Promise<void> {
     provider: boomProvider,
   });
   assert.equal(listening.answer.intent, 'conversation.misunderstanding');
+
+  for (const question of [
+    'Hi dex buddy',
+    'How are you?',
+    "What's up?",
+    'Thanks buddy',
+    'Haha',
+    'Can you help me?',
+  ]) {
+    const result = await askAssistant({
+      question,
+      identity,
+      navigation: { pathname: '/' },
+      environment: 'demo',
+      bundle,
+      provider: boomProvider,
+    });
+    assert.equal(result.modelAttempted, false, question);
+    assert.match(result.answer.intent, /^conversation\./, question);
+    assert.doesNotMatch(
+      `${result.answer.headline} ${result.answer.body}`,
+      /financial adviser|couldn't confidently match/i,
+      question,
+    );
+  }
 
   console.log('Demo Assistant conversation checks passed (A6.1/A7.2.1 snapshot, no production proxy)');
 }

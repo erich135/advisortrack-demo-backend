@@ -37,6 +37,7 @@ import { detectMyPipelineFocus, projectMyPipeline } from './pipelineSelf';
 import { detectMyProductionFocus, monthKeyForAssistantPeriod, projectMyProduction } from './productionSelf';
 import { detectMyTargetProgressFocus } from './targetProgress';
 import { detectMyContactsFocus, projectMyContactsSummary } from './contactsSummary';
+import { detectCompanionFocus } from './companion';
 import { detectMyDashboardFocus, projectMyDashboard } from './dashboardSelf';
 import { normalizeQuestion } from '../retrieve';
 import { isLiveScopeMiss } from './errors';
@@ -316,6 +317,8 @@ export async function gatherLiveGrounding(input: {
   context: AssistantContext;
   source: LiveDirectorySource;
   timeoutMs: number;
+  previousQuestion?: string | null;
+  askedQuestion?: string | null;
 }): Promise<LiveGrounding | null> {
   const route = routeLiveQuestion(input.question, input.context.route.path, input.context.route.routeId);
   if (route.kind === 'none') return null;
@@ -356,7 +359,7 @@ export async function gatherLiveGrounding(input: {
   }
 
   if (route.kind === 'mydashboard') {
-    return answerMyDashboard(ctx, source, input.question);
+    return answerMyDashboard(ctx, source, input.question, input.previousQuestion, input.askedQuestion);
   }
 
   if (route.kind === 'mypipeline') {
@@ -639,10 +642,21 @@ async function answerMyContacts(
   }
 }
 
+async function settled<T>(promise: Promise<T> | undefined | null): Promise<{ ok: true; value: T } | { ok: false }> {
+  if (!promise) return { ok: false };
+  try {
+    return { ok: true, value: await promise };
+  } catch {
+    return { ok: false };
+  }
+}
+
 async function answerMyDashboard(
   ctx: ToolExecutionContext,
   source: LiveDirectorySource,
   question: string,
+  previousQuestion?: string | null,
+  askedQuestion?: string | null,
 ): Promise<LiveGrounding | null> {
   const state: BuildState = {
     ctx,
@@ -659,33 +673,39 @@ async function answerMyDashboard(
       fallbackKind: 'live',
     });
   }
-  try {
-    const [activities, cases, target] = await Promise.all([
-      source.listSelfActivities(ctx),
-      source.listSelfCases(ctx),
-      source.getSelfTargetProgress ? source.getSelfTargetProgress(ctx) : Promise.resolve(null),
-    ]);
-    const projection = projectMyDashboard({
-      followups: projectMyFollowups(activities, ctx.now),
-      pipeline: projectMyPipeline(cases, ctx.now),
-      target,
-    });
-    addTool(state, myDashboardToolFacts(projection));
-    const answer = {
-      ...myDashboardAnswer(projection, detectMyDashboardFocus(normalizeQuestion(question))),
-      actions: liveNavigateActions(ctx.assistant, ['advisor-home', 'advisor-pipeline', 'advisor-activities']),
-    };
-    return pack(state, withProvenance(answer, state.provenance), {
-      compositionWorthy: false,
-      fallbackKind: 'live',
-    });
-  } catch {
+  const focus = detectCompanionFocus(question, previousQuestion)
+    ?? detectMyDashboardFocus(normalizeQuestion(question));
+  const wantProduction = focus !== 'overview';
+  const [activities, cases, target, production] = await Promise.all([
+    settled(source.listSelfActivities(ctx)),
+    settled(source.listSelfCases(ctx)),
+    settled(source.getSelfTargetProgress ? source.getSelfTargetProgress(ctx) : null),
+    settled(wantProduction && source.listSelfProduction ? source.listSelfProduction(ctx) : null),
+  ]);
+  if (!activities.ok && !cases.ok) {
     state.provenance.toolsUnavailable.push(MY_DASHBOARD_TOOL.id);
     return pack(state, withProvenance(toolUnavailableAnswer('My dashboard'), state.provenance), {
       compositionWorthy: false,
       fallbackKind: 'live',
     });
   }
+  const projection = projectMyDashboard({
+    followups: activities.ok ? projectMyFollowups(activities.value, ctx.now) : null,
+    pipeline: cases.ok ? projectMyPipeline(cases.value, ctx.now) : null,
+    target: target.ok ? target.value : null,
+    production: production.ok ? projectMyProduction(production.value, { period: 'this_month', now: ctx.now }) : null,
+    activitiesAvailable: activities.ok,
+    casesAvailable: cases.ok,
+  });
+  addTool(state, myDashboardToolFacts(projection));
+  const answer = {
+    ...myDashboardAnswer(projection, focus, askedQuestion ?? question, previousQuestion),
+    actions: liveNavigateActions(ctx.assistant, ['advisor-home', 'advisor-pipeline', 'advisor-activities']),
+  };
+  return pack(state, withProvenance(answer, state.provenance), {
+    compositionWorthy: false,
+    fallbackKind: 'live',
+  });
 }
 
 async function answerMulti(

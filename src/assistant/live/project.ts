@@ -374,6 +374,13 @@ export function myDashboardToolFacts(projection: MyDashboardProjection): LiveToo
       overdueActivities: projection.overdueActivities,
       todayActivities: projection.todayActivities,
       followUpsToday: projection.followUpsToday,
+      todayMeetingCount: projection.todayMeetingCount,
+      todayCallCount: projection.todayCallCount,
+      thisWeekCount: projection.thisWeekCount,
+      completedTodayCount: projection.completedTodayCount,
+      followUpOverdueCount: projection.followUpOverdueCount,
+      pendingUnderwritingCount: projection.pendingUnderwritingCount,
+      awaitingAdvisorInfoCount: projection.awaitingAdvisorInfoCount,
     }),
   };
 }

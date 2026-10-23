@@ -6,7 +6,7 @@
  *
  * Usage: node scripts/create-demo-database.js
  */
-require('./load-dotenv');
+require('dotenv').config();
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
@@ -30,8 +30,12 @@ const main = async () => {
 
   const parsed = new URL(adminUrl);
   const adminDb = decodeURIComponent(parsed.pathname.replace(/^\//, ''));
-  if (FORBIDDEN.has(adminDb) && parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
-    console.error('Refusing to use a remote production DATABASE_URL to create the demo database from this script.');
+  if (adminDb === 'advisor_track') {
+    console.error('Refusing to use production database advisor_track to create the demo database.');
+    process.exit(1);
+  }
+  if (adminDb === 'advisortrack_local' && parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+    console.error('Refusing to use a remote production-development DATABASE_URL to create the demo database.');
     process.exit(1);
   }
 

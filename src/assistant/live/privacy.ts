@@ -64,7 +64,8 @@ export function containsClientPii(value: string): boolean {
 
 /** End-client identifiers. Advisor directory names are not client PII. */
 export function containsEndClientPii(value: string): boolean {
-  if (/\b(contactName|clientName|caseId|case_id|policy number|id number|sa id)\b/i.test(value)) return true;
+  const withoutRouteParams = value.replace(/:[A-Za-z][A-Za-z0-9_]*/g, '');
+  if (/\b(contactName|clientName|caseId|case_id|policy number|id number|sa id)\b/i.test(withoutRouteParams)) return true;
   if (/\b\d{13}\b/.test(value)) return true;
   if (/(?:\+?27|0)[\s-]?[1-9](?:[\s-]?\d){8}\b/.test(value)) return true;
   if (/\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/.test(value)) return true;

@@ -16,6 +16,7 @@ export type AssistantAskBody = {
   pathname?: string;
   search?: string;
   previousQuestion?: string;
+  viewport?: 'desktop' | 'phone' | 'unknown';
 };
 
 async function organisationForAssistant(userId: string) {
@@ -46,6 +47,7 @@ export async function handleAssistantAsk(
   const navigation = {
     pathname: typeof body.pathname === 'string' ? body.pathname : '/',
     search: typeof body.search === 'string' ? body.search : '',
+    viewport: body.viewport === 'desktop' || body.viewport === 'phone' ? body.viewport : 'unknown' as const,
   };
   const preview = buildAssistantContext({ environment: 'demo', identity, navigation });
   let licencePool = null;

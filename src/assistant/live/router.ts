@@ -1,5 +1,6 @@
 import { normalizeQuestion } from '../retrieve';
 import { phraseHintFor } from '../phrases';
+import { companionPhraseHint, looksCompanionQuestion } from './companion';
 import {
   detectAssistantPeriod,
   type AssistantPeriod,
@@ -163,6 +164,9 @@ export function looksMyProductionQuestion(question: string): boolean {
   if (liveAsk && (productionBook || status || /\bproduction\b/.test(normalized))) return true;
   if (productionBook) return true;
   if (liveAsk && status && /\b(applications?|entries)\b/.test(normalized)) return true;
+  if (/\b(whats still pending|what is still pending|whats holding things up|what is holding things up)\b/.test(normalized)) {
+    return true;
+  }
   return false;
 }
 
@@ -209,6 +213,9 @@ export function looksMyTargetProgressQuestion(question: string): boolean {
   if (/\b(management|downline|my team|the team|region|leadership)\b/.test(normalized)) return false;
   if (looksLikeTeamLookup(question) || looksLikeRegionLookup(question)) return false;
   if (/\bhow far am i from my target\b/.test(normalized)) return true;
+  if (/\bam i on target\b/.test(normalized)) return true;
+  if (/\b(target|goal).{0,24}(stuck|weird|not moving|isn'?t moving|feels stuck)\b/.test(normalized)) return true;
+  if (/\bplanning numbers look weird\b/.test(normalized)) return true;
   if (/\bwhat is my monthly (nett )?(goal|target)\b/.test(normalized)) return true;
   if (/\b(issued|earned) (toward|towards|against) my (target|goal)\b/.test(normalized)) return true;
   const progress = /\b(how far|remaining|left to go|progress|percent|percentage|tracking)\b/.test(normalized);
@@ -242,6 +249,8 @@ export function looksMyDashboardQuestion(question: string): boolean {
     || /\bwhere do i stand\b/.test(normalized)
     || /\bwhats my position\b/.test(normalized)
     || /\bam i on track\b/.test(normalized)
+    || /\bam i (actually )?getting anywhere\b/.test(normalized)
+    || looksCompanionQuestion(question)
   );
 }
 
@@ -257,6 +266,7 @@ export function looksMyAttentionQuestion(question: string): boolean {
     || /\bwhat is outstanding\b/.test(normalized)
     || /\bwhats waiting on me\b/.test(normalized)
     || /\bwhat still needs attention\b/.test(normalized)
+    || /\bwhat should i do now\b/.test(normalized)
   );
 }
 
@@ -278,6 +288,7 @@ export function looksMyFollowupsQuestion(question: string): boolean {
   if ((today || week || howMany) && subject) return true;
   if (/\bwhat do i need to do today\b/.test(normalized)) return true;
   if (/\bdo i have (any )?(follow[- ]?ups?|activit(?:y|ies)|calls?)\b/.test(normalized)) return true;
+  if (/^(whats overdue|what is overdue)$/.test(normalized)) return true;
   return false;
 }
 
@@ -306,14 +317,18 @@ function unitFromQuestion(question: string): ComparisonUnitKind {
   return kind === 'mixed' ? 'person' : kind;
 }
 
-function selfRouteForPart(question: string, navigationPath?: string): LiveRoute {
+function selfRouteForPart(question: string, navigationPath?: string, routeId?: string | null): LiveRoute {
   const caseIdMatch = (navigationPath ?? '').match(
     /^\/advisor\/cases\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i,
   );
   if (looksMyCaseSummaryQuestion(question) && caseIdMatch) {
     return { kind: 'case_summary', caseId: caseIdMatch[1] };
   }
-  if (looksMyDashboardQuestion(question) || looksMyAttentionQuestion(question)) return { kind: 'mydashboard' };
+  const pageHint = companionPhraseHint(normalizeQuestion(question), routeId);
+  if (pageHint?.kind === 'live') return { kind: pageHint.live };
+  if (looksMyDashboardQuestion(question) || looksMyAttentionQuestion(question) || looksCompanionQuestion(question)) {
+    return { kind: 'mydashboard' };
+  }
   if (looksMyContactsQuestion(question)) return { kind: 'mycontacts' };
   if (looksMyFollowupsQuestion(question)) return { kind: 'followups' };
   if (looksMyProductionQuestion(question)) return { kind: 'myproduction' };
@@ -334,13 +349,13 @@ export function routeLiveQuestion(question: string, navigationPath?: string, rou
   const parts = question.split(/\s+\band\b\s+/i).map((part) => part.trim()).filter(Boolean);
   if (parts.length >= 2) {
     const routes = parts
-      .map((part) => selfRouteForPart(part, navigationPath))
+      .map((part) => selfRouteForPart(part, navigationPath, routeId))
       .filter((route): route is Exclude<LiveRoute, { kind: 'none' | 'multi' }> => route.kind !== 'none' && route.kind !== 'multi');
     const unique = [...new Map(routes.map((route) => [route.kind, route])).values()];
     if (unique.length >= 2) return { kind: 'multi', parts: unique.slice(0, 3) };
     if (unique.length === 1) return unique[0];
   }
-  const self = selfRouteForPart(question, navigationPath);
+  const self = selfRouteForPart(question, navigationPath, routeId);
   if (self.kind !== 'none') return self;
   if (looksHelpQuestion(normalized)) return { kind: 'none' };
   if (looksLicenceSummary(normalized)) return { kind: 'licence' };

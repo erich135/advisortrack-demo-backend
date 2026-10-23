@@ -15,8 +15,16 @@ const main = async () => {
     process.exit(1);
   }
 
+  const { FORBIDDEN_DATABASES, assertDemoDatabaseUrl } = require('./assert-demo-database');
   const parsed = new URL(url);
-  const dbName = parsed.pathname.replace(/^\//, '') || 'advisor_track';
+  const dbName = parsed.pathname.replace(/^\//, '') || '';
+  if (!dbName || FORBIDDEN_DATABASES.has(dbName)) {
+    console.error(
+      `Refusing to create database "${dbName || '(missing)'}". This demo backend can only create advisortrack_demo.`
+    );
+    process.exit(1);
+  }
+  assertDemoDatabaseUrl(url);
   parsed.pathname = '/postgres';
 
   const adminUrl = parsed.toString();

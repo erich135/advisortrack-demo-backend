@@ -102,8 +102,11 @@ const main = async () => {
     return;
   }
 
+  const { assertConnectedDemoDatabase } = require('./assert-demo-database');
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
+  const identity = await client.query('SELECT current_database() AS db, current_user AS db_user');
+  assertConnectedDemoDatabase(identity.rows[0].db, identity.rows[0].db_user);
 
   const results = [];
 

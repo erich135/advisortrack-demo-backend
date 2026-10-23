@@ -6,7 +6,7 @@
  * Usage (from advisor_track_backend):
  *   npm run db:reset-tester
  */
-require('dotenv').config();
+require('./load-dotenv');
 const pg = require('pg');
 const bcrypt = require('bcryptjs');
 
@@ -70,36 +70,10 @@ const seedTester = async (client, passwordHash) => {
 };
 
 const run = async () => {
-  if (!process.env.DATABASE_URL) {
-    console.error('DATABASE_URL is not set');
-    process.exit(1);
-  }
-
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
-
-  try {
-    await client.query('BEGIN');
-    await wipeUserData(client);
-    const passwordHash = await bcrypt.hash(TEST_PASSWORD, 10);
-    const user = await seedTester(client, passwordHash);
-    await client.query('COMMIT');
-
-    console.log('Database wiped (user data only).');
-    console.log('Tester created:');
-    console.log(`  id:       ${user.id}`);
-    console.log(`  email:    ${TEST_EMAIL}`);
-    console.log('  password: AdvisorTrack@001!');
-    console.log('  verified: yes');
-    console.log('  plan:     Advisor Standard (pro)');
-    console.log('  access:   Company admin + platform admin');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error(error.message || error);
-    process.exit(1);
-  } finally {
-    await client.end();
-  }
+  console.error(
+    'FATAL demo isolation: db:reset-tester is refused in the demo backend. It would wipe advisortrack_demo.'
+  );
+  process.exit(1);
 };
 
 run();

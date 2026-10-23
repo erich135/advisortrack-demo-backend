@@ -28,8 +28,10 @@ const main = async () => {
     const identity = await client.query(
       'SELECT current_database() AS db, current_user AS db_user'
     );
+    const { assertConnectedDemoDatabase } = require('./assert-demo-database');
     const db = identity.rows[0].db;
     const dbUser = identity.rows[0].db_user;
+    assertConnectedDemoDatabase(db, dbUser);
     if (db !== DEMO_DB) {
       console.error(
         `Refusing demo migrations: connected to "${db}" as "${dbUser}", expected "${DEMO_DB}".`

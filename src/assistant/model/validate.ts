@@ -5,6 +5,7 @@ import {
   extraNumbersFromGrounding,
   numbersInText,
 } from '../live/derive';
+import { workflowInvariants } from '../productMap';
 import { containsEndClientPii } from '../live/privacy';
 import type { LiveToolFactGroup, RegisteredDerivationOutput } from '../live/types';
 import { classificationForRoute } from '../routes';
@@ -26,6 +27,8 @@ const FORBIDDEN_PERFORMANCE =
   /\b(weak|bad performer|lazy|underperforming|under-performer|excellent|struggling|poor performer|poor performance|poor engagement|low effort)\b/i;
 const FORBIDDEN_FINANCIAL_ADVICE =
   /\b(you should (sell|recommend|choose)|i recommend (the )?(policy|product|insurer)|pick this insurer|best product for (the |this )?client|asset allocation)\b/i;
+const IMPLEMENTATION_LEAK =
+  /\b(kb card|knowledge card|selectedCardIds|xAI|tool id|retriev(al|ed cards)|provider error|prompt error)\b/i;
 const TELEMETRY_FRAMING =
   /(last mobile activity|low activity|telemetry)[\s\S]{0,90}(means|shows|indicates|implies|because)[\s\S]{0,50}(lazy|poor|weak|underperform|inactive|not working|low effort|engagement|performance)|\b(lazy|poor performance|low effort|inactive advisor|not working|poor engagement)\b[\s\S]{0,90}(last mobile activity|telemetry|low activity)/i;
 const ENTITY_REF = /\bent_[a-f0-9]{8}\b/gi;
@@ -38,6 +41,8 @@ function groundedNumbers(input: {
   extraToolNumbers?: number[];
   tools?: LiveToolFactGroup[];
   derivations?: RegisteredDerivationOutput[];
+  allowedCards?: ServerKnowledgeCard[];
+  candidateIds?: string[];
 }): Set<number> {
   const values = new Set<number>();
   const pool = input.context.facts?.licencePool;
@@ -59,6 +64,16 @@ function groundedNumbers(input: {
   })) {
     values.add(value);
   }
+  for (const fact of workflowInvariants(input.context.workspace, input.context.capabilities)) {
+    for (const value of numbersInText(fact)) values.add(value);
+  }
+  const candidateIds = new Set(input.candidateIds ?? []);
+  for (const card of input.allowedCards ?? []) {
+    if (!candidateIds.has(card.id)) continue;
+    for (const value of numbersInText(`${card.summary} ${card.steps.map((step) => step.label).join(' ')}`)) {
+      values.add(value);
+    }
+  }
   return values;
 }
 
@@ -69,11 +84,13 @@ export function validateModelDecision(input: {
   candidateIds: string[];
   routes: AssistantRoute[];
   question: string;
+  previousQuestion?: string | null;
   extraToolNumbers?: number[];
   tools?: LiveToolFactGroup[];
   derivations?: RegisteredDerivationOutput[];
 }): ModelValidationFailure | null {
   const { decision, context, allowedCards, candidateIds, routes, question } = input;
+  const previousQuestion = input.previousQuestion ?? '';
   const allowedById = new Map(allowedCards.map((card) => [card.id, card]));
   const suppliedTools = new Map((input.tools ?? []).map((tool) => [tool.tool, tool]));
   const suppliedDerivations = new Set((input.derivations ?? []).map((item) => item.derivationId));
@@ -165,11 +182,47 @@ export function validateModelDecision(input: {
   if (FORBIDDEN_FINANCIAL_ADVICE.test(text)) {
     return { code: 'financial_advice', message: 'Model recommended a financial product or insurer' };
   }
+  if (IMPLEMENTATION_LEAK.test(text)) {
+    return { code: 'implementation_leak', message: 'Model mentioned internal implementation' };
+  }
   if (TELEMETRY_FRAMING.test(text)) {
     return { code: 'telemetry_framing', message: 'Model used Last Mobile Activity as a performance judgement' };
   }
   if (context.environment === 'production' && containsEndClientPii(text)) {
     return { code: 'client_pii', message: 'Model output contained end-client PII' };
+  }
+  if (/\b(?:GET|POST|PATCH|PUT|DELETE)\s+\//i.test(text) || /\/api\/v1\//i.test(text)) {
+    return { code: 'api_leak', message: 'Model mentioned an internal HTTP API' };
+  }
+
+  const hasAdvisorProduction =
+    context.workspace === 'advisor' && context.capabilities.canViewAdvisorWorkspace === true;
+  if (
+    hasAdvisorProduction
+    && /(?:cannot|can['’]t|do not|don['’]t(?: have)?|no permission|without (?:the )?permission|(?:are not|aren['’]t) visible|can['’]t be shown).{0,100}(?:production|issued)|(?:production|issued).{0,100}(?:cannot|can['’]t|don['’]t have|do not have|no permission|not visible|can['’]t be shown)/i.test(text)
+  ) {
+    return { code: 'advisor_production_access', message: 'Model denied Advisor Production access' };
+  }
+  if (
+    /\bfica\b/i.test(text)
+    && /\b(hard (?:block|400|error)|cannot (?:submit|save|move)|can['’]t (?:submit|save|move)|blocks? (?:submit|save|stage)|must complete.{0,24}fica.{0,24}(?:before )?(?:you can )?submit)\b/i.test(text)
+  ) {
+    return { code: 'fica_soft_gate', message: 'Model treated incomplete FICA as a hard block' };
+  }
+  if (
+    (/\bsubmit\b/i.test(question) || /\bsubmit\b/i.test(previousQuestion))
+    && /\bfica\b/i.test(text)
+    && !/\b(commission|greater than 0|greater than zero)\b/i.test(text)
+    && !/\b(not the submit|does not submit|isn't the submit|is not the submit|does not block submit)\b/i.test(text)
+  ) {
+    return { code: 'submit_rule', message: 'Submit troubleshooting must use estimated commission, not FICA as the blocker' };
+  }
+  if (
+    !suppliedTools.has('MY_CASE_SUMMARY')
+    && /\b(?:this case|the current case|on this case)\b/i.test(text)
+    && /\b(estimated commission is \d|fica is (?:complete|incomplete)|already submitted)\b/i.test(text)
+  ) {
+    return { code: 'invented_case_state', message: 'Model invented current-case values that were not supplied' };
   }
 
   const subjectAccess = (input.derivations ?? []).find((item) => item.derivationId === 'SUBJECT_LEADERSHIP_ACCESS');
@@ -223,6 +276,8 @@ export function validateModelDecision(input: {
       extraToolNumbers: input.extraToolNumbers,
       tools: input.tools,
       derivations: input.derivations,
+      allowedCards,
+      candidateIds,
     });
     const claimed = [
       ...numbersInText(decision.headline ?? ''),

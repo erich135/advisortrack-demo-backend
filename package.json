@@ -4,7 +4,7 @@
   "description": "AdvisorTrack REST API — Node.js + TypeScript backend for the mobile app",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node scripts/dev-demo.js",
     "dev:demo": "node scripts/dev-demo.js",
     "build": "tsc",
     "start": "node dist/index.js",
@@ -46,6 +46,7 @@
     "assistant:compare-check": "tsx scripts/verify-assistant-compare.ts",
     "assistant:resilience-check": "tsx scripts/verify-assistant-resilience.ts",
     "assistant:xai-check": "tsx scripts/verify-assistant-xai.ts",
+    "assistant:groq-check": "tsx scripts/verify-assistant-groq.ts",
     "db:hash-password": "node scripts/hash-password.js",
     "db:create": "node scripts/create-database.js",
     "db:create:demo": "node scripts/create-demo-database.js",

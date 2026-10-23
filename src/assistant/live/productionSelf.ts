@@ -41,6 +41,7 @@ export type MyProductionFocus =
   | 'awaiting_advisor_info'
   | 'declined'
   | 'withdrawn'
+  | 'blockers'
   | 'overview';
 
 const STATUS_COUNT_KEYS: Record<ApplicationStatus, keyof MyProductionProjection> = {
@@ -131,6 +132,7 @@ export function projectMyProduction(
 }
 
 export function detectMyProductionFocus(normalized: string): MyProductionFocus {
+  if (/\b(holding things up|still pending|whats pending)\b/.test(normalized)) return 'blockers';
   if (/\b(pending underwriting|underwriting)\b/.test(normalized)) return 'pending_underwriting';
   if (/\b(awaiting medicals|medicals)\b/.test(normalized)) return 'awaiting_medicals';
   if (/\b(pma pending|pma)\b/.test(normalized)) return 'pma_pending';

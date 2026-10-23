@@ -111,16 +111,17 @@ function runStaticChecks(): void {
   assert(app.includes('<CustomerAccountPage'), 'platform customer-account route remains staff-only');
 
   const layout = fs.readFileSync(path.join(frontendRoot, 'src/components/Layout.tsx'), 'utf8');
-  assert(layout.includes("label: 'Performance'"), 'sidebar includes Performance');
-  assert(layout.includes("label: 'Audit'"), 'sidebar includes Audit');
-  assert(layout.includes("label: 'Subscriptions'"), 'sidebar includes Subscriptions');
-  assert(layout.includes("label: 'Invoices'"), 'sidebar includes Invoices');
-  assert(layout.includes("label: 'Companies'"), 'sidebar includes Companies');
-  assert(layout.includes("label: 'Users & Access'"), 'sidebar includes Users & Access');
-  assert(layout.includes("label: 'Settings & Roles'"), 'sidebar includes Settings & Roles');
-  assert(layout.includes('customerBusinessNav'), 'demo nav exposes business screens by role');
-  assert(layout.includes('customerManagementNav'), 'demo nav exposes management screens by role');
-  assert(layout.includes('isCustomerAuditViewer'), 'Audit sidebar is limited to Exec and RM');
+  const portalNav = fs.readFileSync(path.join(frontendRoot, 'src/lib/portalNavigation.ts'), 'utf8');
+  assert(portalNav.includes("label: 'Performance'"), 'sidebar includes Performance');
+  assert(portalNav.includes("label: 'Audit'"), 'sidebar includes Audit');
+  assert(portalNav.includes("label: 'Subscription'"), 'sidebar includes Subscriptions');
+  assert(portalNav.includes("label: 'Invoices'"), 'sidebar includes Invoices');
+  assert(portalNav.includes("label: 'Company Details'"), 'sidebar includes Companies');
+  assert(portalNav.includes("label: 'Users & Access'"), 'sidebar includes Users & Access');
+  assert(portalNav.includes("label: 'Settings & Roles'"), 'sidebar includes Settings & Roles');
+  assert(layout.includes("buildCustomerNav(session, 'demo')"), 'demo nav exposes business screens by role');
+  assert(portalNav.includes("variant === 'demo' && leadership"), 'demo nav exposes management screens by role');
+  assert(portalNav.includes('isCustomerAuditViewer'), 'Audit sidebar is limited to Exec and RM');
   assert(!app.includes('EngineeringChangelog'), 'public demo has no Engineering Change Log page');
   assert(!app.includes('/engineering/changelog'), 'public demo has no Engineering Change Log route');
   assert(!layout.includes("label: 'Change Log'"), 'public demo sidebar has no Change Log item');

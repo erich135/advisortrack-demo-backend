@@ -9,6 +9,7 @@ const askSchema = z.object({
   pathname: z.string().max(200).optional(),
   search: z.string().max(200).optional(),
   previousQuestion: z.string().trim().max(500).optional(),
+  viewport: z.enum(['desktop', 'phone', 'unknown']).optional(),
 });
 
 function clientIp(req: Request): string | null {

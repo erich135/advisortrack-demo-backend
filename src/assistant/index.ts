@@ -16,6 +16,12 @@ export {
   createOrganisationLiveSource,
   createToolExecutionContext,
   routeLiveQuestion,
+  companionAnswer,
+  companionPriorityItems,
+  detectCompanionFocus,
+  looksCompanionBriefingQuestion,
+  looksCompanionEndOfDayQuestion,
+  looksCompanionQuestion,
   resolvePersonInScope,
   mintPersonRef,
   readEntityRef,
@@ -70,6 +76,7 @@ export {
 export type { DirectoryPerson, LiveDirectorySource, ToolExecutionContext, DataClass, AnswerProvenance } from './live';
 export { loadServerBundle } from './loadSnapshot';
 export { buildAssistantContext } from './context';
+export { DEX_NAME, DEX_TAGLINE, DEX_CTA, dexGreeting } from './voice';
 export { trustedIdentityFromOrganisation } from './identity';
 export type { OrganisationSnapshot } from './identity';
 export { createDisabledProvider, AssistantProviderError, shouldRetryProviderError, staticRetryReason, remainingTurnMs, MIN_MODEL_ATTEMPT_MS } from './model/provider';
@@ -83,7 +90,15 @@ export {
   xaiAffinityId,
   opaqueCompanyKey,
 } from './model/xaiProvider';
+export {
+  createGroqProvider,
+  DEFAULT_GROQ_BASE_URL,
+  DEFAULT_GROQ_MODEL,
+  groqChatCompletionsUrl,
+  groqReasoningEffort,
+} from './model/groqProvider';
 export { resetAssistantAskThrottle, allowAssistantAsk, ASSISTANT_ASK_LIMITS } from './model/throttle';
+export { resetAssistantModelGuards, assistantModelCooldownRemaining } from './model/rateLimit';
 export type {
   AssistantAskResult,
   AssistantModelDecision,

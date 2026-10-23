@@ -1,11 +1,14 @@
+import { PRODUCT_VOCAB } from '../normalise';
 import { normalizeQuestion } from '../retrieve';
+
+const PRODUCT_VOCAB_SET = new Set<string>(PRODUCT_VOCAB as readonly string[]);
 
 const NAME_STOP = new Set([
   'a', 'about', 'an', 'and', 'at', 'cases', 'case', 'compare', 'compared', 'current', 'date', 'do', 'does',
   'doing', 'far', 'for', 'from', 'have', 'has', 'highest', 'how', 'i', 'in', 'is', 'issued', 'last',
   'least', 'like', 'looking', 'lowest', 'many', 'me', 'month', 'most', 'my', 'of', 'pipeline', 'please',
   'production', 'region', 'show', 'so', 'summary', 'team', 'tell', 'than', 'the', 'this',
-  'to', 'versus', 'we', 'week', 'what', 'which', 'who', 'whose', 'with', 'year', 'ytd', 'you',
+  'to', 'versus', 'we', 'week', 'what', 'which', 'who', 'whose', 'with', 'year', 'ytd', 'you', 'dex',
 ]);
 
 export function displayNameOf(person: { firstName: string; lastName: string }): string {
@@ -55,6 +58,7 @@ export function looksLikeBarePersonLookup(question: string): boolean {
   const tokens = trimmed.split(/\s+/).filter(Boolean);
   if (tokens.length < 1 || tokens.length > 3) return false;
   if (tokens.some((token) => NAME_STOP.has(normalizeName(token)))) return false;
+  if (tokens.some((token) => PRODUCT_VOCAB_SET.has(normalizeName(token)))) return false;
   if (/\d/.test(trimmed)) return false;
   return Boolean(extractPersonMention(trimmed));
 }

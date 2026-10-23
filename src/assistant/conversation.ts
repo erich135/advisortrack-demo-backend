@@ -3,9 +3,11 @@
  * Runs before A5 retrieval. Pure smalltalk, frustration, and corrections never call a model provider.
  * Combined social or frustration + AdvisorTrack questions continue to live tools then A5/A6.
  */
+import type { AssistantContext } from './context';
 import { normalizeQuestion } from './retrieve';
 import type { AssistantPublicAnswer } from './model/types';
 import type { CardEnvironment } from './types';
+import { DEX_NAME, dexGreeting, dexIdentityCopy } from './voice';
 
 export const CONVERSATION_INTENTS = [
   'greeting',
@@ -37,7 +39,10 @@ const SOCIAL_PREFIX =
   /^(hi there|hello there|good morning|good afternoon|good evening|hello|hey there|hey|hi|morning|thanks that worked|perfect thank you|awesome thanks|okay thanks|ok thanks|thank you so much|thank you|thanks|cheers)\b[\s,!.:;?-]*/i;
 
 const GREETING_FILLER =
-  /^(how are you doing|how are you|hows it going|how's it going|how are things)\b[\s,!.:;?-]*/i;
+  /^(how are you doing|how are you|hows it going|how's it going|how are things|how's your day|hows your day|how is your day|whats up|what's up|what is up|sup|you there|you around|still there|ready to work|are you ready)\b[\s,!.:;?-]*/i;
+
+const VOCATIVE =
+  /^(dex|there|assistant|buddy|mate|pal|legend|friend|man|dude|bro)\b[\s,!.:;?-]*/i;
 
 type NegativeKind = 'frustration' | 'correction' | 'misunderstanding';
 
@@ -196,7 +201,33 @@ const CORE_DOMAIN = [
 ];
 
 function isFillerOnly(text: string): boolean {
-  return /^(how are you doing|how are you|hows it going|how are things)$/.test(normalizeQuestion(text));
+  return /^(how are you doing|how are you|hows it going|how are things|how's your day|hows your day|how is your day|whats up|what's up|you there|you around|ready to work)$/.test(
+    normalizeQuestion(text),
+  );
+}
+
+function stripLeadingVocatives(text: string): string {
+  let remainder = text.trim();
+  for (let pass = 0; pass < 6; pass += 1) {
+    const next = remainder.replace(VOCATIVE, '').replace(/^[\s,!.:;?-]+/, '').trim();
+    if (next === remainder) break;
+    remainder = next;
+  }
+  return remainder;
+}
+
+function isVocativeOnly(text: string): boolean {
+  return !stripLeadingVocatives(text);
+}
+
+function isLaughOnly(text: string): boolean {
+  return /^(haha+|ha ha|lol|heh|hehe)$/.test(normalizeQuestion(text));
+}
+
+function looksInventoryHelp(question?: string | null): boolean {
+  return /^(what can you help me with|what can i ask you|what do you know|how can you help(?: me)?)$/.test(
+    normalizeQuestion(question ?? ''),
+  );
 }
 
 function hasDomainToken(normalized: string, categories: ConversationCategory[]): boolean {
@@ -214,8 +245,16 @@ export function hasProductSubstance(
   const normalized = normalizeQuestion(text);
   if (!normalized || isFillerOnly(normalized)) return false;
   if (hasDomainToken(normalized, categories)) return true;
-  if (/\b(how am i doing|what needs my attention|on track|livepreview|factfind)\b/.test(normalized)) return true;
-  return /\b(how do i|how can i|how do we|where (can|do|are|is)|why (cant|cannot|is|are)|add a |assign )\b/.test(
+  if (/\b(how am i doing|what needs my attention|on track|livepreview|factfind|waiting on me|what now|now what|what should i do now|getting anywhere|enough of this case)\b/.test(normalized)) {
+    return true;
+  }
+  if (/\b(whats on my plate|morning briefing|my briefing|whats happening today|happening with my work|what should i focus on|wrap up my day|done for today|how did today go|anything left for tomorrow|end of (the )?day|whats on the book)\b/.test(normalized)) {
+    return true;
+  }
+  if (/\b(this guy|isnt interested|went cold|finished the meeting|supposed to do|this page|where did)\b/.test(normalized)) {
+    return true;
+  }
+  return /\b(how do i|how can i|how do we|where (can|do|are|is|the hell|the heck)|why (cant|cannot|is|are|wont|won t)|add a |assign )\b/.test(
     normalized,
   );
 }
@@ -223,12 +262,27 @@ export function hasProductSubstance(
 function stripLeadingSocial(question: string): { remainder: string; stripped: boolean } {
   let remainder = question.trim();
   let stripped = false;
-  const withoutPrefix = remainder.replace(SOCIAL_PREFIX, '');
-  if (withoutPrefix !== remainder) {
-    remainder = withoutPrefix;
+  for (let pass = 0; pass < 4; pass += 1) {
+    const withoutPrefix = remainder.replace(SOCIAL_PREFIX, '');
+    if (withoutPrefix === remainder) break;
+    remainder = withoutPrefix.replace(/^[\s,!.:;?-]+/, '').trim();
     stripped = true;
   }
-  remainder = remainder.replace(GREETING_FILLER, '').replace(/^[\s,!.:;?-]+/, '').trim();
+  const withoutVocative = stripLeadingVocatives(remainder);
+  if (withoutVocative !== remainder) {
+    remainder = withoutVocative;
+    stripped = true;
+  }
+  const withoutFiller = remainder.replace(GREETING_FILLER, '').replace(/^[\s,!.:;?-]+/, '').trim();
+  if (withoutFiller !== remainder) {
+    remainder = withoutFiller;
+    stripped = true;
+  }
+  remainder = stripLeadingVocatives(remainder);
+  if (isVocativeOnly(remainder)) {
+    remainder = '';
+    stripped = true;
+  }
   return { remainder, stripped };
 }
 
@@ -263,7 +317,7 @@ function negativeWholeIntent(normalized: string): ConversationIntent | null {
     return 'correction';
   }
   if (
-    /^(you suck|this is (?:so |really |completely |totally |fucking |damn |bloody )?(?:useless|shit|crap|garbage)|this isnt helping|this is not helping|fuck this|fuck it|fuck you|fuck|youre useless|you are useless|stupid bot|dumb bot|useless bot|this sucks|screw this|what a (?:useless|stupid) bot)$/.test(
+    /^(you suck|this is (?:so |really |completely |totally |fucking |damn |bloody )?(?:useless|shit|crap|garbage)|this isnt helping|this is not helping|fuck this|fuck it|fuck you|fuck|youre useless|you are useless|stupid bot|dumb bot|useless bot|this sucks|screw this|what a (?:useless|stupid) bot|what the hell|what the heck|wtf+|this makes no sense|im lost|i am lost|where the hell is this|why isnt this working)$/.test(
       normalized,
     )
   ) {
@@ -274,19 +328,19 @@ function negativeWholeIntent(normalized: string): ConversationIntent | null {
 
 function wholeIntent(normalized: string): ConversationIntent | null {
   if (
-    /^(who are you|what are you|what do you do|whats your name|what is your name)$/.test(normalized)
+    /^(who are you|what are you|what do you do|whats your name|what is your name|who is dex)$/.test(normalized)
   ) {
     return 'identity';
   }
   if (
-    /^(what can you help me with|what can i ask you|what do you know|how can you help|how can you help me|help|help me)$/.test(
+    /^(what can you help me with|what can i ask you|what do you know|how can you help|how can you help me|can you help me|can you help|help|help me)$/.test(
       normalized,
     )
   ) {
     return 'capabilities';
   }
   if (
-    /^(thanks|thank you|cheers|awesome thanks|perfect thank you|thanks that worked|ok thanks|okay thanks)$/.test(
+    /^(thanks|thank you|cheers|awesome thanks|perfect thank you|thanks that worked|ok thanks|okay thanks|thanks buddy|thanks mate|youre a legend|you are a legend)$/.test(
       normalized,
     )
   ) {
@@ -296,13 +350,13 @@ function wholeIntent(normalized: string): ConversationIntent | null {
     return 'goodbye';
   }
   if (
-    /^(hello|hi|hey|morning|good morning|good afternoon|good evening|hi there|hello there|hello how are you|hi how are you|hi how are you doing)$/.test(
+    /^(hello|hi|hey|morning|good morning|good afternoon|good evening|hi there|hello there|hello how are you|hi how are you|hi how are you doing|morning dex|good morning dex|hi dex|hey dex|hello dex|hi dex buddy|hello dex buddy|hey mate|hey buddy|how are you|hows it going|how's it going|how's your day|hows your day|whats up|what's up|you there|ready to work)$/.test(
       normalized,
     )
   ) {
     return 'greeting';
   }
-  if (/^(cool|great|awesome|perfect|nice|got it|okay|ok)$/.test(normalized)) {
+  if (/^(cool|great|awesome|perfect|nice|got it|okay|ok|haha+|ha ha|lol|heh|hehe)$/.test(normalized)) {
     return 'acknowledgement';
   }
   return null;
@@ -314,6 +368,9 @@ function looksOffTopic(text: string, categories: ConversationCategory[]): boolea
     return false;
   }
   if (hasProductSubstance(normalized, categories)) return false;
+  if (/^(what the hell|what the heck|wtf|this makes no sense|im lost|i am lost)\b/.test(normalized)) {
+    return false;
+  }
   if (
     /^(what|where|when|who|why|how|is|are|was|were|which|can you|could you|tell me|whats|explain)\b/.test(
       normalized,
@@ -342,8 +399,13 @@ export function detectConversationIntent(
   const whole = wholeIntent(normalizeQuestion(trimmed))
     || negativeWholeIntent(normalizeQuestion(trimmed))
     || (remainder ? negativeWholeIntent(normalizeQuestion(remainder)) : null)
+    || (remainder ? wholeIntent(normalizeQuestion(remainder)) : null)
     || (negative.kind && !remainder ? negative.kind : null);
   if (whole) return { kind: 'conversation', intent: whole };
+
+  if (isLaughOnly(trimmed) || (remainder && isLaughOnly(remainder))) {
+    return { kind: 'conversation', intent: 'acknowledgement' };
+  }
 
   if (social.stripped && !remainder) {
     const prefix = normalizeQuestion(trimmed);
@@ -384,40 +446,47 @@ export function buildConversationResponse(
   intent: ConversationIntent,
   categories: ConversationCategory[],
   environment: 'production' | 'demo',
+  context?: Pick<AssistantContext, 'workspace' | 'route'> | null,
+  question?: string | null,
+  previousQuestion?: string | null,
 ): AssistantPublicAnswer {
   const areas = formatAreas(visibleConversationAreas(categories, environment));
+  const identity = dexIdentityCopy();
+  const greeting = dexGreeting(context, question, previousQuestion);
   const copy: Record<ConversationIntent, { headline: string; body: string }> = {
-    greeting: {
-      headline: 'Hi',
-      body: "Hi! I'm doing well. How can I help you with AdvisorTrack today?",
-    },
+    greeting,
     thanks: {
       headline: "You're welcome",
-      body: "You're welcome. Let me know if you need anything else in AdvisorTrack.",
+      body: "Anytime. If something else in AdvisorTrack is in the way, ask.",
     },
-    identity: {
-      headline: 'AdvisorTrack Assistant',
-      body: "I'm the AdvisorTrack Assistant. I can help you use AdvisorTrack, explain features and permissions, and help you find information available in your AdvisorTrack account.",
-    },
-    capabilities: {
-      headline: 'What I can help with',
-      body: `I can help you use the AdvisorTrack Management Portal. Ask me about ${areas}.`,
-    },
+    identity,
+    capabilities: looksInventoryHelp(question)
+      ? {
+          headline: 'What I can help with',
+          body: `I can help you use AdvisorTrack. Ask me about ${areas}.`,
+        }
+      : {
+          headline: 'Yes',
+          body:
+            context?.workspace === 'advisor'
+              ? "Ask about your book, pipeline, production, or the page you're on."
+              : 'Ask about people, licences, production, or the page you are on.',
+        },
     acknowledgement: {
       headline: 'Got it',
-      body: 'Glad that helps. Ask if you need anything else in AdvisorTrack.',
+      body: 'Good. Ask if you need the next step.',
     },
     goodbye: {
-      headline: 'Goodbye',
-      body: "Goodbye. I'll be here when you need help with AdvisorTrack.",
+      headline: 'Later',
+      body: `I'll be here. ${DEX_NAME} doesn't wander off.`,
     },
     frustration: {
       headline: 'Fair enough',
-      body: "Fair enough. Tell me what went wrong, or ask me an AdvisorTrack question and I'll help you sort it out.",
+      body: "Fair. Tell me the actual blocker and I'll help you move it.",
     },
     correction: {
-      headline: 'Thanks for flagging it',
-      body: "Thanks for flagging it. Tell me what looked wrong and I'll try again.",
+      headline: 'Got it — try again',
+      body: "Tell me what looked wrong and I'll try again.",
     },
     misunderstanding: {
       headline: 'Which part?',
@@ -425,7 +494,7 @@ export function buildConversationResponse(
     },
     off_topic: {
       headline: "I'm here for AdvisorTrack",
-      body: `I'm here to help with AdvisorTrack. You can ask me about ${areas}.`,
+      body: `I'm here for AdvisorTrack. You can ask me about ${areas}.`,
     },
   };
   const selected = copy[intent];

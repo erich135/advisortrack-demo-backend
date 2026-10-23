@@ -13,9 +13,12 @@ export type AssistantScopeKind = 'company' | 'region' | 'team' | 'self' | 'platf
 export type AssistantWorkspace = 'advisor' | 'management' | 'organisation' | 'platform';
 
 /** Client-provided navigation. Security-sensitive fields here are ignored. */
+export type AssistantViewport = 'desktop' | 'phone' | 'unknown';
+
 export type AssistantNavigation = {
   pathname: string;
   search?: string;
+  viewport?: AssistantViewport | unknown;
   companyId?: unknown;
   role?: unknown;
   isOrganisationAdmin?: unknown;
@@ -73,6 +76,7 @@ export type AssistantContext = {
     tab: string | null;
     query: Record<string, string>;
   };
+  viewport?: AssistantViewport;
   facts?: {
     licencePool?: AssistantLicencePool;
   };
@@ -303,6 +307,8 @@ export function buildAssistantContext(input: {
   const { environment, identity, navigation } = input;
   const routes = input.routes ?? ASSISTANT_ROUTES;
   const pathname = navigation.pathname || '/';
+  const viewport: AssistantViewport =
+    navigation.viewport === 'desktop' || navigation.viewport === 'phone' ? navigation.viewport : 'unknown';
   return {
     environment,
     workspace: workspaceFromPath(pathname, environment),
@@ -325,6 +331,7 @@ export function buildAssistantContext(input: {
     },
     capabilities: capabilitiesFromIdentity(identity, environment),
     route: resolveAssistantRoute(routes, navigation, environment),
+    viewport,
   };
 }
 
