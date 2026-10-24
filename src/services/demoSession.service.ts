@@ -16,6 +16,11 @@ import {
   type DemoSelectedRole,
   type DemoSessionRow,
 } from '../repositories/demoSession.repository';
+import { clearAssistantConversation } from '../assistant/conversationMemory';
+
+function clearVisitorDex(sessionId: string): void {
+  clearAssistantConversation({ environment: 'demo', conversationScope: sessionId });
+}
 
 const sessionTtlMs = (): number => demoSessionTtlMsFromMinutes(env.demoSessionTtlMinutes);
 
@@ -85,6 +90,7 @@ const markExpiredIfNeeded = async (row: DemoSessionRow): Promise<DemoSessionRow>
     if (row.company_id && !(await demoWorkspaceRepository.isTemplateCompany(row.company_id))) {
       await organisationRepository.updateCompany(row.company_id, { isActive: false });
     }
+    clearVisitorDex(row.id);
     return expired ?? { ...row, status: 'expired' };
   }
   return row;
@@ -232,6 +238,7 @@ export const demoSessionService = {
     if (existing.company_id && !(await demoWorkspaceRepository.isTemplateCompany(existing.company_id))) {
       await organisationRepository.updateCompany(existing.company_id, { isActive: false });
     }
+    clearVisitorDex(sessionId);
     return toDto(updated!);
   },
 
@@ -245,6 +252,7 @@ export const demoSessionService = {
     if (existing.company_id && !(await demoWorkspaceRepository.isTemplateCompany(existing.company_id))) {
       await organisationRepository.updateCompany(existing.company_id, { isActive: false });
     }
+    clearVisitorDex(sessionId);
     return toDto(updated!);
   },
 
@@ -282,6 +290,7 @@ export const demoSessionService = {
     const persona = await personaFor(current.company_id!, selectedRole);
     const user = await attachUser(persona.user_id);
     const jwt = mintJwt(persona.user_id, user.email, current);
+    clearVisitorDex(session.id);
     return {
       token: jwt,
       session: toDto(current),

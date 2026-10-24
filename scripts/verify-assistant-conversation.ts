@@ -1,23 +1,29 @@
 /**
- * AdvisorTrack Assistant A6.1 conversational layer — demo backend snapshot.
+ * AdvisorTrack Assistant conversational layer — demo backend snapshot.
+ * Canonical Dex 2.0 behaviour lives in Abel. This check confirms the isolated
+ * demo runtime stays in parity and never proxies production.
  * Run: npm run assistant:conversation-check
  */
 import assert from 'node:assert/strict';
 import {
   askAssistant,
+  createDisabledProvider,
   createFakeProvider,
   loadServerBundle,
   resetAssistantAskThrottle,
+  resetAssistantConversationMemory,
   visibleConversationAreas,
   type TrustedAssistantIdentity,
 } from '../src/assistant';
 
 resetAssistantAskThrottle();
+resetAssistantConversationMemory();
 
 async function main(): Promise<void> {
   const boomProvider = createFakeProvider(async () => {
     throw new Error('model should not run');
   });
+  const disabled = createDisabledProvider();
   const bundle = loadServerBundle();
   const identity: TrustedAssistantIdentity = {
     userId: 'exec-admin-1',
@@ -32,64 +38,47 @@ async function main(): Promise<void> {
     canViewTeams: true,
     permissions: [],
     canAccessEngineeringChangelog: false,
+    conversationScope: 'demo-conversation-check',
   };
 
-  const hello = await askAssistant({
-    question: 'hello',
-    identity,
-    navigation: { pathname: '/' },
-    environment: 'demo',
-    bundle,
-    provider: boomProvider,
-  });
+  const ask = (question: string, environment: 'production' | 'demo' = 'demo') =>
+    askAssistant({
+      question,
+      identity,
+      navigation: { pathname: '/' },
+      environment,
+      bundle,
+      provider: disabled,
+      resetConversation: true,
+    });
+
+  const hello = await ask('hello');
   assert.equal(hello.modelAttempted, false);
+  assert.equal(hello.origin, 'deterministic');
   assert.equal(hello.answer.intent, 'conversation.greeting');
   assert.match(hello.answer.body, /\bDex\b/);
   assert.doesNotMatch(hello.answer.body, /AdvisorTrack Assistant/);
 
-  const addUser = await askAssistant({
-    question: 'Hi, how do I add a user?',
-    identity,
-    navigation: { pathname: '/' },
-    environment: 'demo',
-    bundle,
-    provider: boomProvider,
-  });
+  const addUser = await ask('Hi, how do I add a user?');
   assert.equal(addUser.answer.intent, 'PEOPLE.ADD_USER');
+  assert.equal(addUser.modelAttempted, false);
 
-  const france = await askAssistant({
-    question: 'What is the capital of France?',
-    identity,
-    navigation: { pathname: '/' },
-    environment: 'demo',
-    bundle,
-    provider: boomProvider,
-  });
+  const france = await ask('What is the capital of France?');
   assert.equal(france.answer.intent, 'conversation.off_topic');
-  assert.match(france.answer.body, /Demo Tips/);
+  assert.match(france.answer.body, /limited|conversational side/i);
+  assert.equal(france.modelAttempted, false);
 
-  const productionHelp = await askAssistant({
-    question: 'what can you help me with',
-    identity,
-    navigation: { pathname: '/' },
-    environment: 'production',
-    bundle,
-    provider: boomProvider,
-  });
+  const productionHelp = await ask('what can you help me with', 'production');
   assert.doesNotMatch(productionHelp.answer.body, /Demo Tips/);
   assert.equal(visibleConversationAreas(bundle.categories, 'demo').includes('Demo Tips'), true);
 
-  const suck = await askAssistant({
-    question: 'you suck',
-    identity,
-    navigation: { pathname: '/' },
-    environment: 'demo',
-    bundle,
-    provider: boomProvider,
-  });
-  assert.equal(suck.answer.intent, 'FRUSTRATION_HELP');
+  const demoHelp = await ask('what can you help me with');
+  assert.match(demoHelp.answer.body, /Demo Tips/);
+
+  const suck = await ask('you suck');
+  assert.equal(suck.answer.intent, 'conversation.frustration');
   assert.equal(suck.modelAttempted, false);
-  assert.match(suck.answer.body, /trying to do|stuck on|point you/i);
+  assert.match(suck.answer.body, /listening/i);
 
   const swearyLicence = await askAssistant({
     question: 'This is fucking useless, how do I assign a licence?',
@@ -98,18 +87,12 @@ async function main(): Promise<void> {
     environment: 'demo',
     bundle,
     provider: boomProvider,
+    resetConversation: true,
   });
   assert.equal(swearyLicence.answer.intent, 'LIC.ASSIGN');
   assert.equal(swearyLicence.modelAttempted, false);
 
-  const listening = await askAssistant({
-    question: "you're not listening",
-    identity,
-    navigation: { pathname: '/' },
-    environment: 'demo',
-    bundle,
-    provider: boomProvider,
-  });
+  const listening = await ask("you're not listening");
   assert.equal(listening.answer.intent, 'conversation.misunderstanding');
 
   for (const question of [
@@ -120,14 +103,7 @@ async function main(): Promise<void> {
     'Haha',
     'Can you help me?',
   ]) {
-    const result = await askAssistant({
-      question,
-      identity,
-      navigation: { pathname: '/' },
-      environment: 'demo',
-      bundle,
-      provider: boomProvider,
-    });
+    const result = await ask(question);
     assert.equal(result.modelAttempted, false, question);
     assert.match(result.answer.intent, /^conversation\./, question);
     assert.doesNotMatch(
@@ -137,7 +113,7 @@ async function main(): Promise<void> {
     );
   }
 
-  console.log('Demo Assistant conversation checks passed (A6.1/A7.2.1 snapshot, no production proxy)');
+  console.log('Demo Assistant conversation checks passed (Dex 2.0 snapshot, no production proxy)');
 }
 
 void main();

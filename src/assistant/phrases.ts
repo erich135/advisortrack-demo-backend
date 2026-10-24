@@ -68,15 +68,19 @@ export function expandConversationFollowUp(question: string, previousQuestion?: 
   if (!previousQuestion?.trim()) return question;
   const normalized = normalizeQuestion(question);
   const previousNorm = normalizeQuestion(previousQuestion);
+  if (normalized === previousNorm) return question;
   if (
-    looksCompanionFollowUpQuestion(question)
+    (
+      looksCompanionFollowUpQuestion(question)
+      || /^(why)$/.test(normalized)
+    )
     && (
       previousWasCompanionTurn(previousQuestion)
       || looksCompanionBriefingQuestion(previousQuestion)
       || looksCompanionEndOfDayQuestion(previousQuestion)
     )
   ) {
-    return `${question} briefing`;
+    return /^(why)$/.test(normalized) ? 'why that' : `${question} briefing`;
   }
   if (
     /\b(but i(ve| have) done (the )?fica|fica(s| is) (done|complete)|i already did fica)\b/.test(normalized)
@@ -85,7 +89,7 @@ export function expandConversationFollowUp(question: string, previousQuestion?: 
     return `${question} submit`;
   }
   const short = normalized.split(/\s+/).length <= 8;
-  const danglingThis = /\bthis\b/.test(normalized) && !/\bthis (meeting|call|case|page|screen|contact|activity|pipeline|app|person|guy)\b/.test(normalized);
+  const danglingThis = /\bthis\b/.test(normalized) && !/\bthis (meeting|call|case|page|screen|contact|activity|pipeline|app|person|guy|month|week|year|day)\b/.test(normalized);
   const pronoun = /\b(it|that|mine|he|him|them)\b/.test(normalized) || danglingThis;
   const alreadyGrounded = /\b(meeting|meetings|call|calls|pipeline|production|fica|contact|contacts|activity|activities|case|underwriting|target|invoice)\b/.test(normalized);
   if (!FOLLOW_UP_MARKERS.test(normalized) && !(short && pronoun && !alreadyGrounded)) return question;

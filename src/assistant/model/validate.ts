@@ -11,6 +11,8 @@ import type { LiveToolFactGroup, RegisteredDerivationOutput } from '../live/type
 import { classificationForRoute } from '../routes';
 import type { AssistantRoute } from '../types';
 import type { ServerKnowledgeCard } from '../serverBundle';
+import type { ConversationTurn } from '../conversationMemory';
+import type { AssistantConversationMode } from './prompt';
 import type { AssistantModelDecision } from './types';
 
 export type ModelValidationFailure = {
@@ -88,9 +90,12 @@ export function validateModelDecision(input: {
   extraToolNumbers?: number[];
   tools?: LiveToolFactGroup[];
   derivations?: RegisteredDerivationOutput[];
+  conversationMode?: AssistantConversationMode;
+  history?: ConversationTurn[];
 }): ModelValidationFailure | null {
   const { decision, context, allowedCards, candidateIds, routes, question } = input;
   const previousQuestion = input.previousQuestion ?? '';
+  const chat = input.conversationMode === 'chat';
   const allowedById = new Map(allowedCards.map((card) => [card.id, card]));
   const suppliedTools = new Map((input.tools ?? []).map((tool) => [tool.tool, tool]));
   const suppliedDerivations = new Set((input.derivations ?? []).map((item) => item.derivationId));
@@ -130,8 +135,17 @@ export function validateModelDecision(input: {
     decision.outcome === 'answer'
     && decision.selectedCardIds.length === 0
     && !(decision.selectedToolIds ?? []).length
+    && !chat
   ) {
     return { code: 'empty_answer', message: 'answer requires selectedCardIds or selectedToolIds' };
+  }
+  if (chat && decision.outcome === 'answer') {
+    if ((decision.selectedCardIds?.length ?? 0) > 0 || (decision.selectedToolIds?.length ?? 0) > 0) {
+      return { code: 'chat_grounding', message: 'Conversation answers must not select product cards or tools' };
+    }
+    if (!decision.body?.trim()) {
+      return { code: 'chat_empty', message: 'Conversation answers need a body' };
+    }
   }
   if (decision.outcome === 'clarify' && !decision.clarifyingQuestion?.trim()) {
     return { code: 'clarify', message: 'clarify requires clarifyingQuestion' };
@@ -269,7 +283,7 @@ export function validateModelDecision(input: {
     }
   }
 
-  if (decision.outcome === 'answer') {
+  if (decision.outcome === 'answer' && !chat) {
     const grounded = groundedNumbers({
       question,
       context,

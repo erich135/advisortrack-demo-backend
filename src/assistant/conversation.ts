@@ -1,13 +1,14 @@
 /**
- * A6.1 / A7.2.1 deterministic conversational layer.
- * Runs before A5 retrieval. Pure smalltalk, frustration, and corrections never call a model provider.
- * Combined social or frustration + AdvisorTrack questions continue to live tools then A5/A6.
+ * Conversational layer for Dex 2.0.
+ * Product questions continue to live tools then retrieval. Chat, venting, and
+ * smalltalk are a remainder for Groq — not knowledge-base retrieval.
+ * Combined social + AdvisorTrack questions still strip the social prefix.
  */
 import type { AssistantContext } from './context';
 import { normalizeQuestion } from './retrieve';
 import type { AssistantPublicAnswer } from './model/types';
 import type { CardEnvironment } from './types';
-import { DEX_NAME, dexGreeting, dexIdentityCopy } from './voice';
+import { DEX_NAME, conversationLimitedFallback, dexGreeting, dexIdentityCopy } from './voice';
 
 export const CONVERSATION_INTENTS = [
   'greeting',
@@ -28,6 +29,26 @@ export type ConversationDetection =
   | { kind: 'conversation'; intent: ConversationIntent }
   | { kind: 'continue'; remainder: string }
   | { kind: 'none' };
+
+const DETERMINISTIC_SOCIAL: ReadonlySet<ConversationIntent> = new Set([
+  'thanks',
+  'identity',
+  'acknowledgement',
+  'goodbye',
+  'correction',
+  'misunderstanding',
+]);
+
+export function isDeterministicSocialIntent(intent: ConversationIntent): boolean {
+  return DETERMINISTIC_SOCIAL.has(intent);
+}
+
+/** Remainder that should talk, not retrieve a help card. */
+export function isChatRemainder(detection: ConversationDetection): boolean {
+  if (detection.kind === 'continue') return false;
+  if (detection.kind === 'none') return true;
+  return !isDeterministicSocialIntent(detection.intent);
+}
 
 export type ConversationCategory = {
   id: string;
@@ -244,6 +265,12 @@ export function hasProductSubstance(
 ): boolean {
   const normalized = normalizeQuestion(text);
   if (!normalized || isFillerOnly(normalized)) return false;
+  if (
+    /\b(?:dont|do not|not even|cant|cannot|wont).{0,48}\b(?:look at|see|open|deal with|think about)\b.{0,24}\b(?:cases|pipeline|production|contacts|activities|work)\b/.test(normalized)
+    || /\b(?:dont|do not|not).{0,24}\b(?:want to|wanna).{0,24}\b(?:look at|see|open)\b.{0,24}\b(?:cases|pipeline|work)\b/.test(normalized)
+  ) {
+    return false;
+  }
   if (hasDomainToken(normalized, categories)) return true;
   if (/\b(how am i doing|what needs my attention|on track|livepreview|factfind|waiting on me|what now|now what|what should i do now|getting anywhere|enough of this case)\b/.test(normalized)) {
     return true;
@@ -252,6 +279,13 @@ export function hasProductSubstance(
     return true;
   }
   if (/\b(this guy|isnt interested|went cold|finished the meeting|supposed to do|this page|where did)\b/.test(normalized)) {
+    return true;
+  }
+  if (/\bhow (?:is|are) (?!you\b)[a-z]+(?: [a-z]+)? doing\b/.test(normalized)) return true;
+  if (
+    /\b(?:this month|this week|last month|last week|year to date|ytd)\b/.test(normalized)
+    && /\b(?:doing|issued|standing|progress|numbers)\b/.test(normalized)
+  ) {
     return true;
   }
   return /\b(how do i|how can i|how do we|where (can|do|are|is|the hell|the heck)|why (cant|cannot|is|are|wont|won t)|add a |assign )\b/.test(
@@ -463,14 +497,11 @@ export function buildConversationResponse(
     capabilities: looksInventoryHelp(question)
       ? {
           headline: 'What I can help with',
-          body: `I can help you use AdvisorTrack. Ask me about ${areas}.`,
+          body: `I know AdvisorTrack — ${areas}. I can also just talk. I don't give financial advice.`,
         }
       : {
           headline: 'Yes',
-          body:
-            context?.workspace === 'advisor'
-              ? "Ask about your book, pipeline, production, or the page you're on."
-              : 'Ask about people, licences, production, or the page you are on.',
+          body: 'I can talk, or help you use AdvisorTrack when you want that.',
         },
     acknowledgement: {
       headline: 'Got it',
@@ -482,7 +513,7 @@ export function buildConversationResponse(
     },
     frustration: {
       headline: 'Fair enough',
-      body: "Fair. Tell me the actual blocker and I'll help you move it.",
+      body: "Fair. I'm listening — about work, or not.",
     },
     correction: {
       headline: 'Got it — try again',
@@ -492,10 +523,7 @@ export function buildConversationResponse(
       headline: 'Which part?',
       body: "Tell me which part I misunderstood and I'll correct it.",
     },
-    off_topic: {
-      headline: "I'm here for AdvisorTrack",
-      body: `I'm here for AdvisorTrack. You can ask me about ${areas}.`,
-    },
+    off_topic: conversationLimitedFallback(),
   };
   const selected = copy[intent];
   return {

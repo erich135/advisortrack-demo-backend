@@ -37,11 +37,14 @@ function allowBucket(store: Bucket | number[], key: string | null, max: number, 
 export function allowAssistantAsk(
   userId: string,
   now = Date.now(),
-  options?: { environment?: 'production' | 'demo'; ip?: string | null },
+  options?: { environment?: 'production' | 'demo'; ip?: string | null; conversationScope?: string | null },
 ): boolean {
   const environment = options?.environment ?? 'production';
   if (environment === 'demo') {
-    if (!allowBucket(users, `demo:${userId}`, ASSISTANT_ASK_LIMITS.demoPerUser, now)) return false;
+    const visitorKey = options?.conversationScope
+      ? `demo:session:${options.conversationScope}`
+      : `demo:user:${userId}`;
+    if (!allowBucket(users, visitorKey, ASSISTANT_ASK_LIMITS.demoPerUser, now)) return false;
     if (!allowBucket(ips, options?.ip ?? null, ASSISTANT_ASK_LIMITS.demoPerIp, now)) return false;
     if (!allowBucket(demoGlobal, null, ASSISTANT_ASK_LIMITS.demoGlobal, now)) return false;
     return true;

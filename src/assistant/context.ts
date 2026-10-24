@@ -44,6 +44,11 @@ export type TrustedAssistantIdentity = {
   canViewTeams: boolean;
   permissions: string[];
   canAccessEngineeringChangelog: boolean;
+  /**
+   * Server-validated personal-memory boundary. Demo: JWT demoSessionId.
+   * Production: unused (userId + companyId is the boundary). Never from the request body.
+   */
+  conversationScope?: string | null;
 };
 
 export type AssistantLicencePool = {

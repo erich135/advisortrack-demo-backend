@@ -1141,10 +1141,14 @@
       "aliases": [
         "contact statuses",
         "what does this status mean",
-        "lead"
+        "lead",
+        "lead vs client",
+        "lead versus client"
       ],
       "questionForms": [
-        "What does this contact's status mean?"
+        "What does this contact's status mean?",
+        "What is the difference between a lead and a client?",
+        "What is a lead in AdvisorTrack?"
       ],
       "audience": "customer",
       "environment": "both",

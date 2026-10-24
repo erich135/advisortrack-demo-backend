@@ -6,9 +6,25 @@ export { askAssistant, ASSISTANT_MODEL_LIMITS } from './ask';
 export {
   buildConversationResponse,
   detectConversationIntent,
+  hasProductSubstance,
+  isChatRemainder,
   visibleConversationAreas,
 } from './conversation';
 export type { ConversationDetection, ConversationIntent } from './conversation';
+export {
+  CONVERSATION_MEMORY_LIMITS,
+  clearAssistantConversation,
+  conversationMemoryHasText,
+  conversationMemoryKey,
+  peekAssistantConversation,
+  readAssistantConversation,
+  rememberAssistantTurn,
+  resetAssistantConversationMemory,
+  resolveConversationHistory,
+  sanitizeConversationTurns,
+} from './conversationMemory';
+export type { ConversationTurn } from './conversationMemory';
+export { looksCrisisQuestion, crisisSupportAnswer } from './crisisAsk';
 export {
   tryLiveAssistantAnswer,
   gatherLiveGrounding,
@@ -77,7 +93,7 @@ export type { DirectoryPerson, LiveDirectorySource, ToolExecutionContext, DataCl
 export { loadServerBundle } from './loadSnapshot';
 export { buildAssistantContext } from './context';
 export { DEX_NAME, DEX_TAGLINE, DEX_CTA, dexGreeting } from './voice';
-export { trustedIdentityFromOrganisation } from './identity';
+export { trustedIdentityFromOrganisation, withConversationScope } from './identity';
 export type { OrganisationSnapshot } from './identity';
 export { createDisabledProvider, AssistantProviderError, shouldRetryProviderError, staticRetryReason, remainingTurnMs, MIN_MODEL_ATTEMPT_MS } from './model/provider';
 export { createFakeProvider } from './model/fakeProvider';

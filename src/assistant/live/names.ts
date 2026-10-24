@@ -4,11 +4,13 @@ import { normalizeQuestion } from '../retrieve';
 const PRODUCT_VOCAB_SET = new Set<string>(PRODUCT_VOCAB as readonly string[]);
 
 const NAME_STOP = new Set([
-  'a', 'about', 'an', 'and', 'at', 'cases', 'case', 'compare', 'compared', 'current', 'date', 'do', 'does',
-  'doing', 'far', 'for', 'from', 'have', 'has', 'highest', 'how', 'i', 'in', 'is', 'issued', 'last',
-  'least', 'like', 'looking', 'lowest', 'many', 'me', 'month', 'most', 'my', 'of', 'pipeline', 'please',
-  'production', 'region', 'show', 'so', 'summary', 'team', 'tell', 'than', 'the', 'this',
-  'to', 'versus', 'we', 'week', 'what', 'which', 'who', 'whose', 'with', 'year', 'ytd', 'you', 'dex',
+  'a', 'about', 'afternoon', 'an', 'and', 'at', 'boet', 'cases', 'case', 'cheers', 'compare', 'compared',
+  'current', 'date', 'do', 'does', 'doing', 'evening', 'far', 'for', 'from', 'have', 'has', 'hello',
+  'hey', 'hi', 'highest', 'how', 'howzit', 'i', 'in', 'is', 'issued', 'last', 'least', 'like',
+  'looking', 'lowest', 'many', 'me', 'month', 'morning', 'most', 'my', 'of', 'pipeline', 'please',
+  'production', 'region', 'show', 'so', 'summary', 'team', 'tell', 'than', 'thanks', 'the', 'this',
+  'to', 'versus', 'we', 'week', 'what', 'when', 'where', 'which', 'who', 'whose', 'why', 'with',
+  'year', 'ytd', 'you', 'dex',
 ]);
 
 export function displayNameOf(person: { firstName: string; lastName: string }): string {

@@ -3,7 +3,7 @@
  * Exact and alias matches always outrank fuzzy / route-boosted hits.
  */
 import { cardFamily } from './productMap';
-import { levenshtein, normalizeQuestion, questionTokens, PRODUCT_VOCAB } from './normalise';
+import { levenshtein, normalizeQuestion, questionTokens } from './normalise';
 import { phraseHintFor } from './phrases';
 
 export type RetrievableCard = {
@@ -35,8 +35,7 @@ export type RetrievalResult<T extends RetrievableCard> =
 export { normalizeQuestion, questionTokens } from './normalise';
 
 const MATCH_MIN = 0.55;
-const COVERAGE_MIN = 0.3;
-const PRODUCT_VOCAB_SET = new Set<string>(PRODUCT_VOCAB as readonly string[]);
+const COVERAGE_MIN = 0.5;
 const MATCH_LEAD = 0.12;
 const COMPOSE_MIN = 0.28;
 const COMPOSE_WINDOW = 0.28;
@@ -185,6 +184,15 @@ export function retrieveCards<T extends RetrievableCard>(
   );
   if (!ranked.length) return { kind: 'unknown' };
 
+  const queryNormForStatus = normalizeQuestion(question);
+  if (/\blead\b/.test(queryNormForStatus) && /\b(client|prospect|status)\b/.test(queryNormForStatus)) {
+    const preferred = ranked.filter((hit) => /^(CONTACT\.(STATUS|CLIENT|PROSPECT))$/.test(hit.card.id));
+    if (preferred.length) {
+      const rest = ranked.filter((hit) => !preferred.some((item) => item.card.id === hit.card.id));
+      ranked.splice(0, ranked.length, ...preferred, ...rest);
+    }
+  }
+
   const top = ranked[0];
   const second = ranked[1];
   const exactUnique = top.exactForm && (!second || !second.exactForm);
@@ -192,21 +200,17 @@ export function retrieveCards<T extends RetrievableCard>(
     exactUnique ||
     (top.score >= MATCH_MIN && (!second || top.score - second.score >= MATCH_LEAD));
 
-  const queryTok = questionTokens(question);
+  const queryTok = queryTokens;
   function coverage(card: T): number {
     if (!queryTok.length) return 0;
     const fieldTokens = new Set(
       questionTokens([card.title, ...card.aliases, ...card.questionForms].join(' ')),
     );
     let overlap = 0;
-    let domainHit = false;
     for (const token of queryTok) {
-      if (!fieldTokens.has(token)) continue;
-      overlap += 1;
-      if (PRODUCT_VOCAB_SET.has(token) || token === 'fica' || token === 'popia') domainHit = true;
+      if (fieldTokens.has(token)) overlap += 1;
     }
-    const ratio = overlap / queryTok.length;
-    return domainHit ? Math.max(ratio, COVERAGE_MIN) : ratio;
+    return overlap / queryTok.length;
   }
 
   if (unique && (top.exactForm || coverage(top.card) >= COVERAGE_MIN)) {
@@ -254,10 +258,11 @@ export function retrieveCards<T extends RetrievableCard>(
   if (sameFamily.length >= 2) {
     return { kind: 'compose', cards: sameFamily.slice(0, 3) };
   }
-  if (coverage(top.card) >= COVERAGE_MIN) {
-    return { kind: 'match', card: top.card, score: top.score, exactForm: top.exactForm };
-  }
-  if (sameFamily.length === 1) {
+  if (
+    sameFamily.length === 1
+    && sameFamily[0].score >= MATCH_MIN
+    && (sameFamily[0].exactForm || coverage(sameFamily[0].card) >= COVERAGE_MIN)
+  ) {
     return { kind: 'match', card: sameFamily[0].card, score: sameFamily[0].score, exactForm: sameFamily[0].exactForm };
   }
 
@@ -275,7 +280,9 @@ export function retrieveCards<T extends RetrievableCard>(
 
   const onRoute = ranked.filter((hit) => {
     if (!currentRouteId) return false;
-    return hit.card.routes.includes(currentRouteId) && hit.score >= 0.22 && coverage(hit.card) >= COVERAGE_MIN;
+    return hit.card.routes.includes(currentRouteId)
+      && hit.score >= MATCH_MIN
+      && (hit.exactForm || coverage(hit.card) >= COVERAGE_MIN);
   }).slice(0, COMPOSE_MAX);
   if (onRoute.length === 1) {
     return { kind: 'match', card: onRoute[0].card, score: onRoute[0].score, exactForm: onRoute[0].exactForm };

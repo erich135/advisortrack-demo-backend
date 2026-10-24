@@ -11,8 +11,21 @@ import {
 import {
   buildConversationResponse,
   detectConversationIntent,
+  hasProductSubstance,
+  isChatRemainder,
+  isDeterministicSocialIntent,
 } from './conversation';
+import { looksCrisisQuestion, crisisSupportAnswer } from './crisisAsk';
+import {
+  lastUserQuestion,
+  readAssistantConversation,
+  rememberAssistantTurn,
+  resolveConversationHistory,
+  type ConversationTurn,
+} from './conversationMemory';
+import { previousWasCompanionTurn } from './live/companion';
 import { gatherLiveGrounding, type LiveGrounding } from './live/answer';
+import { normalizeQuestion } from './normalise';
 import { extraNumbersFromGrounding } from './live/derive';
 import { logAssistantAudit } from './live/log';
 import { LIVE_LIMITS } from './live/limits';
@@ -27,6 +40,7 @@ import {
   answerFromGrounding,
   clarifyAnswer,
   disambiguationAnswer,
+  conversationModelAnswer,
   unknownHelpAnswer,
   privacyRefuseAnswer,
   financialAdviceRefuseAnswer,
@@ -41,7 +55,7 @@ import {
 import { createDisabledProvider, AssistantProviderError, remainingTurnMs, shouldRetryProviderError, staticRetryReason, MIN_MODEL_ATTEMPT_MS } from './model/provider';
 import { assistantModelCooldownRemaining } from './model/rateLimit';
 import { assistantModelDecisionSchema } from './model/types';
-import { candidateFromCard, looksCompositeQuestion, buildModelPrompt } from './model/prompt';
+import { candidateFromCard, looksCompositeQuestion, buildModelPrompt, type AssistantConversationMode } from './model/prompt';
 import { redactQuestion } from './model/redact';
 import { validateModelDecision } from './model/validate';
 import type { AssistantAskResult, AssistantModelDecision, AssistantModelProvider, AssistantModelUsage } from './model/types';
@@ -367,9 +381,33 @@ export async function askAssistant(input: {
   timeoutMs?: number;
   liveSource?: LiveDirectorySource | null;
   previousQuestion?: string | null;
+  history?: ConversationTurn[] | null;
+  resetConversation?: boolean;
 }): Promise<AssistantAskResult> {
   const started = Date.now();
-  const result = await askAssistantInner(input);
+  const history = resolveConversationHistory({
+    environment: input.environment,
+    identity: input.identity,
+    clientHistory: input.history,
+    previousQuestion: input.previousQuestion,
+    resetConversation: input.resetConversation === true,
+  });
+  const result = await askAssistantInner({ ...input, history });
+  const crisis = looksCrisisQuestion(input.question);
+  const storedPrior = input.resetConversation
+    ? []
+    : readAssistantConversation({
+      environment: input.environment,
+      identity: input.identity,
+    });
+  rememberAssistantTurn({
+    environment: input.environment,
+    identity: input.identity,
+    history: storedPrior.length ? storedPrior : history,
+    userText: input.question,
+    assistantText: result.answer.body,
+    skipUserText: crisis,
+  });
   const toolsUsed = result.provenance?.toolsUsed ?? [];
   logAssistantAudit({
     turnId: result.provenance?.turnId ?? 'none',
@@ -414,12 +452,18 @@ async function askAssistantInner(input: {
   timeoutMs?: number;
   liveSource?: LiveDirectorySource | null;
   previousQuestion?: string | null;
+  history?: ConversationTurn[];
 }): Promise<AssistantAskResult> {
+  const history = input.history ?? [];
+  const previousQuestion = lastUserQuestion(history, input.previousQuestion);
   const rawQuestion = redactQuestion(
-    expandConversationFollowUp(input.question, input.previousQuestion),
+    expandConversationFollowUp(input.question, previousQuestion),
   ).slice(0, ASSISTANT_MODEL_LIMITS.maxQuestionChars);
   if (!rawQuestion.trim()) {
     return { answer: unknownHelpAnswer(), origin: 'deterministic', modelAttempted: false };
+  }
+  if (looksCrisisQuestion(rawQuestion) || looksCrisisQuestion(input.question)) {
+    return { answer: crisisSupportAnswer(), origin: 'deterministic', modelAttempted: false };
   }
   if (looksClientPiiAsk(rawQuestion)) {
     return { answer: privacyRefuseAnswer(), origin: 'deterministic', modelAttempted: false };
@@ -441,11 +485,7 @@ async function askAssistantInner(input: {
   );
 
   const conversation = detectConversationIntent(rawQuestion, input.bundle.categories);
-  const socialOnly =
-    conversation.kind === 'conversation' &&
-    conversation.intent !== 'off_topic' &&
-    conversation.intent !== 'frustration';
-  if (socialOnly) {
+  if (conversation.kind === 'conversation' && isDeterministicSocialIntent(conversation.intent)) {
     return {
       answer: buildConversationResponse(
         conversation.intent,
@@ -453,7 +493,7 @@ async function askAssistantInner(input: {
         input.environment,
         context,
         rawQuestion,
-        input.previousQuestion,
+        previousQuestion,
       ),
       origin: 'deterministic',
       modelAttempted: false,
@@ -474,38 +514,80 @@ async function askAssistantInner(input: {
     return { answer: leadershipScopeRefuseAnswer(), origin: 'deterministic', modelAttempted: false };
   }
 
-  const highLevel = classifyHighLevelIntent(question, context, input.previousQuestion);
+  const highLevel = classifyHighLevelIntent(question, context, previousQuestion);
   const provider = input.provider ?? createDisabledProvider();
   const providerUsable = provider.id !== 'disabled';
-  if (
-    highLevel.kind === 'FRUSTRATION_HELP'
-    || (conversation.kind === 'conversation' && conversation.intent === 'frustration')
-  ) {
+  const productFrustration = highLevel.kind === 'FRUSTRATION_HELP'
+    && hasProductSubstance(question, input.bundle.categories);
+  if (productFrustration) {
     return {
-      answer: frustrationHelpAnswer(
-        context,
-        highLevel.kind === 'FRUSTRATION_HELP' ? highLevel.subject : null,
-      ),
+      answer: frustrationHelpAnswer(context, highLevel.subject),
       origin: 'deterministic',
       modelAttempted: false,
     };
   }
 
+  const remainderChat = isChatRemainder(conversation)
+    && !hasProductSubstance(question, input.bundle.categories);
+  const shortChatFollowUp = /^(why|and then|what happened|tell me more|go on|and)$/.test(
+    normalizeQuestion(question),
+  );
+  const skipLive = remainderChat
+    && (
+      (
+        conversation.kind === 'conversation'
+        && (conversation.intent === 'greeting'
+          || conversation.intent === 'capabilities'
+          || conversation.intent === 'frustration')
+      )
+      || (shortChatFollowUp && !previousWasCompanionTurn(previousQuestion))
+    );
+
   const turnTimeoutMs = input.timeoutMs ?? ASSISTANT_MODEL_LIMITS.timeoutMs;
   const deadlineAt = Date.now() + turnTimeoutMs;
   const remaining = () => remainingTurnMs(deadlineAt);
 
-  const grounding = input.liveSource
+  const chatFallback: AssistantAskResult = {
+    answer: conversation.kind === 'conversation'
+      ? buildConversationResponse(
+        conversation.intent,
+        input.bundle.categories,
+        input.environment,
+        context,
+        rawQuestion,
+        previousQuestion,
+      )
+      : {
+        answerId: 'conversation:chat',
+        intent: 'conversation.chat',
+        confidence: 0.6,
+        mode: 'allowed',
+        headline: "I'm here",
+        body: "I'm here. Tell me what's going on — work, or not.",
+        sources: [],
+      },
+    origin: 'deterministic',
+    modelAttempted: false,
+  };
+
+  const grounding = !skipLive && input.liveSource
     ? await gatherLiveGrounding({
       question,
       identity: input.identity,
       context,
       source: input.liveSource,
       timeoutMs: remaining() || 1,
-      previousQuestion: input.previousQuestion,
+      previousQuestion,
       askedQuestion: rawQuestion,
     })
     : null;
+
+  const chatPath = remainderChat && !grounding;
+  const conversationMode: AssistantConversationMode = chatPath ? 'chat' : 'product';
+
+  if (chatPath && !providerUsable) {
+    return chatFallback;
+  }
 
   if (grounding && !grounding.compositionWorthy) {
     if (looksCompositeQuestion(question)) {
@@ -529,24 +611,6 @@ async function askAssistantInner(input: {
     return grounding.result;
   }
 
-  if (conversation.kind === 'conversation' && conversation.intent === 'off_topic' && !grounding) {
-    if (highLevel.kind !== 'OUT_OF_SCOPE' && shouldPreferDirectAnswer(highLevel)) {
-      return deterministicFromRetrieval(allowed, question, context, routes, input.previousQuestion);
-    }
-    return {
-      answer: buildConversationResponse(
-        conversation.intent,
-        input.bundle.categories,
-        input.environment,
-        context,
-        rawQuestion,
-        input.previousQuestion,
-      ),
-      origin: 'deterministic',
-      modelAttempted: false,
-    };
-  }
-
   const liveFallback = grounding
     ? compositionFallback(grounding, allowed, question, context, routes)
     : null;
@@ -555,20 +619,24 @@ async function askAssistantInner(input: {
     return liveFallback ?? grounding.result;
   }
 
-  if (!grounding && (!providerUsable || shouldBypassModel(allowed, question, context))) {
-    return deterministicFromRetrieval(allowed, question, context, routes, input.previousQuestion);
+  if (!chatPath && !grounding && (!providerUsable || shouldBypassModel(allowed, question, context))) {
+    return deterministicFromRetrieval(allowed, question, context, routes, previousQuestion);
   }
 
-  const candidates = candidateCards(allowed, question, context, grounding?.seedCardIds ?? []);
-  if (!candidates.length && !(grounding?.tools.length)) {
-    return liveFallback ?? deterministicFromRetrieval(allowed, question, context, routes, input.previousQuestion);
+  const candidates = chatPath ? [] : candidateCards(allowed, question, context, grounding?.seedCardIds ?? []);
+  if (!chatPath && !candidates.length && !(grounding?.tools.length)) {
+    return liveFallback ?? deterministicFromRetrieval(allowed, question, context, routes, previousQuestion);
   }
 
   const timeoutMs = remaining();
-  const fallback = liveFallback ?? deterministicFromRetrieval(allowed, question, context, routes, input.previousQuestion);
-  const modelTools = grounding
-    ? minimiseLiveToolsForModel(question, grounding.tools, context)
-    : undefined;
+  const fallback = chatPath
+    ? chatFallback
+    : (liveFallback ?? deterministicFromRetrieval(allowed, question, context, routes, previousQuestion));
+  const modelTools = chatPath
+    ? undefined
+    : grounding
+      ? minimiseLiveToolsForModel(question, grounding.tools, context)
+      : undefined;
 
   if (timeoutMs < MIN_MODEL_ATTEMPT_MS) {
     return fallback;
@@ -591,6 +659,8 @@ async function askAssistantInner(input: {
       tools: modelTools,
       derivations: grounding?.derivations,
       period: grounding?.period,
+      conversationMode,
+      history,
       factPack: buildFactPack({
         context,
         intent: highLevel,
@@ -629,13 +699,15 @@ async function askAssistantInner(input: {
       candidateIds: candidates.map((card) => card.id),
       routes,
       question,
-      previousQuestion: input.previousQuestion,
+      previousQuestion,
       extraToolNumbers: extraNumbersFromGrounding({
         tools: modelTools,
         derivations: grounding?.derivations,
       }),
       tools: modelTools,
       derivations: grounding?.derivations,
+      conversationMode,
+      history,
     });
     if (failure) {
       const error = new AssistantProviderError(failure.message, 'schema');
@@ -652,6 +724,14 @@ async function askAssistantInner(input: {
     if (decision.outcome === 'clarify') {
       return applyModelUsage({
         answer: clarifyAnswer(decision.clarifyingQuestion || 'Which of these did you mean?', selected),
+        origin: 'model' as const,
+        modelAttempted: true,
+        provenance: withModelProvenance(grounding, decision, 'model', selected),
+      }, lastUsage);
+    }
+    if (conversationMode === 'chat' && decision.outcome === 'answer' && decision.body?.trim()) {
+      return applyModelUsage({
+        answer: conversationModelAnswer(decision),
         origin: 'model' as const,
         modelAttempted: true,
         provenance: withModelProvenance(grounding, decision, 'model', selected),

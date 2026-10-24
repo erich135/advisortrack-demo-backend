@@ -1,7 +1,11 @@
 import { AppError } from '../middleware/errorHandler';
 import { askAssistant } from './ask';
 import { buildAssistantContext } from './context';
-import { trustedIdentityFromOrganisation } from './identity';
+import {
+  clearAssistantConversation,
+  readAssistantConversation,
+} from './conversationMemory';
+import { trustedIdentityFromOrganisation, withConversationScope } from './identity';
 import { createOrganisationLiveSource } from './live/organisationSource';
 import { loadServerBundle } from './loadSnapshot';
 import { createConfiguredAssistantProvider } from './model/createProvider';
@@ -16,7 +20,15 @@ export type AssistantAskBody = {
   pathname?: string;
   search?: string;
   previousQuestion?: string;
+  history?: Array<{ role: 'user' | 'assistant'; text: string }>;
   viewport?: 'desktop' | 'phone' | 'unknown';
+  resetConversation?: boolean;
+};
+
+type AssistantServiceOptions = {
+  provider?: AssistantModelProvider;
+  ip?: string | null;
+  conversationScope?: string | null;
 };
 
 async function organisationForAssistant(userId: string) {
@@ -30,20 +42,35 @@ async function organisationForAssistant(userId: string) {
   }
 }
 
+async function trustedAssistantIdentity(
+  userId: string,
+  conversationScope?: string | null,
+) {
+  const organisation = await organisationForAssistant(userId);
+  return withConversationScope(
+    trustedIdentityFromOrganisation(userId, organisation),
+    conversationScope,
+  );
+}
+
 export async function handleAssistantAsk(
   userId: string,
   body: AssistantAskBody,
-  options?: {
-    provider?: AssistantModelProvider;
-    ip?: string | null;
-  },
+  options?: AssistantServiceOptions,
 ) {
-  if (!allowAssistantAsk(userId, Date.now(), { environment: 'demo', ip: options?.ip })) {
+  if (!allowAssistantAsk(userId, Date.now(), {
+    environment: 'demo',
+    ip: options?.ip,
+    conversationScope: options?.conversationScope,
+  })) {
     throw new AppError(429, 'Too many Assistant questions. Try again shortly.', 'RATE_LIMITED');
   }
 
   const organisation = await organisationForAssistant(userId);
-  const identity = trustedIdentityFromOrganisation(userId, organisation);
+  const identity = withConversationScope(
+    trustedIdentityFromOrganisation(userId, organisation),
+    options?.conversationScope,
+  );
   const navigation = {
     pathname: typeof body.pathname === 'string' ? body.pathname : '/',
     search: typeof body.search === 'string' ? body.search : '',
@@ -62,6 +89,8 @@ export async function handleAssistantAsk(
   return askAssistant({
     question: body.question,
     previousQuestion: typeof body.previousQuestion === 'string' ? body.previousQuestion : null,
+    history: Array.isArray(body.history) ? body.history : undefined,
+    resetConversation: body.resetConversation === true,
     identity,
     navigation,
     environment: 'demo',
@@ -70,4 +99,21 @@ export async function handleAssistantAsk(
     provider: options?.provider ?? createConfiguredAssistantProvider(),
     liveSource: createOrganisationLiveSource(),
   });
+}
+
+export async function handleAssistantConversationRead(
+  userId: string,
+  options?: AssistantServiceOptions,
+) {
+  const identity = await trustedAssistantIdentity(userId, options?.conversationScope);
+  return { turns: readAssistantConversation({ environment: 'demo', identity }) };
+}
+
+export async function handleAssistantConversationReset(
+  userId: string,
+  options?: AssistantServiceOptions,
+) {
+  const identity = await trustedAssistantIdentity(userId, options?.conversationScope);
+  clearAssistantConversation({ environment: 'demo', identity });
+  return { cleared: true as const };
 }

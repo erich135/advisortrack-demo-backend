@@ -100,7 +100,7 @@ export function looksCompanionNextQuestion(question: string): boolean {
 
 export function looksCompanionWhyQuestion(question: string): boolean {
   const normalized = normalizeQuestion(question);
-  return /^(why(?: that| those| that first| the overdue)?)\b/.test(normalized);
+  return /^(why(?: that| those| that first| the overdue))\b/.test(normalized);
 }
 
 export function looksCompanionElseQuestion(question: string): boolean {

@@ -25,6 +25,7 @@ export function liveScopeFingerprint(ctx: ToolExecutionContext): string {
     ctx.scope.directoryResolver,
     projectionAudience(ctx),
     ctx.identity.userId,
+    ctx.identity.conversationScope ?? 'none',
   ]);
 }
 

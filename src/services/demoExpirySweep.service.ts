@@ -2,6 +2,7 @@ import { getPool } from '../config/database';
 import { env } from '../config/env';
 import { demoSessionRepository } from '../repositories/demoSession.repository';
 import { createLogger } from '../utils/logger';
+import { clearAssistantConversation } from '../assistant/conversationMemory';
 
 const log = createLogger('DemoExpirySweep');
 
@@ -19,6 +20,10 @@ export const sweepExpiredDemoSessions = async (
   const expired = await demoSessionRepository.expireActivePast(now);
   if (expired.length === 0) {
     return { expiredSessions: 0, deactivatedCompanies: 0 };
+  }
+
+  for (const row of expired) {
+    clearAssistantConversation({ environment: 'demo', conversationScope: row.id });
   }
 
   const companyIds = [...new Set(expired.map((row) => row.company_id).filter(Boolean))] as string[];

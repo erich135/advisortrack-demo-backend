@@ -51,6 +51,7 @@ export function trustedIdentityFromOrganisation(
       canViewTeams: false,
       permissions: [],
       canAccessEngineeringChangelog: false,
+      conversationScope: null,
     };
   }
 
@@ -71,5 +72,15 @@ export function trustedIdentityFromOrganisation(
     canViewTeams: Boolean(organisation.hierarchy?.structureAccess?.canViewTeams),
     permissions: organisation.permissions ?? [],
     canAccessEngineeringChangelog: Boolean(organisation.canAccessEngineeringChangelog),
+    conversationScope: null,
   };
+}
+
+/** Attach the JWT/session memory boundary. Never copy a client-supplied id. */
+export function withConversationScope(
+  identity: TrustedAssistantIdentity,
+  conversationScope: string | null | undefined,
+): TrustedAssistantIdentity {
+  const scope = typeof conversationScope === 'string' ? conversationScope.trim() : '';
+  return { ...identity, conversationScope: scope || null };
 }

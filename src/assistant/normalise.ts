@@ -4,8 +4,9 @@
 
 const STOP = new Set([
   'a', 'an', 'and', 'are', 'about', 'any', 'can', 'could', 'did', 'do', 'does', 'for', 'from',
-  'how', 'i', 'in', 'is', 'it', 'me', 'my', 'of', 'on', 'or', 'our', 'please', 'should', 'that',
-  'the', 'this', 'to', 'we', 'what', 'where', 'why', 'with', 'would', 'you', 'your',
+  'how', 'hows', 'i', 'in', 'is', 'it', 'me', 'my', 'of', 'on', 'or', 'our', 'please', 'should', 'that',
+  'the', 'this', 'to', 'we', 'what', 'whats', 'when', 'whens', 'where', 'wheres', 'who', 'whos',
+  'why', 'whys', 'with', 'would', 'you', 'your',
 ]);
 
 /** Product-domain tokens eligible for bounded edit-distance correction. */
