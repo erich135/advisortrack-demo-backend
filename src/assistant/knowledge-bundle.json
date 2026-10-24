@@ -4431,7 +4431,78 @@
         "advisor-settings"
       ],
       "category": "advisor-workspace",
-      "summary": "General Settings at /advisor/settings is GET/PATCH /planning/settings: average commission, optional tax-rate override, conversion-ratio sliders, and adaptive ratios. There is no separate notifications, theme, or automation settings API. Working weeks/days and monthly goal live on the financial profile, not this route.",
+      "summary": "General Settings at /advisor/settings is GET/PATCH /planning/settings: average commission, optional tax-rate override, conversion-ratio sliders, and adaptive ratios. Production also has a Dex Memory section on the same page. There is no separate notifications, theme, or automation settings API. Working weeks/days and monthly goal live on the financial profile, not this route.",
+      "steps": [
+        {
+          "label": "Open General Settings",
+          "routeId": "advisor-settings"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SETTINGS.DEX_MEMORY",
+      "kind": "task",
+      "title": "Dex Memory",
+      "aliases": [
+        "persistent memory",
+        "remember me",
+        "forget what you know",
+        "dex memories"
+      ],
+      "questionForms": [
+        "How does Dex memory work?",
+        "Where do I turn Dex memory off?",
+        "Can Dex remember things about me?"
+      ],
+      "audience": "customer",
+      "environment": "production",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-settings"
+      ],
+      "category": "advisor-workspace",
+      "summary": "On production, Dex can save a small set of facts you explicitly ask it to remember, scoped to you and your organisation. Memory is off until you opt in. Open General Settings to enable or disable it, see saved facts, forget one fact, or forget all. Dex never saves client records, ID numbers, or sensitive disclosures. The public demo does not use this store — it remembers only the current visit.",
+      "steps": [
+        {
+          "label": "Open General Settings",
+          "routeId": "advisor-settings"
+        }
+      ],
+      "blockedGuidance": null,
+      "requiredFacts": [],
+      "businessRules": [
+        "RULE.ACCESS.SCOPE_IS_HIERARCHY_CONTROLLED"
+      ]
+    },
+    {
+      "id": "SETTINGS.DEX_MEMORY_DEMO",
+      "kind": "concept",
+      "title": "Dex memory in the demo",
+      "aliases": [
+        "persistent memory",
+        "remember me",
+        "dex memories"
+      ],
+      "questionForms": [
+        "Can Dex remember things about me in the demo?"
+      ],
+      "audience": "customer",
+      "environment": "demo",
+      "requiredCapabilities": [
+        "canViewAdvisorWorkspace"
+      ],
+      "routes": [
+        "advisor-settings"
+      ],
+      "category": "advisor-workspace",
+      "summary": "In the public demo Dex remembers only this visit. Reset Demo or a new visitor starts fresh. There is no long-term personal memory and no production memory database.",
       "steps": [
         {
           "label": "Open General Settings",

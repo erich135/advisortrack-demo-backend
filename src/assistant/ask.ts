@@ -16,6 +16,7 @@ import {
   isDeterministicSocialIntent,
 } from './conversation';
 import { looksCrisisQuestion, crisisSupportAnswer } from './crisisAsk';
+import { tryRelationshipMemoryAnswer } from './relationshipMemory';
 import {
   lastUserQuestion,
   readAssistantConversation,
@@ -467,6 +468,13 @@ async function askAssistantInner(input: {
   }
   if (looksClientPiiAsk(rawQuestion)) {
     return { answer: privacyRefuseAnswer(), origin: 'deterministic', modelAttempted: false };
+  }
+
+  const memoryAnswer = await tryRelationshipMemoryAnswer({
+    question: String(input.question ?? '').slice(0, ASSISTANT_MODEL_LIMITS.maxQuestionChars),
+  });
+  if (memoryAnswer) {
+    return { answer: memoryAnswer, origin: 'deterministic', modelAttempted: false };
   }
 
   const routes = asRoutes(input.bundle);
