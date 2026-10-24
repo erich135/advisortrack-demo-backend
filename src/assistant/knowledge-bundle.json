@@ -4431,7 +4431,7 @@
         "advisor-settings"
       ],
       "category": "advisor-workspace",
-      "summary": "General Settings at /advisor/settings is GET/PATCH /planning/settings: average commission, optional tax-rate override, conversion-ratio sliders, and adaptive ratios. Production also has a Dex Memory section on the same page. There is no separate notifications, theme, or automation settings API. Working weeks/days and monthly goal live on the financial profile, not this route.",
+      "summary": "General Settings at /advisor/settings is GET/PATCH /planning/settings: average commission, optional tax-rate override, conversion-ratio sliders, and adaptive ratios. Production also has a Dex Memory section on the same page; persistent save is only operational when enabled for the environment. There is no separate notifications, theme, or automation settings API. Working weeks/days and monthly goal live on the financial profile, not this route.",
       "steps": [
         {
           "label": "Open General Settings",
@@ -4468,7 +4468,7 @@
         "advisor-settings"
       ],
       "category": "advisor-workspace",
-      "summary": "On production, Dex can save a small set of facts you explicitly ask it to remember, scoped to you and your organisation. Memory is off until you opt in. Open General Settings to enable or disable it, see saved facts, forget one fact, or forget all. Dex never saves client records, ID numbers, or sensitive disclosures. The public demo does not use this store — it remembers only the current visit.",
+      "summary": "On production, Dex can save a small set of facts you explicitly ask it to remember, scoped to you and your organisation, only after persistent memory has been enabled for the environment. Until then, General Settings explains that persistent Dex memory is not currently available, and Dex still follows this visit. When it is enabled, memory is off until you opt in. Open General Settings to enable or disable it, see saved facts, forget one fact, or forget all. Dex never saves client records, ID numbers, or sensitive disclosures. The public demo does not use this store — it remembers only the current visit.",
       "steps": [
         {
           "label": "Open General Settings",
